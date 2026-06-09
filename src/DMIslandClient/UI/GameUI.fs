@@ -52,4 +52,4 @@ type GameUI() =
         healthBar.SetPosition(Pos(left + 0.08f * scaling, top - ratio * 0.08f))
 
         // Minimap — top-right corner.
-        minimap.SetLayout(Pos(right - 0.05f * scaling, top - ratio * 0.08f), 0.1f * scaling)
+        minimap.SetLayout(Pos(right - 0.05f * scaling, top - ratio * 0.08f), 0.2f * scaling)

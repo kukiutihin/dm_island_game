@@ -31,10 +31,9 @@ type GameScene(connection: GameConnection, window: Window) =
     // Rebuild the floor background when the server reports a different biome.
     let updateRoom (biome: string) =
         let biome = if isNull biome then "" else biome
-        if biome <> currentBiome thens
-            
+        if biome <> currentBiome then
             currentBiome <- biome
-            currentRoom <- Some (Room(15, 15, RoomRenderer.ofString biome))
+            currentRoom <- Some (Room(13, 11, RoomRenderer.ofString biome))
 
     let applyUpdate (event: Dto.GameStateResponse) =
         dispatcher.ProcessUpdate(event)

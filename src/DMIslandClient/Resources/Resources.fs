@@ -34,4 +34,6 @@ module Resources =
         let HEART_CONTAINER = "Resources/UI/container.png"
         let FULL_HEART = "Resources/UI/full.png"
         let HALF_HEART = "Resources/UI/half.png"
+        let ROOM_CLEAR = "Resources/UI/room_clear.png"
+        let ROOM_UNCLEAR = "Resources/UI/room_unclear.png"
         

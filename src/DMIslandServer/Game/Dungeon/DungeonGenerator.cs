@@ -21,6 +21,9 @@ public static class DungeonGenerator
     {
         var rand = new Random(seed);
         var rooms = new DungeonRoom?[GridSize, GridSize];
+        
+        var floorBiomes = new[] { "beach", "forest", "cave", "snow" };
+        var biome = floorBiomes[(floorNumber - 1) % floorBiomes.Length];
 
         var cx = GridSize / 2;
         var cy = GridSize / 2;
@@ -69,10 +72,7 @@ public static class DungeonGenerator
                 room.Doors.Add(dir);
             }
         }
-
-        // One biome per floor, spreading across every room.
-        var floorBiomes = new[] { "beach", "forest", "cave", "snow" };
-        var biome = floorBiomes[(floorNumber - 1) % floorBiomes.Length];
+        
         foreach (var room in placed)
             room.Biome = biome;
 
@@ -86,7 +86,7 @@ public static class DungeonGenerator
 
     private static void PopulatePack(DungeonRoom room, GameConfig config, int packSize, Random rand)
     {
-        var count = packSize + rand.Next(0, 2);
+        var count = packSize + rand.Next(0, 1);
         var used = new HashSet<(int, int)>();
 
         for (var i = 0; i < count; i++)
