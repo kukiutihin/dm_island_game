@@ -1,0 +1,17 @@
+<!--
+  Shared MSBuild settings for every project in the monorepo.
+  MSBuild imports this automatically for any project under this folder.
+-->
+<Project>
+
+  <PropertyGroup>
+    <!-- The codebase has many legacy warnings (nullable, unreachable code, a
+         vulnerable ImageSharp transitive dep). Keep warnings as warnings so the
+         build is not blocked. Tighten this later once the warnings are cleaned. -->
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+
+    <!-- Quiet the NuGet audit noise from the pinned ImageSharp version. -->
+    <NuGetAuditMode>direct</NuGetAuditMode>
+  </PropertyGroup>
+
+</Project>

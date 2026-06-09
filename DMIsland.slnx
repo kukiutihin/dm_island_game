@@ -1,0 +1,13 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/DMIslandClient/DMIslandClient.fsproj" />
+    <Project Path="src/LadaEngine/LadaEngine.csproj" />
+  </Folder>
+  <Folder Name="/src/DMIslandServer/">
+    <Project Path="src/DMIslandServer/RoguelikeServerMVP.csproj" />
+  </Folder>
+  <Folder Name="/tests/" />
+  <Folder Name="/tests/DMIslandServer.Tests/">
+    <Project Path="tests/DMIslandServer.Tests/RoguelikeServerMVP.Tests.csproj" />
+  </Folder>
+</Solution>

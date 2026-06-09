@@ -1,0 +1,173 @@
+using System.Text.Json;
+using RoguelikeServerMVP;
+using RoguelikeServerMVP.Api;
+using RoguelikeServerMVP.Game;
+using RoguelikeServerMVP.Game.Generation;
+using RoguelikeServerMVP.Game.Mobs.Factory.Preset;
+
+var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.ConfigureHttpJsonOptions(options =>
+{
+    options.SerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+});
+
+// Конфиг игры (из appsettings.json)
+var gameConfig = new GameConfig();
+builder.Configuration.GetSection("GameConfig").Bind(gameConfig);
+builder.Services.AddSingleton(gameConfig);
+
+// Регистрация игрового движка (одна сессия)
+builder.Services.AddSingleton<GameEngine>(sp =>
+{
+    var config = sp.GetRequiredService<GameConfig>();
+    return new GameEngine(config);
+});
+
+var app = builder.Build();
+
+// Endpoint /action
+app.MapPost("/action", (PlayerActionRequest request, GameEngine engine) =>
+{
+    var action = request.Action?.ToLowerInvariant();
+
+    Direction? dir = null;
+    if (!string.IsNullOrWhiteSpace(request.Direction))
+    {
+        dir = request.Direction.ToLowerInvariant() switch
+        {
+            "up"    => Direction.Up,
+            "down"  => Direction.Down,
+            "left"  => Direction.Left,
+            "right" => Direction.Right,
+            _       => null
+        };
+    }
+
+    switch (action)
+    {
+        case "move":
+            if (dir.HasValue)
+                engine.PlayerMove(dir.Value);
+            break;
+        case "attack":
+            if (dir.HasValue)
+                engine.PlayerAttack(dir.Value);
+            break;
+        case "skip":
+            engine.PlayerSkipTurn();
+            break;
+        case "restart":
+            // Start a fresh run from floor 1 with a healed player (respawn after death).
+            engine.Restart();
+            break;
+        default:
+            // неизвестное действие — ничего не делаем
+            Console.WriteLine($"Unknown action: {action}");
+            break;
+    }
+
+    var response = BuildGameStateResponse(engine.State, engine.Config, engine.Floor);
+    return Results.Json(response);
+});
+
+app.Run();
+
+// --------- вспомогательная функция ---------
+
+static GameStateResponse BuildGameStateResponse(GameState state, GameConfig config, RoguelikeServerMVP.Game.Dungeon.Floor floor)
+{
+    var viewWidth = config.ViewWidth;
+    var viewHeight = config.ViewHeight;
+
+    var radiusX = viewWidth / 2;
+    var radiusY = viewHeight / 2;
+
+    var player = state.Player;
+    var px = player.Position.X;
+    var py = player.Position.Y;
+
+    var resp = new GameStateResponse
+    {
+        Turn = state.TurnNumber,
+        ViewWidth = viewWidth,
+        ViewHeight = viewHeight,
+        Floor = floor.Number,
+        Rooms = floor.AllRooms.Select(r => new RoomCellDto
+        {
+            X = r.GridX,
+            Y = r.GridY,
+            Visited = r.Visited,
+            Cleared = r.Cleared,
+            Current = r.GridX == floor.CurrentX && r.GridY == floor.CurrentY
+        }).ToList(),
+        Player = new PlayerViewDto
+        {
+            Id = player.Id,
+            Hp = player.Hp,
+            MaxHp = player.MaxHp,
+            Position = new PositionDto(px, py)
+        },
+        Objects = new List<ObjectViewDto>()
+    };
+
+    // 1) Мобы
+    var allEntities = state.Mobs.Concat<Entity>(state.Projectiles).Concat(state.Effects);
+    foreach (var mob in allEntities)
+    {
+        if (!mob.IsAlive) continue;
+
+        var dx = mob.Position.X - px;
+        var dy = mob.Position.Y - py;
+
+        if (Math.Abs(dx) <= radiusX && Math.Abs(dy) <= radiusY)
+        {
+            resp.Objects.Add(new ObjectViewDto
+            {
+                Id = mob.Id,
+                Type = mob.Type,
+                Hp = mob.Hp,
+                MaxHp = mob.MaxHp,
+                Position = new PositionDto(mob.Position),
+                PreviousPosition = new PositionDto(mob.PreviousPosition)
+            });
+        }
+    }
+
+    // 2) Стены и другие статические объекты
+    foreach (var obj in state.StaticObjects)
+    {
+        if (!obj.IsAlive) continue;
+
+        var dx = obj.Position.X - px;
+        var dy = obj.Position.Y - py;
+
+        if (Math.Abs(dx) <= radiusX && Math.Abs(dy) <= radiusY)
+        {
+            resp.Objects.Add(new ObjectViewDto
+            {
+                Id = obj.Id,
+                Type = obj.Type,
+                Hp = obj.Hp,
+                MaxHp = obj.MaxHp,
+                Position = new PositionDto(obj.Position),
+                PreviousPosition = new PositionDto(obj.Position)
+            });
+        }
+    }
+    
+    // 3) События
+    while (state.EventQueue.Count > 0)
+    {
+        var e = state.EventQueue.Dequeue();
+
+        resp.Events.Add(new EventDto
+        {
+            Position = e.Position,
+            Type = e.Type,
+            Payload = e.Payload,
+        });
+    }
+
+    return resp;
+}

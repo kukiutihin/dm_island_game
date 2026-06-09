@@ -1,0 +1,65 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>net10.0</TargetFramework>
+        <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <Content Include=".dockerignore">
+            <Link>.dockerignore</Link>
+        </Content>
+        <Content Include="Dockerfile" />
+        <Content Include="Resources\Textures\**">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </Content>
+        <Content Include="Resources\Font\**">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </Content>
+        <Content Include="Resources\UI\**">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </Content>
+        <Content Include="Resources\Item\**">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </Content>
+    </ItemGroup>
+
+    <ItemGroup>
+        <Compile Include="Resources\Resources.fs" />
+        <Compile Include="Utils\GameRandom.fs" />
+        <Compile Include="Utils\MathUtils.fs" />
+        <Compile Include="Connection\Dto.fs" />
+        <Compile Include="Animation\IAnimatableT.fs" />
+        <Compile Include="Animation\AnimatablePos.fs" />
+        <Compile Include="Animation\AnimatableFloat.fs" />
+        <Compile Include="UI\Components\Image.fs" />
+        <Compile Include="UI\Components\Text\Text.fs" />
+        <Compile Include="UI\Components\Button.fs" />
+        <Compile Include="UI\Components\FpsCounter.fs" />
+        <Compile Include="UI\Components\HealthBar.fs" />
+        <Compile Include="UI\Components\Minimap.fs" />
+        <Compile Include="UI\GameUI.fs" />
+        <Compile Include="UI\MainMenuUI.fs" />
+        <Compile Include="UI\GameOverUI.fs" />
+        <Compile Include="World\RoomRenderer.fs" />
+        <Compile Include="World\Room.fs" />
+        <Compile Include="Effect\Effect.fs" />
+        <Compile Include="Effect\EffectGroup.fs" />
+        <Compile Include="Entity\Entity.fs" />
+        <Compile Include="Entity\ElasticCamera.fs" />
+        <Compile Include="Entity\EntityGroup.fs" />
+        <Compile Include="Connection\GameConnection.fs" />
+        <Compile Include="Connection\PlayerController.fs" />
+        <Compile Include="Connection\Synchro.fs" />
+        <Compile Include="Connection\EventDispatcher.fs" />
+        <Compile Include="Scenes\GameScene.fs" />
+        <Compile Include="Scenes\MainMenuScene.fs" />
+        <Compile Include="Game.fs" />
+        <Compile Include="Program.fs"/>
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\LadaEngine\LadaEngine.csproj" />
+    </ItemGroup>
+</Project>
