@@ -32,14 +32,15 @@ type Minimap() =
         | [] -> ()
         | _ ->
             let minX = rooms |> List.map (fun r -> r.X) |> List.min
-            let minY = rooms |> List.map (fun r -> r.Y) |> List.min
             let maxX = rooms |> List.map (fun r -> r.X) |> List.max
+            let maxY = rooms |> List.map (fun r -> r.Y) |> List.max
             let cols = maxX - minX + 1
-            // Place the grid's right edge at the anchor and grow leftward / downward.
+            // Right edge at the anchor, grid grows leftward.
             let x0 = anchor.X - float32 cols * cellSize
             for r in rooms do
                 let cx = x0 + float32 (r.X - minX) * cellSize
-                let cy = anchor.Y - float32 (r.Y - minY) * cellSize
+                // +Y is up on screen, so larger grid-Y rooms sit higher (top = maxY).
+                let cy = anchor.Y - float32 (maxY - r.Y) * cellSize
                 let tex = if r.Cleared then Resources.Texture.SANDSTONE else Resources.Texture.DIRT
                 addCell cx cy tex
                 if r.Current then
