@@ -10,6 +10,12 @@ public class MobSpawn(EntityType type, Position position)
     public Position Position => position;
 }
 
+public class ItemSpawn(ItemType type, Position position)
+{
+    public ItemType Type => type;
+    public Position Position => position;
+}
+
 /// <summary>
 /// One room of a dungeon floor. Holds its grid coordinates, which sides have
 /// doors, the mob pack to spawn, and progress flags.
@@ -20,9 +26,10 @@ public class DungeonRoom(int gridX, int gridY)
     public int GridY => gridY;
 
     /// <summary>Sides of the room that have a door to a neighbouring room.</summary>
-    public HashSet<Direction> Doors { get; } = new();
+    public HashSet<Direction> Doors { get; } = [];
 
-    public List<MobSpawn> MobSpawns { get; } = new();
+    public List<MobSpawn> MobSpawns { get; } = [];
+    public List<ItemSpawn> ItemSpawns { get; } = [];
 
     /// <summary>Visual theme of the room: "beach", "forest", "cave", "snow".</summary>
     public string Biome { get; set; } = "beach";

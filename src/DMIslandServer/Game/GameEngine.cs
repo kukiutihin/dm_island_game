@@ -3,7 +3,8 @@ using System.Linq;
 using RoguelikeServerMVP.Api;
 using RoguelikeServerMVP.Game.Dungeon;
 using RoguelikeServerMVP.Game.Entities;
-using RoguelikeServerMVP.Game.Mobs.Factory.Preset;
+using RoguelikeServerMVP.Game.Entities.Factory.Preset;
+using RoguelikeServerMVP.Game.Entities.Pickups;
 
 namespace RoguelikeServerMVP.Game;
 
@@ -106,14 +107,14 @@ public class GameEngine
     {
         foreach (var p in State.Projectiles) p.PerformTurn(State);
         foreach (var m in State.Mobs) m.PerformTurn(State);
-        foreach (var e in State.Effects) e.PerformTurn(State);
+        foreach (var e in State.Items) e.PerformTurn(State);
         CleanupDeadMobs();
     }
 
     private void CleanupDeadMobs()
     {
         State.Mobs.RemoveAll(m => !m.IsAlive);
-        State.Effects.RemoveAll(m => !m.IsAlive);
+        State.Items.RemoveAll(m => !m.IsAlive);
         State.Projectiles.RemoveAll(m => !m.IsAlive);
     }
 
@@ -133,7 +134,7 @@ public class GameEngine
         AddWalls(room);
 
         if (!target.Cleared && !target.Spawned)
-            SpawnMobs(target);
+            SpawnEntities(target);
 
         State.Player.Teleport(playerPos);
 
@@ -177,10 +178,12 @@ public class GameEngine
         }
     }
 
-    private void SpawnMobs(DungeonRoom target)
+    private void SpawnEntities(DungeonRoom target)
     {
         foreach (var spawn in target.MobSpawns)
             State.AddMob(CreateMob(spawn.Type, spawn.Position));
+        foreach (var spawn in target.ItemSpawns)
+            State.AddItem(CreateItem(spawn.Type, spawn.Position));
         target.Spawned = true;
     }
 
@@ -217,4 +220,6 @@ public class GameEngine
         EntityType.ModusPonens => new ModusPonens(pos),
         _ => new ModusPonens(pos)
     };
+
+    private static Item CreateItem(ItemType type, Position pos) => new Item(type, pos);
 }

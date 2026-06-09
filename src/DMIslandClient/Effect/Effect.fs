@@ -21,11 +21,14 @@ type EffectParticle(scale, position: IAnimatablePos, sprite: Sprite) =
         position.Update(dt)
         size.Update(dt)
     
-    member public x.Finished() = size.GetValue() < 0.01f
+    member public x.Finished() = size.GetValue() < 0.03f
+    
+    member public x.GetSprite() = sprite
 
 type Effect =
     abstract Update: float32 -> unit
     abstract Finished: unit -> bool
+    abstract Destroy: unit -> unit
 
 type ExplosionEffect(textures, scale, count, disperse, pos: Pos, atlas: TextureAtlas, group: SpriteGroup) =
      
@@ -48,9 +51,13 @@ type ExplosionEffect(textures, scale, count, disperse, pos: Pos, atlas: TextureA
 
          member x.Finished() =
              Array.forall (fun (x: EffectParticle) -> x.Finished()) sprites
+             
+         member x.Destroy() =
+             let sprites = sprites |> Seq.map _.GetSprite()
+             Seq.iter (fun x -> group.Sprites.Remove(x) |> ignore) sprites
 
 type DeathEffect(a, b, c) =
-    inherit ExplosionEffect([Resources.Particle.SMOKE1; Resources.Particle.SMOKE2], 0.9f, 20, 5f, a, b, c)
+    inherit ExplosionEffect([Resources.Particle.SMOKE1; Resources.Particle.SMOKE2], 0.9f, 40, 5f, a, b, c)
     
 type TearPopEffect(a, b, c) =
-    inherit ExplosionEffect([Resources.Particle.BUBBLE], 0.2f, 4, 2f, a, b, c)
+    inherit ExplosionEffect([Resources.Particle.BUBBLE], 0.2f, 1, 2f, a, b, c)

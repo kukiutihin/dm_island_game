@@ -80,8 +80,18 @@ public static class DungeonGenerator
         var packSize = config.MobPackSize + (floorNumber - 1);
         foreach (var room in placed.Where(r => !r.IsStart))
             PopulatePack(room, config, packSize, rand);
+        
+        var itemRoom = placed[rand.Next(placed.Count)];
+        CreateItem(itemRoom, rand);
 
         return new Floor(floorNumber, rooms, cx, cy);
+    }
+
+    private static void CreateItem(DungeonRoom room, Random rand)
+    {
+        var type = rand.Next(0, 2) == 0 ? ItemType.Cpp : ItemType.Python3;
+        var position = new Position(7, 5);
+        room.ItemSpawns.Add(new ItemSpawn(type, position));
     }
 
     private static void PopulatePack(DungeonRoom room, GameConfig config, int packSize, Random rand)

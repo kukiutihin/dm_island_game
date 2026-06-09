@@ -1,17 +1,12 @@
 using RoguelikeServerMVP.Api;
-using RoguelikeServerMVP.Game.Mobs.Factory.Preset;
+using RoguelikeServerMVP.Game.Entities.Factory.Preset;
 
 namespace RoguelikeServerMVP.Game;
 
 public class Player(Position startPos, int maxHp, int attackDamage)
     : Entity(EntityType.Player, startPos, maxHp), IActor
 {
-    private readonly int _attackDamage = attackDamage;
-
-    public void PerformTurn(GameState state)
-    {
-        // Игрок управляется снаружи — пусто
-    }
+    private readonly List<ItemType> _items = [];
 
     public void TryMove(Direction dir, GameState state)
     {
@@ -25,29 +20,22 @@ public class Player(Position startPos, int maxHp, int attackDamage)
 
     public void Attack(Direction dir, GameState state)
     {
-        var tearEntity = new Tear(dir, Position);
+        var tearEntity = new Tear(dir, _items, Position);
         state.AddProjectile(tearEntity);
     }
 
-    public void SkipTurn()
+    public void PickupItem(ItemType itemType)
     {
-        // Ничего
+        _items.Add(itemType);
     }
 
-    /// <summary>Instantly moves the player to a tile (used when entering a new room).</summary>
-    public void Teleport(Position p)
+    public void Teleport(Position pos)
     {
-        Position = p;
-        PreviousPosition = p;
+        Position = pos;
+        PreviousPosition = pos;
     }
 
-    protected override void OnDeath(GameState state)
-    {
-        
-    }
-
-    protected override void OnDamage(int damage, GameState state)
-    {
-        
-    }
+    public void PerformTurn(GameState state) { }
+    protected override void OnDeath(GameState state) { }
+    protected override void OnDamage(int damage, GameState state) { }
 }

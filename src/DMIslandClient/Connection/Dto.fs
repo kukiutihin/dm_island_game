@@ -16,6 +16,9 @@ module Dto =
         | Monad = 3
         | Tear = 4
         | Wall = 5
+        | CppItem = 6
+        | Python3Item = 7
+        | HaskellItem = 8
 
     [<CLIMutable>]
     type PlayerActionRequest = {
@@ -59,7 +62,8 @@ module Dto =
         Id: Guid
         
         [<JsonPropertyName("type")>]
-        Type: string
+        [<JsonConverter(typeof<JsonStringEnumConverter>)>]
+        Type: EntityType
         
         [<JsonPropertyName("name")>]
         Name: string

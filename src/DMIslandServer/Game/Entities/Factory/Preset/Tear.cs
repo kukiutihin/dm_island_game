@@ -1,17 +1,13 @@
 using RoguelikeServerMVP.Api;
-using RoguelikeServerMVP.Game.Entities;
 using RoguelikeServerMVP.Game.Entities.Behaviour;
 using RoguelikeServerMVP.Game.Entities.Behaviour.ProjectileBehaviour;
 using RoguelikeServerMVP.Game.Events;
 
-namespace RoguelikeServerMVP.Game.Mobs.Factory.Preset;
+namespace RoguelikeServerMVP.Game.Entities.Factory.Preset;
 
-public class Tear(Direction direction, Position position) : Projectile(EntityType.Tear, position, 1)
+public class Tear(Direction direction, IEnumerable<ItemType> items, Position position) : Projectile(EntityType.Tear, position, 1)
 {
-    private readonly IBehaviour _behaviour = new CompositeBehaviour([
-        new DamageEntityOnCollisionBehaviour(1),
-        new StraightLineBehaviour(direction)
-    ]);
+    private readonly IBehaviour _behaviour = new ProjectileBehaviourBuilder(direction, items).Build();
     
     public override bool IsBlocking => false;
     

@@ -8,18 +8,12 @@ open DMIslandClient.UI
 open LadaEngine.Engine.Base
 
 type EventDispatcher(entities: EntityGroup, effects: EffectGroup, ui: GameUI) =
-    let entityTypeOfString = function
-        | "Wall" -> EtWall
-        | "Lambda" -> EtLambda
-        | "ModusPonens" -> EtModusPonens
-        | "Tear" -> EtTear
-        | m -> failwith $"Unknown mob type: {m}"
         
     let posOfDto (p: PositionDto) =
         Pos(p.X, p.Y)
 
     let toQuery (entity: ObjectViewDto) =
-        let typ = entityTypeOfString entity.Type
+        let typ = entity.Type
         let pos = posOfDto entity.Position
         let prevPos = posOfDto entity.PreviousPosition
         entity.Id, typ, prevPos, pos    

@@ -56,5 +56,16 @@ namespace RoguelikeServerMVP.Game
         public override string ToString() => $"({X},{Y})";
         
         public static Position Zero => new Position(0, 0);
+
+        public static IEnumerable<Position> CreateRectangle(Position first, Position second)
+        {
+            var bottom = int.Min(first.Y, second.Y);
+            var top = int.Max(first.Y, second.Y);
+            var left = int.Min(first.X, second.X);
+            var right = int.Max(first.X, second.X);
+            for (var x = left; x <= right; x++)
+            for (var y = bottom; y <= top; y++)
+                yield return new Position(x, y);
+        }
     }
 }

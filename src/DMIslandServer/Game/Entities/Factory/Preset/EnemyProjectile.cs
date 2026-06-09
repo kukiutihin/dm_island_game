@@ -1,16 +1,15 @@
 using RoguelikeServerMVP.Api;
-using RoguelikeServerMVP.Game.Entities;
 using RoguelikeServerMVP.Game.Entities.Behaviour;
 using RoguelikeServerMVP.Game.Entities.Behaviour.ProjectileBehaviour;
 using RoguelikeServerMVP.Game.Events;
 
-namespace RoguelikeServerMVP.Game.Mobs.Factory.Preset;
+namespace RoguelikeServerMVP.Game.Entities.Factory.Preset;
 
 public class EnemyProjectile(Direction direction, Position position) : Projectile(EntityType.Tear, position, 1) 
 {
     private readonly IBehaviour _behaviour = new CompositeBehaviour([
         new DamagePlayerOnCollisionBehaviour(),
-        new StraightLineBehaviour(direction)
+        new StraightLineBehaviour(1, direction)
     ]);
     
     public override void PerformTurn(GameState state)

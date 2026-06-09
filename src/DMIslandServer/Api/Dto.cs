@@ -152,6 +152,9 @@ public enum EntityType
     Monad,
     Tear,
     Wall,
+    
+    HeartItem,
+    HalfHeartItem,
 
     CppItem,
     HaskellItem,

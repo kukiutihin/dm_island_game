@@ -1,4 +1,4 @@
-using RoguelikeServerMVP.Game.Mobs.Factory.Preset;
+using RoguelikeServerMVP.Game.Entities.Factory.Preset;
 
 namespace RoguelikeServerMVP.Game.Entities.Behaviour.EntityBehaviour;
 

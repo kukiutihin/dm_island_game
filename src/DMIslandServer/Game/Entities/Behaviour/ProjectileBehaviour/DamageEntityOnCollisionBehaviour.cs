@@ -4,8 +4,11 @@ public class DamageEntityOnCollisionBehaviour(int damage) : IBehaviour
 {
     private static Entity? GetCollisionInRange(Position from, Position to, GameState state)
     {
-        var first = state.GetCollision(from);
-        return first ?? state.GetCollision(to);
+        var positions = Position.CreateRectangle(from, to);
+        
+        return positions
+            .Select(state.GetCollision)
+            .FirstOrDefault(entity => entity != null);
     }
     
     public void PerformTurn(Entity self, GameState state)
@@ -16,6 +19,8 @@ public class DamageEntityOnCollisionBehaviour(int damage) : IBehaviour
             return;
         
         Console.WriteLine($"DamageOnCollisionBehaviour: Detected collision with {collision}");
+        
+        self.TryMoveTo(collision.Position);
         
         collision.TakeDamage(damage, state);
         self.Kill(state);

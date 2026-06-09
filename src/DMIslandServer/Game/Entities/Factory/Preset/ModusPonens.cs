@@ -1,9 +1,8 @@
 using RoguelikeServerMVP.Api;
-using RoguelikeServerMVP.Game.Entities;
 using RoguelikeServerMVP.Game.Entities.Behaviour;
 using RoguelikeServerMVP.Game.Entities.Behaviour.EntityBehaviour;
 
-namespace RoguelikeServerMVP.Game.Mobs.Factory.Preset;
+namespace RoguelikeServerMVP.Game.Entities.Factory.Preset;
 
 public class ModusPonens(Position position) : Mob(EntityType.ModusPonens, position, 3)
 {

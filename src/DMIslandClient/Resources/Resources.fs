@@ -28,6 +28,9 @@ module Resources =
     
     module Item =
         let AMETHYST_SHARD = "Resources/Item/amethyst_shard.png"
+        let CPP = "Resources/Item/plusci.png"
+        let PYTHON3 = "Resources/Item/haskell.png"
+        let HASKELL = "Resources/Item/python3.png"
     
     module UI =
         let ISLAND = "Resources/UI/island.png"

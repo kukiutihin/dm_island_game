@@ -38,18 +38,9 @@ type EffectGroup() =
     
     member x.Update(dt: float32) =
         effects |> Seq.iter _.Update(dt)
+        effects |> Seq.filter _.Finished() |> Seq.iter _.Destroy()
         effects.RemoveAll(_.Finished()) |> ignore
         spriteGroup.Update()
     
     member x.Render(camera: Camera) =
         spriteGroup.Render(camera)
-        
-        
-        
-module T =
-    let inline lerp c p t =
-        t * c + p * (LanguagePrimitives.GenericOne - c)
-
-    lerp 0.1f 0f 1f |> printfn "%A"
-    lerp 0.1f System.Numerics.Vector2.Zero System.Numerics.Vector2.One |> printfn "%A"
-    lerp 0.1f System.Numerics.Vector3.Zero System.Numerics.Vector3.One |> printfn "%A"

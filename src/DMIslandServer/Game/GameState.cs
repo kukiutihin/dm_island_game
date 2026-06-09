@@ -1,6 +1,6 @@
 using RoguelikeServerMVP.Game.Entities;
+using RoguelikeServerMVP.Game.Entities.Pickups;
 using RoguelikeServerMVP.Game.Events;
-using RoguelikeServerMVP.Game.Mobs;
 using RoguelikeServerMVP.Game.Util;
 
 namespace RoguelikeServerMVP.Game;
@@ -9,7 +9,7 @@ public class GameState(Player player, Room room)
 {
     public Player Player { get; } = player;
     
-    public List<Effect> Effects { get; } = [];
+    public List<Item> Items { get; } = [];
     public List<Projectile> Projectiles { get; } = [];
     public List<Mob> Mobs { get; } = [];
     
@@ -69,9 +69,9 @@ public class GameState(Player player, Room room)
         Projectiles.Add(mob);
     }
     
-    public void AddEffect(Effect mob)
+    public void AddItem(Item mob)
     {
-        Effects.Add(mob);
+        Items.Add(mob);
     }
 
     public void AddObject(Entity obj)
@@ -105,7 +105,7 @@ public class GameState(Player player, Room room)
     {
         Mobs.Clear();
         Projectiles.Clear();
-        Effects.Clear();
+        Items.Clear();
         StaticObjects.Clear();
     }
 

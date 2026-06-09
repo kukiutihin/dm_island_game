@@ -3,17 +3,12 @@ namespace DMIslandClient.Entity
 open System
 open System.Collections.Generic
 open DMIslandClient.Animation.AnimatablePos
+open DMIslandClient.Connection.Dto
 open DMIslandClient.Resources
 open LadaEngine.Engine.Base
 open LadaEngine.Engine.Common
 open LadaEngine.Engine.Common.SpriteGroup
 open LadaEngine.Engine.Renderables.GroupRendering
-
-type EntityType =
-    | EtLambda
-    | EtModusPonens
-    | EtWall
-    | EtTear
 
 type EntityGroup() =
     let textures = [|
@@ -22,6 +17,9 @@ type EntityGroup() =
         Resources.Entity.MODUS_PONENS
         Resources.Texture.DIRT
         Resources.Particle.BUBBLE
+        Resources.Item.CPP
+        Resources.Item.HASKELL
+        Resources.Item.PYTHON3
     |]
     let atlas = TextureAtlas(textures)
     let spriteGroup = SpriteGroup(atlas)
@@ -59,22 +57,35 @@ type EntityGroup() =
     let createPlayer pos =
         let sprite = Sprite(pos, atlas, Resources.Entity.STEVE)
         spriteGroup.AddSprite(sprite)
-        Entity(sprite, EaseOutAndBounceAnimatablePos(0.5f, 4f, pos))
+        let entity = Entity(sprite, EaseOutAndBounceAnimatablePos(0.5f, 4f, pos))
+        entity.SetFlip(true)
+        entity
+        
+    let createItem texture pos =
+        let sprite = Sprite(pos, atlas, texture)
+        spriteGroup.AddSprite(sprite)
+        sprite.Height <- 0.6f
+        sprite.Width <- 0.6f
+        Entity(sprite, SmoothAnimatablePos(4f, pos))
     
     let createNewEntity id t prevPos pos=
         let createEntity =
             match t with
-            | EtLambda -> createLambda
-            | EtModusPonens -> createMp
-            | EtWall -> createWall
-            | EtTear -> createTear
+            | EntityType.Lambda -> createLambda
+            | EntityType.ModusPonens -> createMp
+            | EntityType.Wall -> createWall
+            | EntityType.Tear -> createTear
+            | EntityType.CppItem -> createItem Resources.Item.CPP
+            | EntityType.Python3Item -> createItem Resources.Item.PYTHON3
+            | EntityType.HaskellItem -> createItem Resources.Item.HASKELL
+            | _ -> failwith "Out of range for entity type"
         let entity = createEntity prevPos
         entity.SetTarget pos
         entities.Add(id, entity)
 
     member x.CreateOrUpdate(id: Guid, t: EntityType, prevPos: Pos, pos: Pos)=
         match entities.TryGetValue(id) with
-        | true, v ->v.SetTarget(pos)
+        | true, v -> v.SetTarget(pos)
         | false, _ -> createNewEntity id t prevPos pos
     
     member x.RemoveEntity(id: Guid) =
@@ -97,7 +108,7 @@ type EntityGroup() =
             entities.Add(id, playerEntity)
             player <- Some playerEntity
             playerId <- Some id
-        | Some x -> x.Position.SetTarget(pos)
+        | Some x -> x.SetTarget(pos)
     
     member x.Render(camera: Camera) =
         spriteGroup.Render(camera)

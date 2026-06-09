@@ -4,6 +4,12 @@ public class DamagePlayerOnCollisionBehaviour : IBehaviour
 {
     public void PerformTurn(Entity self, GameState state)
     {
+        if (!state.CanMoveTo(self.Position))
+        {
+            self.Kill(state);
+            return;
+        }
+
         if (self.Position != state.Player.Position && self.PreviousPosition != state.Player.Position)
             return;
         

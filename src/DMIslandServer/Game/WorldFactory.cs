@@ -1,5 +1,5 @@
+using RoguelikeServerMVP.Game.Entities.Factory.Preset;
 using RoguelikeServerMVP.Game.Generation;
-using RoguelikeServerMVP.Game.Mobs.Factory.Preset;
 
 namespace RoguelikeServerMVP.Game;
 

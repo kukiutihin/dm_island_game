@@ -3,7 +3,6 @@ using RoguelikeServerMVP;
 using RoguelikeServerMVP.Api;
 using RoguelikeServerMVP.Game;
 using RoguelikeServerMVP.Game.Generation;
-using RoguelikeServerMVP.Game.Mobs.Factory.Preset;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -114,7 +113,7 @@ static GameStateResponse BuildGameStateResponse(GameState state, GameConfig conf
     };
 
     // 1) Мобы
-    var allEntities = state.Mobs.Concat<Entity>(state.Projectiles).Concat(state.Effects);
+    var allEntities = state.Mobs.Concat<Entity>(state.Projectiles).Concat(state.Items);
     foreach (var mob in allEntities)
     {
         if (!mob.IsAlive) continue;
