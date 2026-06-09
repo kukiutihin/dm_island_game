@@ -45,11 +45,11 @@ type GameUI() =
 
         // Floor number — top-left.
         floorText.SetScale(0.09f * scaling)
-        floorText.SetPosition(Pos(left + 0.04f * scaling, top - ratio * 0.07f))
+        floorText.SetPosition(Pos(left + 0.04f * scaling, top - ratio * 0.20f))
 
         // Health bar — top-left, below the floor label.
         healthBar.SetScale(0.1f * scaling)
-        healthBar.SetPosition(Pos(left + 0.04f * scaling, top - ratio * 0.26f))
+        healthBar.SetPosition(Pos(left + 0.08f * scaling, top - ratio * 0.08f))
 
         // Minimap — top-right corner.
         minimap.SetLayout(Pos(right - 0.05f * scaling, top - ratio * 0.08f), 0.1f * scaling)

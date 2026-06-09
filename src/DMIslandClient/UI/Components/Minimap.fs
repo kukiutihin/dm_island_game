@@ -31,23 +31,21 @@ type Minimap() =
         match rooms with
         | [] -> ()
         | _ ->
-            let minX = rooms |> List.map (fun r -> r.X) |> List.min
-            let maxX = rooms |> List.map (fun r -> r.X) |> List.max
-            let maxY = rooms |> List.map (fun r -> r.Y) |> List.max
+            let minX = rooms |> List.map _.X |> List.min
+            let minY = rooms |> List.map (fun room -> -room.Y) |> List.min
+            let maxX = rooms |> List.map _.X |> List.max
             let cols = maxX - minX + 1
-            // Right edge at the anchor, grid grows leftward.
             let x0 = anchor.X - float32 cols * cellSize
-            for r in rooms do
-                let cx = x0 + float32 (r.X - minX) * cellSize
-                // +Y is up on screen, so larger grid-Y rooms sit higher (top = maxY).
-                let cy = anchor.Y - float32 (maxY - r.Y) * cellSize
-                let tex = if r.Cleared then Resources.Texture.SANDSTONE else Resources.Texture.DIRT
+            for room in rooms do
+                let cx = x0 + float32 (room.X - minX) * cellSize
+                let cy = anchor.Y - float32 (-minY - room.Y) * cellSize
+                let tex = if room.Cleared then Resources.Texture.SANDSTONE else Resources.Texture.DIRT
                 addCell cx cy tex
-                if r.Current then
+                if room.Current then
                     addCell cx cy Resources.Entity.STEVE
         group.Update()
 
-    member _.SetRooms(newRooms: IEnumerable<RoomCellDto>) =
+    member _.SetRooms(newRooms: RoomCellDto seq) =
         rooms <- if isNull (box newRooms) then [] else List.ofSeq newRooms
         rebuild ()
 

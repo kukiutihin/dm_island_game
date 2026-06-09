@@ -33,7 +33,7 @@ type GameScene(connection: GameConnection, window: Window) =
         let biome = if isNull biome then "" else biome
         if biome <> currentBiome then
             currentBiome <- biome
-            currentRoom <- Some (Room(20, 20, RoomRenderer.ofString biome))
+            currentRoom <- Some (Room(15, 15, RoomRenderer.ofString biome))
 
     let applyUpdate (event: Dto.GameStateResponse) =
         dispatcher.ProcessUpdate(event)
