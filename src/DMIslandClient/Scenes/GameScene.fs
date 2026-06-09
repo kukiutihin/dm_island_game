@@ -31,7 +31,8 @@ type GameScene(connection: GameConnection, window: Window) =
     // Rebuild the floor background when the server reports a different biome.
     let updateRoom (biome: string) =
         let biome = if isNull biome then "" else biome
-        if biome <> currentBiome then
+        if biome <> currentBiome thens
+            
             currentBiome <- biome
             currentRoom <- Some (Room(15, 15, RoomRenderer.ofString biome))
 
