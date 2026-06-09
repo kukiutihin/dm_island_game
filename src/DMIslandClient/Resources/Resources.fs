@@ -5,7 +5,13 @@ module Resources =
         let SAND = "Resources/Textures/sand.png"
         let SANDSTONE = "Resources/Textures/sandstone.png"
         let DIRT = "Resources/Textures/dirt.png"
-        
+        let GRASS = "Resources/Textures/grass.png"
+        let GRASS_DARK = "Resources/Textures/grass_dark.png"
+        let STONE = "Resources/Textures/stone.png"
+        let STONE_DARK = "Resources/Textures/stone_dark.png"
+        let SNOW = "Resources/Textures/snow.png"
+        let SNOW_DARK = "Resources/Textures/snow_dark.png"
+
     module Entity =
         let STEVE = "Resources/Textures/steve.png"
         let LAMBDA = "Resources/Textures/lambda.png"

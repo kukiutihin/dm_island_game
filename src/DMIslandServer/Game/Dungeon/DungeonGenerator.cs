@@ -70,6 +70,11 @@ public static class DungeonGenerator
             }
         }
 
+        // Assign a random biome to every room.
+        var biomes = new[] { "beach", "forest", "cave", "snow" };
+        foreach (var room in placed)
+            room.Biome = biomes[rand.Next(biomes.Length)];
+
         // Populate mob packs (every room except the start).
         var packSize = config.MobPackSize + (floorNumber - 1);
         foreach (var room in placed.Where(r => !r.IsStart))

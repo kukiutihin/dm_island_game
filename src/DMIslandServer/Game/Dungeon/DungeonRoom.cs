@@ -24,6 +24,9 @@ public class DungeonRoom(int gridX, int gridY)
 
     public List<MobSpawn> MobSpawns { get; } = new();
 
+    /// <summary>Visual theme of the room: "beach", "forest", "cave", "snow".</summary>
+    public string Biome { get; set; } = "beach";
+
     public bool IsStart { get; set; }
     public bool Visited { get; set; }
     public bool Cleared { get; set; }

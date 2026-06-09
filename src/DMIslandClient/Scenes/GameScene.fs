@@ -12,7 +12,8 @@ open LadaEngine.Engine.Scene
 
 
 type GameScene(connection: GameConnection, window: Window) =
-    let mutable currentRoom: Room option = Some (Room(20, 20, RoomType.MonadicBeach))
+    let mutable currentBiome = ""
+    let mutable currentRoom: Room option = None
     let entities = EntityGroup()
     let effects = EffectGroup()
     let camera = ElasticCamera(Camera())
@@ -25,8 +26,16 @@ type GameScene(connection: GameConnection, window: Window) =
     let controller = PlayerController(connection)
     let dispatcher = EventDispatcher(entities, effects, ui)
 
+    // Rebuild the floor background when the server reports a different biome.
+    let updateRoom (biome: string) =
+        let biome = if isNull biome then "" else biome
+        if biome <> currentBiome then
+            currentBiome <- biome
+            currentRoom <- Some (Room(20, 20, RoomRenderer.ofString biome))
+
     let applyUpdate (event: Dto.GameStateResponse) =
         dispatcher.ProcessUpdate(event)
+        updateRoom event.Biome
         // The player is dead once the server reports no health left.
         if box event.Player <> null then
             isDead <- event.Player.Hp <= 0

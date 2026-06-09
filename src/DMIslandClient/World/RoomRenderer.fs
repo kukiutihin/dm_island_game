@@ -7,15 +7,19 @@ open LadaEngine.Engine.Common
 open LadaEngine.Engine.Common.SpriteGroup
 open LadaEngine.Engine.Renderables.GroupRendering
 
-type RoomType = MonadicBeach
+type RoomType =
+    | Beach
+    | Forest
+    | Cave
+    | Snow
 
 type IRoomRenderer =
     abstract Render: Camera -> unit
     abstract Update: unit -> unit
     abstract AddTile: Pos -> unit
-    
-type MBRoomRenderer() =
-    let textures = [| Resources.Texture.SAND; Resources.Texture.SANDSTONE |]
+
+/// A floor renderer that randomly tiles the room with the given textures.
+type TiledRoomRenderer(textures: string[]) =
     let atlas = TextureAtlas(textures)
     let group = SpriteGroup(atlas)
 
@@ -25,14 +29,25 @@ type MBRoomRenderer() =
         sprite.Width <- 1f
         sprite.Height <- 1f
         group.AddSprite(sprite)
-        
+
     interface IRoomRenderer with
         member _.Render(camera) = group.Render(camera)
         member _.AddTile(pos) = addTile pos
         member _.Update() = group.Update()
-    
+
 
 module RoomRenderer =
-    let getFor(t: RoomType): IRoomRenderer =
+    let getFor (t: RoomType) : IRoomRenderer =
         match t with
-        | MonadicBeach -> MBRoomRenderer()
+        | Beach  -> TiledRoomRenderer([| Resources.Texture.SAND;  Resources.Texture.SANDSTONE |])
+        | Forest -> TiledRoomRenderer([| Resources.Texture.GRASS; Resources.Texture.GRASS_DARK |])
+        | Cave   -> TiledRoomRenderer([| Resources.Texture.STONE; Resources.Texture.STONE_DARK |])
+        | Snow   -> TiledRoomRenderer([| Resources.Texture.SNOW;  Resources.Texture.SNOW_DARK |])
+
+    /// Maps the server's biome string to a room type (defaults to Beach).
+    let ofString (s: string) : RoomType =
+        match s with
+        | "forest" -> Forest
+        | "cave"   -> Cave
+        | "snow"   -> Snow
+        | _        -> Beach

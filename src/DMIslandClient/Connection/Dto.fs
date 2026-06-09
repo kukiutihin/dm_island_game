@@ -134,6 +134,9 @@ module Dto =
         [<JsonPropertyName("floor")>]
         Floor: int
 
+        [<JsonPropertyName("biome")>]
+        Biome: string
+
         [<JsonPropertyName("rooms")>]
         Rooms: List<RoomCellDto>
     }

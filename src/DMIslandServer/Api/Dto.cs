@@ -95,6 +95,9 @@ public class GameStateResponse
     [JsonPropertyName("floor")]
     public int Floor { get; set; }
 
+    [JsonPropertyName("biome")]
+    public string Biome { get; set; } = "beach";
+
     [JsonPropertyName("rooms")]
     public List<RoomCellDto> Rooms { get; set; } = [];
 }
