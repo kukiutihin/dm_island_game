@@ -95,6 +95,9 @@ public class GameStateResponse
     [JsonPropertyName("floor")]
     public int Floor { get; set; }
 
+    [JsonPropertyName("completed")]
+    public bool Completed { get; set; }
+
     [JsonPropertyName("biome")]
     public string Biome { get; set; } = "beach";
 

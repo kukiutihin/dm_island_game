@@ -96,8 +96,9 @@ public class GameEngine
             cur.Cleared = true;
             OpenDoors(cur);
 
-            if (Floor.AllCleared)
-                StartNewRun(Floor.Number + 1); // auto-descend to the next floor
+            // Auto-descend, unless this was the final floor (then the run is won).
+            if (Floor.AllCleared && Floor.Number < Config.MaxFloors)
+                StartNewRun(Floor.Number + 1);
         }
     }
 

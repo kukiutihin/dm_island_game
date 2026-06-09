@@ -5,12 +5,12 @@ open LadaEngine.Engine.Base
 open LadaEngine.Engine.Common
 open LadaEngine.Engine.Global
 
-/// Minecraft-style death screen overlay: a big "You Died!" title and a prompt
-/// to respawn. Shown on top of the frozen game world when the player dies.
-type GameOverUI() =
+/// A full-screen overlay with a big title and a prompt, shown on top of the
+/// frozen game world (used for both the death and victory screens).
+type GameOverUI(titleText: string, promptText: string) =
     let uiCamera = Camera()
-    let title = Text("You Died!", Pos(0f, 0f))
-    let prompt = Text("Press R to Respawn", Pos(0f, 0f))
+    let title = Text(titleText, Pos(0f, 0f))
+    let prompt = Text(promptText, Pos(0f, 0f))
 
     member x.Render() =
         title.Render(uiCamera)

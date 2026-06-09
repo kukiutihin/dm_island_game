@@ -18,10 +18,12 @@ type GameScene(connection: GameConnection, window: Window) =
     let effects = EffectGroup()
     let camera = ElasticCamera(Camera())
     let ui = GameUI()
-    let gameOver = GameOverUI()
+    let deathUI = GameOverUI("You Died!", "Press R to Respawn")
+    let winUI = GameOverUI("You Win!", "Press R to play again")
     let sync = SynchroQueue()
 
     let mutable isDead = false
+    let mutable won = false
 
     let controller = PlayerController(connection)
     let dispatcher = EventDispatcher(entities, effects, ui)
@@ -36,6 +38,7 @@ type GameScene(connection: GameConnection, window: Window) =
     let applyUpdate (event: Dto.GameStateResponse) =
         dispatcher.ProcessUpdate(event)
         updateRoom event.Biome
+        won <- event.Completed
         // The player is dead once the server reports no health left.
         if box event.Player <> null then
             isDead <- event.Player.Hp <= 0
@@ -54,23 +57,26 @@ type GameScene(connection: GameConnection, window: Window) =
             controller.SendInitial()
             camera.GetCamera().Zoom <- 6f
             ui.Load()
-            gameOver.Load()
+            deathUI.Load()
+            winUI.Load()
 
         member this.Render() =
             currentRoom |> Option.iter _.Render(camera.GetCamera())
             entities.Render(camera.GetCamera())
             effects.Render(camera.GetCamera())
             ui.Render()
-            if isDead then gameOver.Render()
+            if won then winUI.Render()
+            elif isDead then deathUI.Render()
 
         member this.Resize() =
             ui.Resize(window)
-            gameOver.Resize(window)
+            deathUI.Resize(window)
+            winUI.Resize(window)
 
         member this.Update(dt: float32) =
-            if isDead then
-                // Game is frozen on the death screen until the player respawns.
-                gameOver.Update()
+            if won || isDead then
+                // Game is frozen on the end screen until the player restarts.
+                (if won then winUI.Update() else deathUI.Update())
                 if Controls.ButtonPressedOnce(OpenTK.Windowing.GraphicsLibraryFramework.Keys.R) then
                     connection.RestartCallback(fun resp -> sync.AddEvent(fun () -> applyUpdate resp))
             else

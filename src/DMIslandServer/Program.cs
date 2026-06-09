@@ -93,6 +93,7 @@ static GameStateResponse BuildGameStateResponse(GameState state, GameConfig conf
         ViewWidth = viewWidth,
         ViewHeight = viewHeight,
         Floor = floor.Number,
+        Completed = floor.Number >= config.MaxFloors && floor.AllCleared,
         Biome = floor.Current.Biome,
         Rooms = floor.AllRooms.Select(r => new RoomCellDto
         {

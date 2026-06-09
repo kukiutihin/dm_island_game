@@ -45,5 +45,8 @@ namespace RoguelikeServerMVP
 
         /// <summary>Base size of a mob pack in a (non-start) room on floor 1.</summary>
         public int MobPackSize { get; set; } = 3;
+
+        /// <summary>Number of floors in a run. Clearing the last floor wins the game.</summary>
+        public int MaxFloors { get; set; } = 3;
     }
 }

@@ -134,6 +134,9 @@ module Dto =
         [<JsonPropertyName("floor")>]
         Floor: int
 
+        [<JsonPropertyName("completed")>]
+        Completed: bool
+
         [<JsonPropertyName("biome")>]
         Biome: string
 
