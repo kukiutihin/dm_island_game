@@ -40,8 +40,8 @@ type Minimap() =
             let minX = rooms |> List.map _.X |> List.min
             let minY = rooms |> List.map (fun room -> -room.Y) |> List.min
             let maxX = rooms |> List.map _.X |> List.max
-            let cols = maxX - minX + 1
-            let x0 = anchor.X - float32 cols * cellSize
+            let cols = maxX - minX |> float32 |> (+) 0.5f
+            let x0 = anchor.X - cols * cellSize
             let yScale = 0.75f
             for room in rooms do
                 let cx = x0 + float32 (room.X - minX) * cellSize
