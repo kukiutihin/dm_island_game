@@ -1,8 +1,7 @@
 namespace DMIslandClient.Entity
 
 open DMIslandClient.Animation.AnimatablePos
-open LadaEngine.Engine.Base
-open LadaEngine.Engine.Common.SpriteGroup
+open LadaEngine
 
 type Entity (sprite: Sprite, position: IAnimatablePos) =
     let spriteFlipper = SpriteFlipper(sprite)

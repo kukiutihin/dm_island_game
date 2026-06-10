@@ -4,9 +4,7 @@ open System.Collections.Generic
 open DMIslandClient.Connection.Dto
 open DMIslandClient.UI.Components
 open DMIslandClient.UI.Text
-open LadaEngine.Engine.Base
-open LadaEngine.Engine.Common
-open LadaEngine.Engine.Global
+open LadaEngine
 
 type GameUI() =
     let uiCamera = Camera()

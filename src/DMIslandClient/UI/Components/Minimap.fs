@@ -3,10 +3,7 @@ namespace DMIslandClient.UI.Components
 open System.Collections.Generic
 open DMIslandClient.Connection.Dto
 open DMIslandClient.Resources
-open LadaEngine.Engine.Base
-open LadaEngine.Engine.Common
-open LadaEngine.Engine.Common.SpriteGroup
-open LadaEngine.Engine.Renderables.GroupRendering
+open LadaEngine
 
 /// Isaac-style floor map. Cleared rooms are bright, not-yet-cleared rooms are
 /// dark, and the current room is marked. Anchored to the top-right corner.

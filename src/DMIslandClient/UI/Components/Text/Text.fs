@@ -2,10 +2,7 @@ namespace DMIslandClient.UI.Text
 
 open System.Collections.Generic
 open DMIslandClient.Resources
-open LadaEngine.Engine.Base
-open LadaEngine.Engine.Common
-open LadaEngine.Engine.Common.SpriteGroup
-open LadaEngine.Engine.Renderables.GroupRendering
+open LadaEngine
 
 type CharDescription = {
     texture: string

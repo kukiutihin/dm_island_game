@@ -2,8 +2,7 @@ module DMIslandClient.Animation.AnimatablePos
 
 open DMIslandClient.Animation.IAnimatableT
 open DMIslandClient.Utils
-open LadaEngine.Engine.Base
-open LadaEngine.Engine.Common.SpriteGroup
+open LadaEngine
 
 
 type IAnimatablePos = IAnimatableT<Pos>

@@ -60,6 +60,6 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\LadaEngine\LadaEngine.csproj" />
+      <ProjectReference Include="..\LadaEngine\LadaEngine.fsproj" />
     </ItemGroup>
 </Project>

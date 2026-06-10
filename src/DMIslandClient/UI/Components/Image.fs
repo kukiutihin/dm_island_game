@@ -1,9 +1,6 @@
 namespace DMIslandClient.UI.Image
 
-open LadaEngine.Engine.Base
-open LadaEngine.Engine.Common
-open LadaEngine.Engine.Common.SpriteGroup
-open LadaEngine.Engine.Renderables.GroupRendering
+open LadaEngine
 
 type Image(texture: string, position: Pos) =
     let atlas = TextureAtlas([texture])

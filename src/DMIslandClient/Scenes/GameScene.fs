@@ -6,9 +6,7 @@ open DMIslandClient.Effect
 open DMIslandClient.Entity
 open DMIslandClient.UI
 open DMIslandClient.World
-open LadaEngine.Engine.Common
-open LadaEngine.Engine.Global
-open LadaEngine.Engine.Scene
+open LadaEngine
 
 
 type GameScene(connection: GameConnection, window: Window) =
@@ -50,7 +48,7 @@ type GameScene(connection: GameConnection, window: Window) =
 
     interface IScene with
         member this.FixedUpdate() = ()
-        member this.GetName() = "Gaming"
+        member this.Name = "Gaming"
 
         member this.Load() =
             controller.SubscribeToUpdate(fun event -> sync.AddEvent(fun () -> applyUpdate event))
@@ -77,7 +75,7 @@ type GameScene(connection: GameConnection, window: Window) =
             if won || isDead then
                 // Game is frozen on the end screen until the player restarts.
                 (if won then winUI.Update() else deathUI.Update())
-                if Controls.ButtonPressedOnce(OpenTK.Windowing.GraphicsLibraryFramework.Keys.R) then
+                if Controls.keyPressedOnce(OpenTK.Windowing.GraphicsLibraryFramework.Keys.R) then
                     connection.RestartCallback(fun resp -> sync.AddEvent(fun () -> applyUpdate resp))
             else
                 controller.Update()

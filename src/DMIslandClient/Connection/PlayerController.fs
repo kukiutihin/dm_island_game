@@ -2,24 +2,24 @@ namespace DMIslandClient.Connection
 
 open DMIslandClient.Connection.Dto
 open DMIslandClient.Connection
-open LadaEngine.Engine.Global
+open LadaEngine
 open OpenTK.Windowing.GraphicsLibraryFramework
 
 type PlayerController(connection: GameConnection) =
     let subscriptions = ResizeArray()
     
     let getMoveDirection () =
-        if Controls.ButtonPressedOnce(Keys.D) then Some "right"
-        else if Controls.ButtonPressedOnce(Keys.A) then Some "left"
-        else if Controls.ButtonPressedOnce(Keys.S) then Some "up"
-        else if Controls.ButtonPressedOnce(Keys.W) then Some "down"
+        if Controls.keyPressedOnce(Keys.D) then Some "right"
+        else if Controls.keyPressedOnce(Keys.A) then Some "left"
+        else if Controls.keyPressedOnce(Keys.S) then Some "up"
+        else if Controls.keyPressedOnce(Keys.W) then Some "down"
         else None
         
     let getShootDirection () =
-        if Controls.ButtonPressedOnce(Keys.Right) then Some "right"
-        else if Controls.ButtonPressedOnce(Keys.Left) then Some "left"
-        else if Controls.ButtonPressedOnce(Keys.Down) then Some "up"
-        else if Controls.ButtonPressedOnce(Keys.Up) then Some "down"
+        if Controls.keyPressedOnce(Keys.Right) then Some "right"
+        else if Controls.keyPressedOnce(Keys.Left) then Some "left"
+        else if Controls.keyPressedOnce(Keys.Down) then Some "up"
+        else if Controls.keyPressedOnce(Keys.Up) then Some "down"
         else None
         
     let notifyAll result =

@@ -5,9 +5,7 @@ open DMIslandClient.Animation.AnimatablePos
 open DMIslandClient.Animation.IAnimatableT
 open DMIslandClient.Resources
 open DmIslandClient.Utils
-open LadaEngine.Engine.Base
-open LadaEngine.Engine.Common.SpriteGroup
-open LadaEngine.Engine.Renderables.GroupRendering
+open LadaEngine
 
 type EffectParticle(scale, position: IAnimatablePos, sprite: Sprite) =
     let size: IAnimatableT<float32> = LinearAnimatableFloat(1.6f + GameRandom.random.NextSingle(), scale)

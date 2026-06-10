@@ -3,9 +3,7 @@ namespace DMIslandClient.UI
 open DMIslandClient.Resources
 open DMIslandClient.UI.Image
 open DMIslandClient.UI.Text
-open LadaEngine.Engine.Base
-open LadaEngine.Engine.Common
-open LadaEngine.Engine.Global
+open LadaEngine
 
 type MainMenuUI () =
     let uiCamera = Camera()

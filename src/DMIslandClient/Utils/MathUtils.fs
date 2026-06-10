@@ -1,6 +1,6 @@
 namespace DMIslandClient.Utils
 
-open LadaEngine.Engine.Base
+open LadaEngine
 
 module MathUtils =
     let inline lerp<^a, ^b

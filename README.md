@@ -12,7 +12,7 @@ and talks to an authoritative game server over HTTP.
 ├── build.sh                   # build everything
 ├── run.sh                     # start server + client
 ├── src/
-│   ├── LadaEngine/            # 2D OpenGL engine (OpenTK) — used by the client
+│   ├── LadaEngine/            # 2D OpenGL engine (OpenTK, F#) — used by the client
 │   ├── DMIslandServer/        # authoritative game server (ASP.NET, C#)
 │   └── DMIslandClient/        # game client (F#), renders via LadaEngine
 └── tests/

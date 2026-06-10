@@ -5,7 +5,7 @@ open DMIslandClient.Connection.Dto
 open DMIslandClient.Effect
 open DMIslandClient.Entity
 open DMIslandClient.UI
-open LadaEngine.Engine.Base
+open LadaEngine
 
 type EventDispatcher(entities: EntityGroup, effects: EffectGroup, ui: GameUI) =
         

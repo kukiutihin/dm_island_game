@@ -2,8 +2,7 @@ namespace DMIslandClient.Scenes
 
 open DMIslandClient.Connection
 open DMIslandClient.UI
-open LadaEngine.Engine.Global
-open LadaEngine.Engine.Scene
+open LadaEngine
 
 type MainMenuScene(loadScene, window: Window) =
     let connection = GameConnection("http://localhost:5229")
@@ -19,7 +18,7 @@ type MainMenuScene(loadScene, window: Window) =
     
     interface IScene with
         member this.FixedUpdate() = ()
-        member this.GetName() = "Main Menu"
+        member this.Name = "Main Menu"
         member this.Load() =
             connection.CheckAlive(liveCheck)
             ui.Load()

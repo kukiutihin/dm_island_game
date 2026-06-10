@@ -1,8 +1,7 @@
 namespace DMIslandClient.Entity
 
 open DMIslandClient.Animation.AnimatablePos
-open LadaEngine.Engine.Base
-open LadaEngine.Engine.Common
+open LadaEngine
 
 type ElasticCamera(camera: Camera) =
     let position: IAnimatablePos = SmoothAnimatablePos(10f, Pos(0f, 0f))

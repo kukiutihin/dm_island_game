@@ -2,10 +2,7 @@ namespace DMIslandClient.World
 
 open DMIslandClient.Resources
 open DmIslandClient.Utils
-open LadaEngine.Engine.Base
-open LadaEngine.Engine.Common
-open LadaEngine.Engine.Common.SpriteGroup
-open LadaEngine.Engine.Renderables.GroupRendering
+open LadaEngine
 
 type RoomType =
     | Beach

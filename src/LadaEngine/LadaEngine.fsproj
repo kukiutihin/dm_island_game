@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <Compile Include="Engine/Pos.fs" />
+        <Compile Include="Engine/Globals.fs" />
+        <Compile Include="Engine/Texture.fs" />
+        <Compile Include="Engine/Shader.fs" />
+        <Compile Include="Engine/TextureAtlas.fs" />
+        <Compile Include="Engine/Camera.fs" />
+        <Compile Include="Engine/Sprite.fs" />
+        <Compile Include="Engine/SpriteGroup.fs" />
+        <Compile Include="Engine/Box.fs" />
+        <Compile Include="Engine/FrameBuffer.fs" />
+        <Compile Include="Engine/Scene.fs" />
+        <Compile Include="Engine/Controls.fs" />
+        <Compile Include="Engine/Window.fs" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="OpenTK" Version="4.7.7" />
+        <PackageReference Include="SixLabors.ImageSharp" Version="3.0.1" />
+    </ItemGroup>
+
+</Project>

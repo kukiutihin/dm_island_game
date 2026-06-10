@@ -2,7 +2,7 @@ namespace DMIslandClient.World
 
 open System
 open System.Collections.Generic
-open LadaEngine.Engine.Base
+open LadaEngine
 
 type Room(width: int, height: int, typ: RoomType) =
     let renderer = RoomRenderer.getFor typ

@@ -1,9 +1,7 @@
 namespace DMIslandClient.UI
 
 open DMIslandClient.UI.Text
-open LadaEngine.Engine.Base
-open LadaEngine.Engine.Common
-open LadaEngine.Engine.Global
+open LadaEngine
 
 /// A full-screen overlay with a big title and a prompt, shown on top of the
 /// frozen game world (used for both the death and victory screens).

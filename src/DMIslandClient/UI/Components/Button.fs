@@ -1,7 +1,7 @@
 namespace DMIslandClient.UI.Components
 
 open DMIslandClient.UI.Text
-open LadaEngine.Engine.Base
+open LadaEngine
 
 type Button(text: string, origin: Pos, onClick: unit -> unit) =
     let textSprite = Text(text, origin)

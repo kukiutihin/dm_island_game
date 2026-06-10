@@ -1,9 +1,7 @@
 namespace DMIslandClient.UI.Components
 
 open DMIslandClient.Resources
-open LadaEngine.Engine.Base
-open LadaEngine.Engine.Common.SpriteGroup
-open LadaEngine.Engine.Renderables.GroupRendering
+open LadaEngine
 
 type HeartType = Empty | Full | Half
 
