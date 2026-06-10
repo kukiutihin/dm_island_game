@@ -30,12 +30,14 @@ type GameScene(connection: GameConnection, window: Window) =
         match currentRoom with
         | Some room when room.Id = event.Room.Id -> ()
         | _ -> 
-            let room = Room(event.Room.Id, 13, 11, RoomRenderer.ofString event.Room.Biome)
+            let room = Room(event.Room.Id, 13, 9, RoomRenderer.ofString event.Room.Biome)
             currentRoom <- Some room
 
     let applyUpdate (event: Dto.GameStateResponse) =
+        objects.SetBiome(event.Room.Biome)
         dispatcher.ProcessUpdate(event)
         updateRoom event
+        isDead <- event.Player.Hp = 0
         won <- event.Completed
 
 
@@ -46,15 +48,15 @@ type GameScene(connection: GameConnection, window: Window) =
         member this.Load() =
             controller.SubscribeToUpdate(fun event -> sync.AddEvent(fun () -> applyUpdate event))
             controller.SendInitial()
-            camera.GetCamera().Zoom <- 6f
+            camera.GetCamera().Zoom <- 7f
             ui.Load()
             deathUI.Load()
             winUI.Load()
 
         member this.Render() =
             currentRoom |> Option.iter _.Render(camera.GetCamera())
-            entities.Render(camera.GetCamera())
             objects.GetGroup().Render(camera.GetCamera())
+            entities.Render(camera.GetCamera())
             effects.Render(camera.GetCamera())
             ui.Render()
             if won then winUI.Render()
@@ -74,8 +76,8 @@ type GameScene(connection: GameConnection, window: Window) =
                 controller.Update()
 
             sync.ExecuteAll()
-            entities.Update(dt)
             objects.GetGroup().Update(dt)
+            entities.Update(dt)
             effects.Update(dt)
             camera.Update(dt)
             ui.Update(dt)

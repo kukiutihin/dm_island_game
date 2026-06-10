@@ -8,6 +8,7 @@ module Dto =
     type EventType =
         | EntityDeath = 1
         | TearPop = 2
+        | EnemyProjectilePop = 3
 
     type EntityType =
         | Player = 1
@@ -23,6 +24,7 @@ module Dto =
         | CppItem = 11
         | HaskellItem = 12
         | Python3Item = 13
+        | JavaItem = 14
 
     [<CLIMutable>]
     type PlayerActionRequest = {

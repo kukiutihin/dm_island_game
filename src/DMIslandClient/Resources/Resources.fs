@@ -10,9 +10,13 @@ module Resources =
         let STONE = "Resources/Textures/stone.png"
         let STONE_1 = "Resources/Textures/stones1.png"
         let STONE_2 = "Resources/Textures/stones2.png"
-        let STONE_DARK = "Resources/Textures/stone_dark.png"
+        let STONE_DARK = "Resources/Textures/stones_dark.png"
+        let THORNS = "Resources/Textures/thorns.png"
+        let SWAMP = "Resources/Textures/swamp.png"
+        let SWAMP_BLAZE = "Resources/Textures/swamp_blaze.png"
         let SNOW = "Resources/Textures/snow.png"
         let SNOW_DARK = "Resources/Textures/snow_dark.png"
+        let SHADE = "Resources/Textures/shade.png"
 
     module Entity =
         let STEVE = "Resources/Textures/steve.png"
@@ -33,6 +37,7 @@ module Resources =
         let AMETHYST_SHARD = "Resources/Item/amethyst_shard.png"
         let CPP = "Resources/Item/plusci.png"
         let PYTHON3 = "Resources/Item/haskell.png"
+        let JAVA = "Resources/Item/java.png"
         let HASKELL = "Resources/Item/python3.png"
     
     module UI =

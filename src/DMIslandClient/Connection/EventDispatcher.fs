@@ -31,6 +31,9 @@ type EventDispatcher(entities: EntityGroup, effects: EffectGroup, objects: Entit
         | EventType.TearPop ->
             entities.MoveEntityTo(Guid.Parse(e.Payload), posOfDto e.Position)
             effects.CreateEffect(EtTearPop, posOfDto e.Position)
+        | EventType.EnemyProjectilePop ->
+            entities.MoveEntityTo(Guid.Parse(e.Payload), posOfDto e.Position)
+            effects.CreateEffect(EtProjectilePop, posOfDto e.Position)
         | _ -> ArgumentOutOfRangeException() |> raise
 
     let processEntities (updates: ObjectViewDto seq)=
@@ -43,6 +46,7 @@ type EventDispatcher(entities: EntityGroup, effects: EffectGroup, objects: Entit
     
     let processPlayer (player: ObjectViewDto) =
         ui.SetHealth(player.Hp)
+        ui.SetMaxHealth(player.MaxHp)
         camera.SetPosition(posOfDto player.Position)
     
     member public x.ProcessUpdate(data: GameStateResponse) =

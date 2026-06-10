@@ -15,6 +15,7 @@ module MobGroupTextures =
         Resources.UI.HALF_HEART
         Resources.UI.FULL_HEART
         Resources.Item.AMETHYST_SHARD
+        Resources.Item.JAVA 
     |]
 
 type MobGroup() =

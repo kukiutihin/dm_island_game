@@ -39,6 +39,7 @@
         <Compile Include="UI\Components\FpsCounter.fs" />
         <Compile Include="UI\Components\HealthBar.fs" />
         <Compile Include="UI\Components\Minimap.fs" />
+        <Compile Include="UI\Components\ItemList.fs" />
         <Compile Include="UI\GameUI.fs" />
         <Compile Include="UI\MainMenuUI.fs" />
         <Compile Include="UI\GameOverUI.fs" />
@@ -48,6 +49,7 @@
         <Compile Include="Entity\EntityGroup.fs" />
         <Compile Include="Entity\MobGroup.fs" />
         <Compile Include="World\RoomRenderer.fs" />
+        <Compile Include="World\RoomVignette.fs" />
         <Compile Include="World\Room.fs" />
         <Compile Include="World\StaticObjectGroup.fs" />
         <Compile Include="Effect\Effect.fs" />

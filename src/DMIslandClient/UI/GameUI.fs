@@ -8,13 +8,16 @@ open LadaEngine
 
 type GameUI() =
     let uiCamera = Camera()
-    let healthBar = HealthBar()
+    let healthBar = HealthBar(3)
     let floorText = Text("Floor 1", Pos(0f, 0f))
     let minimap = Minimap()
     let mutable frame = 0
 
     member x.SetHealth(health) =
         healthBar.UpdateHealth(health)
+        
+    member x.SetMaxHealth(health) =
+        healthBar.UpdateMaxHealth(health)
 
     member x.SetFloor(n: int) =
         floorText.SetText($"Floor {n}")

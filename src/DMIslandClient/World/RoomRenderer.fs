@@ -7,8 +7,8 @@ open LadaEngine
 type RoomType =
     | Beach
     | Forest
-    | Cave
-    | Snow
+    | NerdForest
+    | Swamp
 
 type IRoomRenderer =
     abstract Render: Camera -> unit
@@ -37,15 +37,15 @@ type TiledRoomRenderer(floorTextures: string seq) =
 module RoomRenderer =
     let getFor (t: RoomType) : IRoomRenderer =
         match t with
-        | Beach  -> TiledRoomRenderer([| Resources.Texture.SAND; Resources.Texture.SANDSTONE |])
-        | Forest -> TiledRoomRenderer([| Resources.Texture.GRASS; Resources.Texture.GRASS_DARK |])
-        | Cave   -> TiledRoomRenderer([| Resources.Texture.STONE; Resources.Texture.STONE_DARK |])
+        | Beach  -> TiledRoomRenderer([| Resources.Texture.SAND; Resources.Texture.SAND; Resources.Texture.SAND; Resources.Texture.SANDSTONE |])
+        | Forest -> TiledRoomRenderer([| Resources.Texture.GRASS; Resources.Texture.GRASS; Resources.Texture.GRASS; Resources.Texture.GRASS_DARK |])
+        | Swamp   -> TiledRoomRenderer([| Resources.Texture.SWAMP;Resources.Texture.SWAMP; Resources.Texture.SWAMP; Resources.Texture.SWAMP_BLAZE |])
         | Snow   -> TiledRoomRenderer([| Resources.Texture.SNOW;  Resources.Texture.SNOW_DARK |])
 
     /// Maps the server's biome string to a room type (defaults to Beach).
     let ofString (s: string) : RoomType =
         match s with
+        | "beach" -> Beach
         | "forest" -> Forest
-        | "cave"   -> Cave
-        | "snow"   -> Snow
-        | _        -> Beach
+        | "swamp" -> Swamp
+        | "nerds" -> NerdForest

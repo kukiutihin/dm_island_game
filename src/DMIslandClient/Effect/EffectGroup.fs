@@ -8,12 +8,15 @@ open LadaEngine
 type EffectType =
     | EtEntityDeath
     | EtTearPop
+    | EtProjectilePop
+    
 
 type EffectGroup() =
     let textures = [|
         Resources.Particle.SMOKE1
         Resources.Particle.SMOKE2
         Resources.Particle.BUBBLE
+        Resources.Particle.ENEMY_PROJECTILE
     |]
     
     let atlas = TextureAtlas(textures)
@@ -27,10 +30,15 @@ type EffectGroup() =
     let createTearExplosion position =
         let effect = TearPopEffect(position, atlas, spriteGroup)
         effects.Add(effect)
+        
+    let createProjectileExplosion position =
+        let effect = ProjectilePopEffect(position, atlas, spriteGroup)
+        effects.Add(effect)
     
     member x.CreateEffect(typ: EffectType, position: Pos) =
         match typ with
         | EtEntityDeath -> createEntityDeath position
+        | EtProjectilePop -> createProjectileExplosion position
         | EtTearPop -> createTearExplosion position
     
     member x.Update(dt: float32) =

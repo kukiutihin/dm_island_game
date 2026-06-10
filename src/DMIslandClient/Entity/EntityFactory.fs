@@ -56,6 +56,7 @@ type MobFactory() =
             | EntityType.EnemyProjectile -> createProjectile atlas group Resources.Particle.ENEMY_PROJECTILE pos
             | EntityType.CppItem -> createItem atlas group Resources.Item.CPP pos
             | EntityType.Python3Item -> createItem atlas group Resources.Item.PYTHON3 pos
+            | EntityType.JavaItem -> createItem atlas group Resources.Item.JAVA pos
             | EntityType.HaskellItem -> createItem atlas group Resources.Item.HASKELL pos
             | EntityType.Player -> createPlayer atlas group pos
             | EntityType.Monad -> failwith "todo"

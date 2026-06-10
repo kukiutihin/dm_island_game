@@ -27,10 +27,11 @@ type HealthBarHeart(group: SpriteGroup, atlas: TextureAtlas, pos: Pos, size: flo
         | Half -> halfHeart.Width <- size
 
 
-type HealthBar() =
+type HealthBar(heartCount) =
     let mutable origin = Pos(0, 0)
     let mutable size = 0.1f
     let mutable health = 6
+    let mutable heartCount = heartCount
     let atlas = TextureAtlas([Resources.UI.HEART_CONTAINER; Resources.UI.HALF_HEART; Resources.UI.FULL_HEART])
     let group = SpriteGroup(atlas)
     let hearts = ResizeArray()
@@ -38,7 +39,7 @@ type HealthBar() =
     let recreateHearts () =
         group.Sprites.Clear()
         hearts.Clear()
-        Seq.init 3 (fun x -> HealthBarHeart(group, atlas, origin + Pos(float32 x * size, 0f), size))
+        Seq.init heartCount (fun x -> HealthBarHeart(group, atlas, origin + Pos(float32 x * size, 0f), size))
         |> hearts.AddRange
         
     let stateOfLeft left =
@@ -49,6 +50,12 @@ type HealthBar() =
     member x.UpdateHealth(newHealth) =
         health <- newHealth
         Seq.iteri (fun i (c: HealthBarHeart) -> c.SetState(stateOfLeft (health - i * 2))) hearts
+        group.Update()
+    
+    member x.UpdateMaxHealth(newHealth) =
+        heartCount <- newHealth / 2
+        recreateHearts()
+        x.UpdateHealth(health)
         group.Update()
     
     member x.Render(camera) =
