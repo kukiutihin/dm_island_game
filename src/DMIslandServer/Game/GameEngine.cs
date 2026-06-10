@@ -20,8 +20,7 @@ public class GameEngine
 
         var player = new Player(
             new Position(config.RoomWidth / 2, config.RoomHeight / 2),
-            config.PlayerDefaultMaxHp,
-            config.PlayerAttackDamage);
+            config.PlayerDefaultMaxHp);
 
         State = new GameState(player, new Room(config.RoomWidth, config.RoomHeight));
 

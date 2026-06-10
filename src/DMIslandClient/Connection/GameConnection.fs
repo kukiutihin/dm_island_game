@@ -3,10 +3,9 @@ namespace DMIslandClient.Connection
 open System
 open System.Net.Http.Json
 open System.Text.Json
-open System.Threading.Tasks
+open System.Text.Json.Serialization
 open DMIslandClient.Connection.Dto
 open System.Net.Http
-
 type GameConnection(serverUrl) =
     let actionEndpoint = $"{serverUrl}/action"
     
@@ -52,4 +51,7 @@ type GameConnection(serverUrl) =
             callback true
         with
         | :? HttpRequestException -> callback false
-        | :? AggregateException -> callback false
+        | :? AggregateException as e ->
+            printfn "%s" <| e.Message.ToString()
+            printfn "%s" <| e.StackTrace.ToString()
+            callback false

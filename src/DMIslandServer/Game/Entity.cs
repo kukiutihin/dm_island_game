@@ -36,6 +36,12 @@ public abstract class Entity
         OnDamage(amount, state);
         if (Hp <= 0) OnDeath(state);
     }
+    
+    public void Heal(int amount)
+    {
+        Hp += amount;
+        Hp = Math.Max(0, Hp);
+    }
 
     public void Kill(GameState state)
     {

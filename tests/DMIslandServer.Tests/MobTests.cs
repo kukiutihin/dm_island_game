@@ -31,7 +31,7 @@ public class MobTests
     [Fact]
     public void Mob_TakeDamage_ReducesHpAndCanKill()
     {
-        var player = new Player(new Position(0, 0), 10, 3);
+        var player = new Player(new Position(0, 0), 10);
         var room = new Room(10, 10);
         var state = new GameState(player, room);
 

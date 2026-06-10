@@ -156,6 +156,7 @@ public enum EntityType
     
     HeartItem,
     HalfHeartItem,
+    AmethystItem,
 
     CppItem,
     HaskellItem,
@@ -164,6 +165,10 @@ public enum EntityType
 
 public enum ItemType
 {
+    Heart,
+    HalfHeart,
+    Amethyst,
+    
     Cpp, 
     Haskell,
     Python3,

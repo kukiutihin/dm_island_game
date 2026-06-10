@@ -9,7 +9,7 @@ public class PlayerTests
     [Fact]
     public void Player_Creation_ShouldInitializeProperties()
     {
-        var player = new Player(new Position(5, 10), maxHp: 10, attackDamage: 3);
+        var player = new Player(new Position(5, 10), maxHp: 6);
 
         Assert.Equal(5, player.Position.X);
         Assert.Equal(10, player.Position.Y);
@@ -22,7 +22,7 @@ public class PlayerTests
     [Fact]
     public void Player_TryMove_OnWalkableTile_UpdatesPosition()
     {
-        var player = new Player(new Position(5, 5), 10, 3);
+        var player = new Player(new Position(5, 5), 10);
         var room = new Room(10, 10);
         var state = new GameState(player, room);
 
@@ -35,7 +35,7 @@ public class PlayerTests
     [Fact]
     public void Player_TryMove_IntoWall_DoesNotMove()
     {
-        var player = new Player(new Position(5, 5), 10, 3);
+        var player = new Player(new Position(5, 5), 10);
         var room = new Room(10, 10);
         room.SetWalkable(new Position(6, 5), false);
         var state = new GameState(player, room);

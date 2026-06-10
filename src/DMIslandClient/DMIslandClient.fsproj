@@ -62,4 +62,8 @@
     <ItemGroup>
       <ProjectReference Include="..\LadaEngine\LadaEngine.fsproj" />
     </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="FSharp.SystemTextJson" Version="1.4.36" />
+    </ItemGroup>
 </Project>

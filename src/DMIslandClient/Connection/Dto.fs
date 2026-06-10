@@ -6,20 +6,23 @@ open System.Text.Json.Serialization
 
 module Dto =
     type EventType =
-        | EntityDeath = 0
-        | TearPop = 1
+        | EntityDeath = 1
+        | TearPop = 2
 
     type EntityType =
-        | Player = 0
-        | ModusPonens = 1
-        | Lambda = 2
-        | Monad = 3
-        | Tear = 4
-        | EnemyProjectile = 5
-        | Wall = 6
-        | CppItem = 7
-        | Python3Item = 8
-        | HaskellItem = 9
+        | Player = 1
+        | ModusPonens = 2
+        | Lambda = 3
+        | Monad = 4
+        | Tear = 5
+        | EnemyProjectile = 6
+        | Wall = 7
+        | HeartItem = 8
+        | HalfHeartItem = 9
+        | AmethystItem = 10
+        | CppItem = 11
+        | HaskellItem = 12
+        | Python3Item = 13
 
     [<CLIMutable>]
     type PlayerActionRequest = {

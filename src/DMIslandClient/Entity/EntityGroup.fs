@@ -25,6 +25,9 @@ type EntityGroup() =
         Resources.Item.CPP
         Resources.Item.HASKELL
         Resources.Item.PYTHON3
+        Resources.UI.HALF_HEART
+        Resources.UI.FULL_HEART
+        Resources.Item.AMETHYST_SHARD
     |]
     let atlas = TextureAtlas(textures)
     let spriteGroup = SpriteGroup(atlas)
@@ -82,7 +85,11 @@ type EntityGroup() =
             | EntityType.CppItem -> createItem Resources.Item.CPP
             | EntityType.Python3Item -> createItem Resources.Item.PYTHON3
             | EntityType.HaskellItem -> createItem Resources.Item.HASKELL
-            | _ -> failwith "Out of range for entity type"
+            | EntityType.Player -> failwith "Not here"
+            | EntityType.Monad -> failwith "todo"
+            | EntityType.HeartItem -> createItem Resources.UI.FULL_HEART
+            | EntityType.HalfHeartItem -> createItem Resources.UI.HALF_HEART
+            | EntityType.AmethystItem -> createItem Resources.Item.AMETHYST_SHARD
         let entity = createEntity prevPos
         entity.SetTarget pos
         entities.Add(id, entity)

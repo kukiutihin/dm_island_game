@@ -3,7 +3,7 @@ using RoguelikeServerMVP.Game.Entities.Factory.Preset;
 
 namespace RoguelikeServerMVP.Game;
 
-public class Player(Position startPos, int maxHp, int attackDamage)
+public class Player(Position startPos, int maxHp)
     : Entity(EntityType.Player, startPos, maxHp), IActor
 {
     private readonly List<ItemType> _items = [];
@@ -23,10 +23,19 @@ public class Player(Position startPos, int maxHp, int attackDamage)
         var tearEntity = new Tear(dir, _items, Position);
         state.AddProjectile(tearEntity);
     }
-
+    
     public void PickupItem(ItemType itemType)
     {
-        _items.Add(itemType);
+        switch (itemType)
+        {
+            case ItemType.Amethyst: break;
+            case ItemType.Heart: Heal(2); break;
+            case ItemType.HalfHeart: Heal(1); break;
+            case ItemType.Cpp:
+            case ItemType.Haskell:
+            case ItemType.Python3:
+            default: _items.Add(itemType); break;
+        }
     }
 
     public void Teleport(Position pos)

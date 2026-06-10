@@ -35,7 +35,7 @@ public static class WorldFactory
         var spawn = RoomGen.FindNearestWalkable(
             walkable, new Position(config.RoomWidth / 2, config.RoomHeight / 2));
 
-        var player = new Player(spawn, config.PlayerDefaultMaxHp, config.PlayerAttackDamage);
+        var player = new Player(spawn, config.PlayerDefaultMaxHp);
 
         var state = new GameState(player, room);
 

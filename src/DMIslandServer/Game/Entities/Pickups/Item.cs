@@ -19,6 +19,9 @@ public sealed class Item(ItemType type, Position position) : Entity(GetEntityTyp
             ItemType.Haskell => EntityType.HaskellItem,
             ItemType.Python3 => EntityType.Python3Item,
             ItemType.Cpp => EntityType.CppItem,
+            ItemType.Heart => EntityType.HeartItem,
+            ItemType.HalfHeart => EntityType.HalfHeartItem,
+            ItemType.Amethyst => EntityType.AmethystItem,
             _ => throw new ArgumentOutOfRangeException(nameof(type), type, null)
         };
     }
