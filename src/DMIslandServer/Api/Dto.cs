@@ -151,6 +151,7 @@ public enum EntityType
     Lambda,
     Monad,
     Tear,
+    EnemyProjectile,
     Wall,
     
     HeartItem,

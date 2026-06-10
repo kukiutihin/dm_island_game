@@ -23,6 +23,5 @@ public class DamageEntityOnCollisionBehaviour(int damage) : IBehaviour
         self.TryMoveTo(collision.Position);
         
         collision.TakeDamage(damage, state);
-        self.Kill(state);
     }
 }

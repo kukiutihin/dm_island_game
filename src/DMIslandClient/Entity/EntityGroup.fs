@@ -10,6 +10,13 @@ open LadaEngine.Engine.Common
 open LadaEngine.Engine.Common.SpriteGroup
 open LadaEngine.Engine.Renderables.GroupRendering
 
+type EntityUpdateQuery = {
+    id: Guid
+    previousPosition: Pos
+    position: Pos
+    typ: EntityType
+}
+
 type EntityGroup() =
     let textures = [|
         Resources.Entity.STEVE
@@ -17,6 +24,7 @@ type EntityGroup() =
         Resources.Entity.MODUS_PONENS
         Resources.Texture.DIRT
         Resources.Particle.BUBBLE
+        Resources.Particle.ENEMY_PROJECTILE
         Resources.Item.CPP
         Resources.Item.HASKELL
         Resources.Item.PYTHON3
@@ -47,11 +55,9 @@ type EntityGroup() =
         spriteGroup.AddSprite(sprite)
         Entity(sprite, SmoothAnimatablePos(1f, pos))
         
-    let createTear pos =
-        let sprite = Sprite(pos, atlas, Resources.Particle.BUBBLE)
+    let createProjectile texture pos =
+        let sprite = Sprite(pos, atlas, texture)
         spriteGroup.AddSprite(sprite)
-        sprite.Height <- 0.4f
-        sprite.Width <- 0.4f
         Entity(sprite, SmoothAnimatablePos(4f, pos))
 
     let createPlayer pos =
@@ -74,7 +80,8 @@ type EntityGroup() =
             | EntityType.Lambda -> createLambda
             | EntityType.ModusPonens -> createMp
             | EntityType.Wall -> createWall
-            | EntityType.Tear -> createTear
+            | EntityType.Tear -> createProjectile Resources.Particle.BUBBLE
+            | EntityType.EnemyProjectile -> createProjectile Resources.Particle.ENEMY_PROJECTILE
             | EntityType.CppItem -> createItem Resources.Item.CPP
             | EntityType.Python3Item -> createItem Resources.Item.PYTHON3
             | EntityType.HaskellItem -> createItem Resources.Item.HASKELL
@@ -93,10 +100,10 @@ type EntityGroup() =
         spriteGroup.Sprites.Remove(entity.Sprite) |> ignore
         entities.Remove(id) |> ignore
     
-    member x.CreateOrUpdateAll(query: (Guid * EntityType * Pos * Pos) seq) =
+    member x.CreateOrUpdateAll(query : EntityUpdateQuery seq) =
         let isPlayerId id = playerId = Some id
-        let updatedIds = Seq.map (fun (id, _, _, _) -> id) query |> HashSet
-        Seq.iter x.CreateOrUpdate query
+        let updatedIds = Seq.map _.id query |> HashSet
+        Seq.iter (fun q -> x.CreateOrUpdate(q.id, q.typ, q.previousPosition, q.position))  query
         entities.Keys
         |> Seq.filter (fun id -> not (updatedIds.Contains(id) || isPlayerId id))
         |> Seq.iter x.RemoveEntity
@@ -118,3 +125,8 @@ type EntityGroup() =
         spriteGroup.Update()
         
     member x.GetPlayer() : Entity option = player
+    
+    member x.MoveEntityTo(guid: Guid, pos: Pos) =
+        match entities.TryGetValue(guid) with
+        | true, ent -> ent.Position.SetTarget(pos)
+        | false, _ -> ()

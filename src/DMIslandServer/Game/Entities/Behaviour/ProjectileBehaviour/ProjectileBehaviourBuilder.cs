@@ -9,6 +9,7 @@ public class ProjectileBehaviourBuilder(Direction direction, IEnumerable<ItemTyp
     public IBehaviour Build()
     {
         return new CompositeBehaviour([
+            new DestroyIfInBlockBehaviour(),
             new StraightLineBehaviour(GetSpeed(), direction),
             new DamageEntityOnCollisionBehaviour(GetDamage()),
             new TimedDieBehaviour(GetTtl()),

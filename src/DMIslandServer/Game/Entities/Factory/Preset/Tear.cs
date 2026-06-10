@@ -19,7 +19,7 @@ public class Tear(Direction direction, IEnumerable<ItemType> items, Position pos
 
     protected override void OnDeath(GameState state)
     {
-        state.AddEvent(new Event(EventType.TearPop, Position, Type.ToString()));
+        state.AddEvent(new Event(EventType.TearPop, Position, Id.ToString()));
     }
 
     protected override void OnDamage(int damage, GameState state)

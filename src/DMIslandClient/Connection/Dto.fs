@@ -15,10 +15,11 @@ module Dto =
         | Lambda = 2
         | Monad = 3
         | Tear = 4
-        | Wall = 5
-        | CppItem = 6
-        | Python3Item = 7
-        | HaskellItem = 8
+        | EnemyProjectile = 5
+        | Wall = 6
+        | CppItem = 7
+        | Python3Item = 8
+        | HaskellItem = 9
 
     [<CLIMutable>]
     type PlayerActionRequest = {

@@ -12,19 +12,29 @@ type EventDispatcher(entities: EntityGroup, effects: EffectGroup, ui: GameUI) =
     let posOfDto (p: PositionDto) =
         Pos(p.X, p.Y)
 
-    let toQuery (entity: ObjectViewDto) =
+    let toQuery (entity: ObjectViewDto) : EntityUpdateQuery=
         let typ = entity.Type
         let pos = posOfDto entity.Position
         let prevPos = posOfDto entity.PreviousPosition
-        entity.Id, typ, prevPos, pos    
+        { id = entity.Id; typ = typ; previousPosition = prevPos; position = pos }
+    
+    let collectEntityId (e: EventDto) =
+        match e.Type with
+        | EventType.EntityDeath -> Guid.Parse(e.Payload) |> Some
+        | EventType.TearPop -> Guid.Parse(e.Payload) |> Some 
+        | _ -> None
     
     let processEvent (e: EventDto) =
         match e.Type with
-        | EventType.EntityDeath -> effects.CreateEffect(EtEntityDeath, posOfDto e.Position)
-        | EventType.TearPop -> effects.CreateEffect(EtTearPop, posOfDto e.Position)
+        | EventType.EntityDeath ->
+            entities.MoveEntityTo(Guid.Parse(e.Payload), posOfDto e.Position)
+            effects.CreateEffect(EtEntityDeath, posOfDto e.Position)
+        | EventType.TearPop ->
+            entities.MoveEntityTo(Guid.Parse(e.Payload), posOfDto e.Position)
+            effects.CreateEffect(EtTearPop, posOfDto e.Position)
         | _ -> ArgumentOutOfRangeException() |> raise
 
-    let processEntities (objects: ObjectViewDto seq) =
+    let processEntities (objects: ObjectViewDto seq)=
         let query = Seq.map toQuery objects
         entities.CreateOrUpdateAll(query)
     

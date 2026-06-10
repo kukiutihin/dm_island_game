@@ -11,7 +11,7 @@ public abstract class Mob(EntityType name, Position position, int maxHp) : Entit
 
     protected override void OnDeath(GameState state)
     {
-        state.AddEvent(new Event(EventType.EntityDeath, Position, Type.ToString()));
+        state.AddEvent(new Event(EventType.EntityDeath, Position, Id.ToString()));
     }
 
     protected override void OnDamage(int damage, GameState state)

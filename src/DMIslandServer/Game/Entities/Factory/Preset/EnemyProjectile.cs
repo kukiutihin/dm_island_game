@@ -5,9 +5,10 @@ using RoguelikeServerMVP.Game.Events;
 
 namespace RoguelikeServerMVP.Game.Entities.Factory.Preset;
 
-public class EnemyProjectile(Direction direction, Position position) : Projectile(EntityType.Tear, position, 1) 
+public class EnemyProjectile(Direction direction, Position position) : Projectile(EntityType.EnemyProjectile, position, 1) 
 {
     private readonly IBehaviour _behaviour = new CompositeBehaviour([
+        new DestroyIfInBlockBehaviour(),
         new DamagePlayerOnCollisionBehaviour(),
         new StraightLineBehaviour(1, direction)
     ]);
@@ -20,11 +21,8 @@ public class EnemyProjectile(Direction direction, Position position) : Projectil
 
     protected override void OnDeath(GameState state)
     {
-        state.AddEvent(new Event(EventType.TearPop, Position, Type.ToString()));
+        state.AddEvent(new Event(EventType.TearPop, Position, Id.ToString()));
     }
 
-    protected override void OnDamage(int damage, GameState state)
-    {
-        
-    }
+    protected override void OnDamage(int damage, GameState state) { }
 }

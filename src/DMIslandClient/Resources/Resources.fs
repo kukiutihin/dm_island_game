@@ -22,6 +22,7 @@ module Resources =
         let BUBBLE = "Resources/Textures/Particle/bubble.png"
         let SMOKE1 = "Resources/Textures/Particle/generic_3.png"
         let SMOKE2 = "Resources/Textures/Particle/generic_6.png"
+        let ENEMY_PROJECTILE = "Resources/Textures/Particle/enemy_proj.png"
     
     module Font =
         let FONT_QUICKSAND_PREFIX = "Resources/Font/Quicksand-Light.ttf/"
