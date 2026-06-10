@@ -7,8 +7,7 @@ open DMIslandClient.Entity
 open DMIslandClient.UI
 open LadaEngine
 
-type EventDispatcher(entities: EntityGroup, effects: EffectGroup, ui: GameUI) =
-        
+type EventDispatcher(entities: EntityGroup, effects: EffectGroup, objects: EntityGroup, ui: GameUI, camera: ElasticCamera) =
     let posOfDto (p: PositionDto) =
         Pos(p.X, p.Y)
 
@@ -34,18 +33,22 @@ type EventDispatcher(entities: EntityGroup, effects: EffectGroup, ui: GameUI) =
             effects.CreateEffect(EtTearPop, posOfDto e.Position)
         | _ -> ArgumentOutOfRangeException() |> raise
 
-    let processEntities (objects: ObjectViewDto seq)=
-        let query = Seq.map toQuery objects
+    let processEntities (updates: ObjectViewDto seq)=
+        let query = Seq.map toQuery updates
         entities.CreateOrUpdateAll(query)
     
-    let processPlayer (player: PlayerViewDto) =
-        let pos = posOfDto player.Position
+    let processObjects (updates: ObjectViewDto seq) =
+        let query = Seq.map toQuery updates
+        objects.CreateOrUpdateAll(query)
+    
+    let processPlayer (player: ObjectViewDto) =
         ui.SetHealth(player.Hp)
-        entities.CreateOrUpdatePlayer(player.Id, pos)
+        camera.SetPosition(posOfDto player.Position)
     
     member public x.ProcessUpdate(data: GameStateResponse) =
         data.Events |> Seq.iter processEvent
-        data.Objects |> processEntities
+        data.Entities |> Seq.append [ data.Player ] |> processEntities
+        data.Objects |> processObjects
         data.Player |> processPlayer
         ui.SetFloor(data.Floor)
         ui.SetMinimap(data.Rooms)

@@ -41,23 +41,14 @@ module Dto =
         [<JsonPropertyName("y")>]
         Y: int
     }
-
+    
     [<CLIMutable>]
-    type PlayerViewDto = {
+    type RoomDto = {
         [<JsonPropertyName("id")>]
         Id: Guid
         
-        [<JsonPropertyName("name")>]
-        Name: string
-        
-        [<JsonPropertyName("hp")>]
-        Hp: int
-        
-        [<JsonPropertyName("maxHp")>]
-        MaxHp: int
-        
-        [<JsonPropertyName("position")>]
-        Position: PositionDto
+        [<JsonPropertyName("biome")>]
+        Biome: String
     }
 
     [<CLIMutable>]
@@ -91,9 +82,6 @@ module Dto =
         [<JsonConverter(typeof<JsonStringEnumConverter>)>]
         Type: EventType
         
-        [<JsonPropertyName("objects")>]
-        Objects: List<ObjectViewDto>
-        
         [<JsonPropertyName("position")>]
         Position: PositionDto
         
@@ -125,10 +113,13 @@ module Dto =
         Turn: int
 
         [<JsonPropertyName("player")>]
-        Player: PlayerViewDto
+        Player: ObjectViewDto
 
         [<JsonPropertyName("objects")>]
         Objects: List<ObjectViewDto>
+        
+        [<JsonPropertyName("entities")>]
+        Entities: List<ObjectViewDto>
 
         [<JsonPropertyName("viewWidth")>]
         ViewWidth: int
@@ -145,8 +136,8 @@ module Dto =
         [<JsonPropertyName("completed")>]
         Completed: bool
 
-        [<JsonPropertyName("biome")>]
-        Biome: string
+        [<JsonPropertyName("room")>]
+        Room: RoomDto
 
         [<JsonPropertyName("rooms")>]
         Rooms: List<RoomCellDto>

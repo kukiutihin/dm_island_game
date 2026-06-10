@@ -12,7 +12,6 @@ public class GameState(Player player, Room room)
     public List<Item> Items { get; } = [];
     public List<Projectile> Projectiles { get; } = [];
     public List<Mob> Mobs { get; } = [];
-    
     public Queue<Event> EventQueue { get; } = [];
     
     public List<Entity> StaticObjects { get; } = [];

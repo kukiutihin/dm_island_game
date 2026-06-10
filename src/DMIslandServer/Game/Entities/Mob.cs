@@ -12,11 +12,16 @@ public abstract class Mob(EntityType name, Position position, int maxHp) : Entit
 
     protected virtual void DropLoot(GameState state)
     {
-        switch (state.GetRandom().Random.Next(10))
+        switch (state.GetRandom().Random.Next(20))
         {
-            case 0 or 1:
+            case 0:
+                state.Items.Add(new Item(ItemType.HalfHeart, Position));
+                break;
+            
+            case 1:
                 state.Items.Add(new Item(ItemType.Heart, Position));
                 break;
+            
             case 2:
                 state.Items.Add(new Item(ItemType.Amethyst, Position));
                 break;

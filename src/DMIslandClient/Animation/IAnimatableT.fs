@@ -7,6 +7,7 @@ type IAnimatableT<'a> =
     abstract GetValue: unit -> 'a
     abstract Update: float32 -> unit
     abstract GetTarget: unit -> 'a
+    abstract Teleport: 'a -> unit
 
 type FunctionAnimatableT<'a>(f: float32 -> 'a -> 'a -> 'a, speed: float32, initial: 'a) =
     let mutable initial: 'a = initial
@@ -31,3 +32,7 @@ type FunctionAnimatableT<'a>(f: float32 -> 'a -> 'a -> 'a, speed: float32, initi
             else timeLeft <- timeLeft - speed * dt
 
         member this.GetTarget() = target
+        
+        member this.Teleport(x) =
+            target <- x
+            initial <- x

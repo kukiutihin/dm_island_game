@@ -13,30 +13,31 @@ type RoomType =
 type IRoomRenderer =
     abstract Render: Camera -> unit
     abstract Update: unit -> unit
-    abstract AddTile: Pos -> unit
+    abstract AddFloorTile: Pos -> unit
 
-/// A floor renderer that randomly tiles the room with the given textures.
-type TiledRoomRenderer(textures: string[]) =
-    let atlas = TextureAtlas(textures)
-    let group = SpriteGroup(atlas)
 
-    let addTile (pos: Pos) =
-        let texture = GameRandom.choice(textures)
+type TiledRoomRenderer(floorTextures: string seq) =
+    let atlas = TextureAtlas(floorTextures)
+    let floorGroup = SpriteGroup(atlas)
+
+    let addTile (group: SpriteGroup) (textureSet: string seq) (pos: Pos) =
+        let texture = GameRandom.choice(textureSet)
         let sprite = Sprite(pos, atlas, texture)
-        sprite.Width <- 1f
-        sprite.Height <- 1f
         group.AddSprite(sprite)
 
     interface IRoomRenderer with
-        member _.Render(camera) = group.Render(camera)
-        member _.AddTile(pos) = addTile pos
-        member _.Update() = group.Update()
+        member _.Render(camera) =
+            floorGroup.Render(camera)
+        member _.AddFloorTile(pos) =
+            addTile floorGroup floorTextures pos
+        member _.Update() =
+            floorGroup.Update()
 
 
 module RoomRenderer =
     let getFor (t: RoomType) : IRoomRenderer =
         match t with
-        | Beach  -> TiledRoomRenderer([| Resources.Texture.SAND;  Resources.Texture.SANDSTONE |])
+        | Beach  -> TiledRoomRenderer([| Resources.Texture.SAND; Resources.Texture.SANDSTONE |])
         | Forest -> TiledRoomRenderer([| Resources.Texture.GRASS; Resources.Texture.GRASS_DARK |])
         | Cave   -> TiledRoomRenderer([| Resources.Texture.STONE; Resources.Texture.STONE_DARK |])
         | Snow   -> TiledRoomRenderer([| Resources.Texture.SNOW;  Resources.Texture.SNOW_DARK |])

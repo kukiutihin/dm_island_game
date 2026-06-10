@@ -35,19 +35,13 @@ public class PositionDto
     }
 }
 
-public class PlayerViewDto
+public class RoomDto
 {
     [JsonPropertyName("id")]
     public Guid Id { get; set; }
-
-    [JsonPropertyName("hp")]
-    public int Hp { get; set; }
-
-    [JsonPropertyName("maxHp")]
-    public int MaxHp { get; set; }
-
-    [JsonPropertyName("position")]
-    public PositionDto Position { get; set; } = new(Game.Position.Zero);
+    
+    [JsonPropertyName("biome")]
+    public string Biome { get; set; } = "beach";
 }
 
 public class ObjectViewDto
@@ -78,8 +72,11 @@ public class GameStateResponse
     public int Turn { get; set; }
 
     [JsonPropertyName("player")]
-    public PlayerViewDto Player { get; set; } = new();
+    public ObjectViewDto Player { get; set; } = new();
 
+    [JsonPropertyName("entities")]
+    public List<ObjectViewDto> Entities { get; set; } = [];
+    
     [JsonPropertyName("objects")]
     public List<ObjectViewDto> Objects { get; set; } = [];
     
@@ -98,8 +95,8 @@ public class GameStateResponse
     [JsonPropertyName("completed")]
     public bool Completed { get; set; }
 
-    [JsonPropertyName("biome")]
-    public string Biome { get; set; } = "beach";
+    [JsonPropertyName("room")]
+    public RoomDto Room { get; set; }
 
     [JsonPropertyName("rooms")]
     public List<RoomCellDto> Rooms { get; set; } = [];
