@@ -18,6 +18,9 @@ type SmoothAnimatablePos(speed, initial: Pos) =
             let delta = dt * speed
             current <- current * (1f - delta) + target * delta
         member this.GetTarget() = target
+        member this.Teleport(x) =
+            target <- x
+            current <- x
 
 type FunctionAnimatablePos(f: float32 -> Pos -> Pos -> Pos, speed: float32, initial: Pos) =
     inherit FunctionAnimatableT<Pos>(f, speed, initial)

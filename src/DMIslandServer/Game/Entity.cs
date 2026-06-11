@@ -9,7 +9,7 @@ public abstract class Entity
     public Position Position { get; protected set; }
     public Position PreviousPosition { get; protected set; }
 
-    public int MaxHp { get; }
+    public int MaxHp { get; private set; }
     public int Hp { get; private set; }
     public bool IsAlive => Hp > 0;
 
@@ -41,6 +41,12 @@ public abstract class Entity
     {
         Hp += amount;
         Hp = Math.Max(0, Hp);
+    }
+
+    public void AddHealth(int amount)
+    {
+        MaxHp += amount;
+        Hp += amount;
     }
 
     public void Kill(GameState state)

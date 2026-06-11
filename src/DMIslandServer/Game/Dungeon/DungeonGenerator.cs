@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using RoguelikeServerMVP.Api;
+using RoguelikeServerMVP.Game.Entities.Pickups;
 
 namespace RoguelikeServerMVP.Game.Dungeon;
 
@@ -15,30 +16,56 @@ public static class DungeonGenerator
     private const int GridSize = 9;
 
     private static readonly Direction[] AllDirections =
-        { Direction.Up, Direction.Down, Direction.Left, Direction.Right };
+        [Direction.Up, Direction.Down, Direction.Left, Direction.Right];
 
+    public static IEnumerable<string> CreateTemplateList(Random rand, int roomCount)
+    {
+        // 2 Item rooms
+        var itemRooms = DungeonRoomTemplateStorage.ChooseN(
+            rand, DungeonRoomTemplateStorage.GetItemRooms(), 2
+        );
+        // 1 Exit room
+        var exitRoom = DungeonRoomTemplateStorage.ChooseN(
+            rand, DungeonRoomTemplateStorage.GetExitRooms(), 1
+        );
+        // Anything else is normal
+        var others = DungeonRoomTemplateStorage.ChooseN(
+            rand, DungeonRoomTemplateStorage.GetNormalRoomSources(), roomCount - 3
+        );
+        return itemRooms.Concat(others).Concat(exitRoom);
+    }
+    
     public static Floor Generate(GameConfig config, int floorNumber, int seed)
     {
         var rand = new Random(seed);
         var rooms = new DungeonRoom?[GridSize, GridSize];
         
-        var floorBiomes = new[] { "beach", "forest", "cave", "snow" };
+        var floorBiomes = new[] { "beach", "forest", "swamp", "nerd" };
         var biome = floorBiomes[(floorNumber - 1) % floorBiomes.Length];
 
         var cx = GridSize / 2;
         var cy = GridSize / 2;
 
-        var start = new DungeonRoom(cx, cy) { IsStart = true, Visited = true, Cleared = true };
+        var start = new DungeonRoom(cx, cy, DungeonRoomTemplate.Empty(floorNumber))
+        {
+            IsStart = true, Visited = true, Cleared = true
+        };
         rooms[cx, cy] = start;
 
         var placed = new List<DungeonRoom> { start };
 
         var targetRooms = Math.Min(
             GridSize * GridSize,
-            config.BaseRooms + (floorNumber - 1) * config.RoomsPerFloor);
+            config.BaseRooms + (floorNumber - 1) * config.RoomsPerFloor
+        );
+
+        var templates = CreateTemplateList(rand, targetRooms)
+            .Select(x => DungeonRoomTemplate.OfString(rand, floorNumber, x))
+            .ToList();
 
         // Grow the floor by repeatedly attaching a new room to a random existing one.
         var safety = 0;
+        var templateIndex = 0;
         while (placed.Count < targetRooms && safety++ < 10_000)
         {
             var anchor = placed[rand.Next(placed.Count)];
@@ -52,7 +79,7 @@ public static class DungeonGenerator
                 if (nx < 0 || ny < 0 || nx >= GridSize || ny >= GridSize) continue;
                 if (rooms[nx, ny] != null) continue;
 
-                var room = new DungeonRoom(nx, ny);
+                var room = new DungeonRoom(nx, ny, templates[templateIndex++]);
                 rooms[nx, ny] = room;
                 placed.Add(room);
                 break;
@@ -75,50 +102,11 @@ public static class DungeonGenerator
         
         foreach (var room in placed)
             room.Biome = biome;
-
-        // Populate mob packs (every room except the start).
-        var packSize = config.MobPackSize + (floorNumber - 1);
-        foreach (var room in placed.Where(r => !r.IsStart))
-            PopulatePack(room, config, packSize, rand);
         
-        var itemRoom = placed[rand.Next(placed.Count)];
-        CreateItem(itemRoom, rand);
-
         return new Floor(floorNumber, rooms, cx, cy);
     }
 
-    private static void CreateItem(DungeonRoom room, Random rand)
-    {
-        var type = rand.Next(0, 2) == 0 ? ItemType.Cpp : ItemType.Python3;
-        var position = new Position(7, 5);
-        room.ItemSpawns.Add(new ItemSpawn(type, position));
-    }
-
-    private static void PopulatePack(DungeonRoom room, GameConfig config, int packSize, Random rand)
-    {
-        var count = packSize + rand.Next(0, 1);
-        var used = new HashSet<(int, int)>();
-
-        for (var i = 0; i < count; i++)
-        {
-            // Pick a free interior tile (avoid the border).
-            int x, y, tries = 0;
-            do
-            {
-                x = 1 + rand.Next(config.RoomWidth - 2);
-                y = 1 + rand.Next(config.RoomHeight - 2);
-                tries++;
-            }
-            while (used.Contains((x, y)) && tries < 20);
-
-            used.Add((x, y));
-
-            var type = rand.Next(2) == 0 ? EntityType.Lambda : EntityType.ModusPonens;
-            room.MobSpawns.Add(new MobSpawn(type, new Position(x, y)));
-        }
-    }
-
-    private static IEnumerable<Direction> Shuffle(Direction[] source, Random rand)
+    private static List<Direction> Shuffle(Direction[] source, Random rand)
     {
         var list = source.ToList();
         for (var i = list.Count - 1; i > 0; i--)

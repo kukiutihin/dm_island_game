@@ -1,4 +1,5 @@
 using RoguelikeServerMVP.Game.Entities.Factory.Preset;
+using RoguelikeServerMVP.Game.Entities.Factory.Preset.Projectile;
 
 namespace RoguelikeServerMVP.Game.Entities.Behaviour.EntityBehaviour;
 

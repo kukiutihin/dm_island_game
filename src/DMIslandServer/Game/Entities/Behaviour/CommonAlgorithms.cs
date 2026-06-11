@@ -24,7 +24,7 @@ public static class CommonAlgorithms
             var position = q.Dequeue();
             var neighbors = GetNeighbours(position)
                 .Where(visited.Add)
-                .Where(state.CanMoveTo)
+                .Where(x => state.CanMoveTo(x) || x == target)
                 .ToArray();
             
             foreach (var neighbor in neighbors)

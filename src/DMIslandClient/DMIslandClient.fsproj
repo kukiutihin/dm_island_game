@@ -11,6 +11,12 @@
             <Link>.dockerignore</Link>
         </Content>
         <Content Include="Dockerfile" />
+        <Content Include="Resources\Entity\**">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </Content>
+        <Content Include="Resources\Item\**">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </Content>
         <Content Include="Resources\Textures\**">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </Content>
@@ -18,9 +24,6 @@
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </Content>
         <Content Include="Resources\UI\**">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </Content>
-        <Content Include="Resources\Item\**">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </Content>
     </ItemGroup>
@@ -39,16 +42,21 @@
         <Compile Include="UI\Components\FpsCounter.fs" />
         <Compile Include="UI\Components\HealthBar.fs" />
         <Compile Include="UI\Components\Minimap.fs" />
+        <Compile Include="UI\Components\ItemList.fs" />
         <Compile Include="UI\GameUI.fs" />
         <Compile Include="UI\MainMenuUI.fs" />
         <Compile Include="UI\GameOverUI.fs" />
-        <Compile Include="World\RoomRenderer.fs" />
-        <Compile Include="World\Room.fs" />
-        <Compile Include="Effect\Effect.fs" />
-        <Compile Include="Effect\EffectGroup.fs" />
         <Compile Include="Entity\Entity.fs" />
         <Compile Include="Entity\ElasticCamera.fs" />
+        <Compile Include="Entity\EntityFactory.fs" />
         <Compile Include="Entity\EntityGroup.fs" />
+        <Compile Include="Entity\MobGroup.fs" />
+        <Compile Include="World\RoomRenderer.fs" />
+        <Compile Include="World\RoomVignette.fs" />
+        <Compile Include="World\Room.fs" />
+        <Compile Include="World\StaticObjectGroup.fs" />
+        <Compile Include="Effect\Effect.fs" />
+        <Compile Include="Effect\EffectGroup.fs" />
         <Compile Include="Connection\GameConnection.fs" />
         <Compile Include="Connection\PlayerController.fs" />
         <Compile Include="Connection\Synchro.fs" />

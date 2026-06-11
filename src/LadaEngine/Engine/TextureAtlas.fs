@@ -42,8 +42,11 @@ type TextureAtlas(fileNames: string seq) =
 
             offset <- offset + image.Width
             image.Dispose())
-
-        Image.LoadPixelData<Rgba32>(pixels, width, height)
+        
+        let image = Image.LoadPixelData<Rgba32>(pixels, width, height)
+        if (image.Width > 16000) then
+            image.Save("faulty.png")
+        image
 
     let handle =
         use atlas = buildAtlasImage ()

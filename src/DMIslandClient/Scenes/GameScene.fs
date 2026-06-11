@@ -10,9 +10,9 @@ open LadaEngine
 
 
 type GameScene(connection: GameConnection, window: Window) =
-    let mutable currentBiome = ""
     let mutable currentRoom: Room option = None
-    let entities = EntityGroup()
+    let entities = MobGroup()
+    let objects = StaticObjectGroup()
     let effects = EffectGroup()
     let camera = ElasticCamera(Camera())
     let ui = GameUI()
@@ -24,27 +24,22 @@ type GameScene(connection: GameConnection, window: Window) =
     let mutable won = false
 
     let controller = PlayerController(connection)
-    let dispatcher = EventDispatcher(entities, effects, ui)
+    let dispatcher = EventDispatcher(entities, effects, objects.GetGroup(), ui, camera)
 
-    // Rebuild the floor background when the server reports a different biome.
-    let updateRoom (biome: string) =
-        let biome = if isNull biome then "" else biome
-        if biome <> currentBiome then
-            currentBiome <- biome
-            currentRoom <- Some (Room(13, 11, RoomRenderer.ofString biome))
+    let updateRoom (event: Dto.GameStateResponse) =
+        match currentRoom with
+        | Some room when room.Id = event.Room.Id -> ()
+        | _ -> 
+            let room = Room(event.Room.Id, 13, 9, RoomRenderer.ofString event.Room.Biome)
+            currentRoom <- Some room
 
     let applyUpdate (event: Dto.GameStateResponse) =
+        objects.SetBiome(event.Room.Biome)
         dispatcher.ProcessUpdate(event)
-        updateRoom event.Biome
+        updateRoom event
+        isDead <- event.Player.Hp = 0
         won <- event.Completed
-        // The player is dead once the server reports no health left.
-        if box event.Player <> null then
-            isDead <- event.Player.Hp <= 0
 
-    let trySnapToPlayer () =
-        match entities.GetPlayer() with
-        | Some player -> camera.SetPosition(player.Position.GetValue())
-        | None -> ()
 
     interface IScene with
         member this.FixedUpdate() = ()
@@ -53,13 +48,14 @@ type GameScene(connection: GameConnection, window: Window) =
         member this.Load() =
             controller.SubscribeToUpdate(fun event -> sync.AddEvent(fun () -> applyUpdate event))
             controller.SendInitial()
-            camera.GetCamera().Zoom <- 6f
+            camera.GetCamera().Zoom <- 7f
             ui.Load()
             deathUI.Load()
             winUI.Load()
 
         member this.Render() =
             currentRoom |> Option.iter _.Render(camera.GetCamera())
+            objects.GetGroup().Render(camera.GetCamera())
             entities.Render(camera.GetCamera())
             effects.Render(camera.GetCamera())
             ui.Render()
@@ -73,15 +69,14 @@ type GameScene(connection: GameConnection, window: Window) =
 
         member this.Update(dt: float32) =
             if won || isDead then
-                // Game is frozen on the end screen until the player restarts.
                 (if won then winUI.Update() else deathUI.Update())
                 if Controls.keyPressedOnce(OpenTK.Windowing.GraphicsLibraryFramework.Keys.R) then
                     connection.RestartCallback(fun resp -> sync.AddEvent(fun () -> applyUpdate resp))
             else
                 controller.Update()
 
-            trySnapToPlayer()
             sync.ExecuteAll()
+            objects.GetGroup().Update(dt)
             entities.Update(dt)
             effects.Update(dt)
             camera.Update(dt)

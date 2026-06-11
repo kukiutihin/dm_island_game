@@ -2,17 +2,17 @@ using RoguelikeServerMVP.Api;
 using RoguelikeServerMVP.Game.Entities.Behaviour;
 using RoguelikeServerMVP.Game.Entities.Behaviour.EntityBehaviour;
 
-namespace RoguelikeServerMVP.Game.Entities.Factory.Preset;
+namespace RoguelikeServerMVP.Game.Entities.Factory.Preset.Mob;
 
-public class ModusPonens(Position position) : Mob(EntityType.ModusPonens, position, 3)
+/// <summary>
+/// Lambda mob is flying around and attacking with projectiles
+/// </summary>
+/// <param name="position"></param>
+public class Lambda(Position position) : Entities.Mob(EntityType.Lambda, position, 3)
 {
     private readonly IBehaviour _behaviour = new CompositeBehaviour([
-        new DamageWhenNearBehaviour(),
-        new ChooseOnPlayerDistanceBehaviour(
-            new ChasePlayerBehaviour(1),
-            new RandomWalkBehaviour(5, 1),
-            4f
-        )
+        new ShootPlayerBehaviour(4),
+        new RandomWalkBehaviour(1, 1)
     ]);
     
     public override void PerformTurn(GameState state)

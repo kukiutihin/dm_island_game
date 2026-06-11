@@ -2,6 +2,7 @@ using Xunit;
 using RoguelikeServerMVP.Api;
 using RoguelikeServerMVP.Game;
 using RoguelikeServerMVP.Game.Entities.Factory.Preset;
+using RoguelikeServerMVP.Game.Entities.Factory.Preset.Mob;
 
 namespace GameTests;
 

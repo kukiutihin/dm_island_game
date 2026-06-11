@@ -2,6 +2,7 @@ namespace RoguelikeServerMVP.Game
 {
     public class Room
     {
+        public Guid Id { get; set; }
         public int Width { get; }
         public int Height { get; }
 
@@ -9,6 +10,7 @@ namespace RoguelikeServerMVP.Game
 
         public Room(int width, int height)
         {
+            Id = Guid.NewGuid();
             Width = width;
             Height = height;
             _walkable = new bool[width, height];

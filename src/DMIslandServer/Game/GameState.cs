@@ -11,8 +11,8 @@ public class GameState(Player player, Room room)
     
     public List<Item> Items { get; } = [];
     public List<Projectile> Projectiles { get; } = [];
+    public List<Projectile> DelayedProjectiles { get; } = [];
     public List<Mob> Mobs { get; } = [];
-    
     public Queue<Event> EventQueue { get; } = [];
     
     public List<Entity> StaticObjects { get; } = [];
@@ -107,10 +107,16 @@ public class GameState(Player player, Room room)
         Projectiles.Clear();
         Items.Clear();
         StaticObjects.Clear();
+        DelayedProjectiles.Clear();
     }
 
     public void AddEvent(Event e)
     {
         EventQueue.Enqueue(e);
+    }
+
+    public void AddProjectileDelayed(Projectile projectile)
+    {
+        DelayedProjectiles.Add(projectile);
     }
 }

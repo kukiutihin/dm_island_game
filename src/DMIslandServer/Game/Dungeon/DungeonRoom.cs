@@ -20,7 +20,7 @@ public class ItemSpawn(ItemType type, Position position)
 /// One room of a dungeon floor. Holds its grid coordinates, which sides have
 /// doors, the mob pack to spawn, and progress flags.
 /// </summary>
-public class DungeonRoom(int gridX, int gridY)
+public class DungeonRoom(int gridX, int gridY, DungeonRoomTemplate template)
 {
     public int GridX => gridX;
     public int GridY => gridY;
@@ -28,8 +28,7 @@ public class DungeonRoom(int gridX, int gridY)
     /// <summary>Sides of the room that have a door to a neighbouring room.</summary>
     public HashSet<Direction> Doors { get; } = [];
 
-    public List<MobSpawn> MobSpawns { get; } = [];
-    public List<ItemSpawn> ItemSpawns { get; } = [];
+    public readonly DungeonRoomTemplate Template = template;
 
     /// <summary>Visual theme of the room: "beach", "forest", "cave", "snow".</summary>
     public string Biome { get; set; } = "beach";

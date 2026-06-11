@@ -4,11 +4,15 @@ public class DamagePlayerOnCollisionBehaviour : IBehaviour
 {
     public void PerformTurn(Entity self, GameState state)
     {
-        if (self.Position != state.Player.Position && self.PreviousPosition != state.Player.Position)
-            return;
+        var positionsCollided =
+            self.Position == state.Player.Position ||
+            self.PreviousPosition == state.Player.Position;
         
-        Console.WriteLine($"DamagePlayerOnCollisionBehaviour: Damaging a player {self.Position}/{self.PreviousPosition}");
-        
-        state.Player.TakeDamage(1, state);
+        if (positionsCollided)
+        {
+            self.Kill(state);
+            Console.WriteLine($"Damaging player ({state.Player.Position}/{state.Player.PreviousPosition}): {self.Position}/{self.PreviousPosition}");
+            state.Player.TakeDamage(1, state);
+        }
     }
 }

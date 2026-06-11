@@ -8,6 +8,7 @@ module Dto =
     type EventType =
         | EntityDeath = 1
         | TearPop = 2
+        | EnemyProjectilePop = 3
 
     type EntityType =
         | Player = 1
@@ -23,7 +24,50 @@ module Dto =
         | CppItem = 11
         | HaskellItem = 12
         | Python3Item = 13
+        | JavaItem = 14
+        | OCamlItem = 15
+        | ZigItem = 16
+        | RustItem = 17
+        | AnsiCItem = 18
+        | FSharpItem = 19
+        | RocItem = 20
+        | OneFItem = 21
+        | JavaScriptItem = 22
+        | TypeScriptItem = 23
+        | GoItem = 24
+        | KotlinItem = 25
+        | AsmItem = 26
+        | Scala3Item = 27
+        | Nerd = 28
+        | NuclearNerd = 29
+        | Skolem = 30
+        | Mole = 31
+        | AttackIndicator = 32
+        | ThetaAttack = 33
 
+    type ItemType =
+        | Heart = 1
+        | HalfHeart = 2
+        | Amethyst = 3
+        
+        | Cpp = 4
+        | Haskell = 5
+        | Python3 = 6
+        | Java = 7
+        | OCaml = 8
+        | Zig = 9
+        | Rust = 10
+        | AnsiC = 11
+        | FSharp = 12
+        | Roc = 13
+        | OneF = 14
+        | JavaScript = 15
+        | TypeScript = 16
+        | Go = 17
+        | Kotlin = 18
+        | Asm = 19
+        | Scala3 = 20
+    
     [<CLIMutable>]
     type PlayerActionRequest = {
         [<JsonPropertyName("action")>]
@@ -41,23 +85,14 @@ module Dto =
         [<JsonPropertyName("y")>]
         Y: int
     }
-
+    
     [<CLIMutable>]
-    type PlayerViewDto = {
+    type RoomDto = {
         [<JsonPropertyName("id")>]
         Id: Guid
         
-        [<JsonPropertyName("name")>]
-        Name: string
-        
-        [<JsonPropertyName("hp")>]
-        Hp: int
-        
-        [<JsonPropertyName("maxHp")>]
-        MaxHp: int
-        
-        [<JsonPropertyName("position")>]
-        Position: PositionDto
+        [<JsonPropertyName("biome")>]
+        Biome: String
     }
 
     [<CLIMutable>]
@@ -91,9 +126,6 @@ module Dto =
         [<JsonConverter(typeof<JsonStringEnumConverter>)>]
         Type: EventType
         
-        [<JsonPropertyName("objects")>]
-        Objects: List<ObjectViewDto>
-        
         [<JsonPropertyName("position")>]
         Position: PositionDto
         
@@ -125,10 +157,13 @@ module Dto =
         Turn: int
 
         [<JsonPropertyName("player")>]
-        Player: PlayerViewDto
+        Player: ObjectViewDto
 
         [<JsonPropertyName("objects")>]
         Objects: List<ObjectViewDto>
+        
+        [<JsonPropertyName("entities")>]
+        Entities: List<ObjectViewDto>
 
         [<JsonPropertyName("viewWidth")>]
         ViewWidth: int
@@ -141,12 +176,15 @@ module Dto =
 
         [<JsonPropertyName("floor")>]
         Floor: int
+        
+        [<JsonPropertyName("items")>]
+        Items: List<ItemType>
 
         [<JsonPropertyName("completed")>]
         Completed: bool
 
-        [<JsonPropertyName("biome")>]
-        Biome: string
+        [<JsonPropertyName("room")>]
+        Room: RoomDto
 
         [<JsonPropertyName("rooms")>]
         Rooms: List<RoomCellDto>

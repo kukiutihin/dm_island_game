@@ -58,4 +58,7 @@ type DeathEffect(a, b, c) =
     inherit ExplosionEffect([Resources.Particle.SMOKE1; Resources.Particle.SMOKE2], 0.9f, 40, 5f, a, b, c)
     
 type TearPopEffect(a, b, c) =
-    inherit ExplosionEffect([Resources.Particle.BUBBLE], 0.2f, 1, 2f, a, b, c)
+    inherit ExplosionEffect([Resources.Particle.BUBBLE], 0.9f, 1, 2f, a, b, c)
+    
+type ProjectilePopEffect(a, b, c) =
+    inherit ExplosionEffect([Resources.Particle.ENEMY_PROJECTILE], 0.9f, 1, 2f, a, b, c)

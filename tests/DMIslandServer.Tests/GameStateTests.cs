@@ -1,6 +1,7 @@
 using Xunit;
 using RoguelikeServerMVP.Game;
 using RoguelikeServerMVP.Game.Entities.Factory.Preset;
+using RoguelikeServerMVP.Game.Entities.Factory.Preset.Mob;
 
 namespace GameTests;
 
@@ -8,7 +9,7 @@ public class GameStateTests
 {
     private static GameState CreateState(int width = 10, int height = 10)
     {
-        var player = new Player(new Position(0, 0), 10, 3);
+        var player = new Player(new Position(0, 0), 10);
         var room = new Room(width, height);
         return new GameState(player, room);
     }

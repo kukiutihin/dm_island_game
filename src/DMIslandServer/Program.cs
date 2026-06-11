@@ -78,13 +78,9 @@ static GameStateResponse BuildGameStateResponse(GameState state, GameConfig conf
 {
     var viewWidth = config.ViewWidth;
     var viewHeight = config.ViewHeight;
-
-    var radiusX = viewWidth / 2;
-    var radiusY = viewHeight / 2;
+    var viewRadius = 20;
 
     var player = state.Player;
-    var px = player.Position.X;
-    var py = player.Position.Y;
 
     var resp = new GameStateResponse
     {
@@ -93,7 +89,11 @@ static GameStateResponse BuildGameStateResponse(GameState state, GameConfig conf
         ViewHeight = viewHeight,
         Floor = floor.Number,
         Completed = floor.Number >= config.MaxFloors && floor.AllCleared,
-        Biome = floor.Current.Biome,
+        Room = new RoomDto
+        {
+            Id = state.GetCurrentRoom().Id,
+            Biome = floor.Current.Biome
+        },
         Rooms = floor.AllRooms.Select(r => new RoomCellDto
         {
             X = r.GridX,
@@ -102,13 +102,16 @@ static GameStateResponse BuildGameStateResponse(GameState state, GameConfig conf
             Cleared = r.Cleared,
             Current = r.GridX == floor.CurrentX && r.GridY == floor.CurrentY
         }).ToList(),
-        Player = new PlayerViewDto
+        Player = new ObjectViewDto
         {
+            Type = EntityType.Player,
             Id = player.Id,
             Hp = player.Hp,
             MaxHp = player.MaxHp,
-            Position = new PositionDto(px, py)
+            Position = new PositionDto(player.Position),
+            PreviousPosition = new PositionDto(player.PreviousPosition),
         },
+        Items = player.GetItems(),
         Objects = new List<ObjectViewDto>()
     };
 
@@ -117,13 +120,10 @@ static GameStateResponse BuildGameStateResponse(GameState state, GameConfig conf
     foreach (var mob in allEntities)
     {
         if (!mob.IsAlive) continue;
-
-        var dx = mob.Position.X - px;
-        var dy = mob.Position.Y - py;
-
-        if (Math.Abs(dx) <= radiusX && Math.Abs(dy) <= radiusY)
+        
+        if (mob.Position.SquaredDistanceTo(player.Position) < viewRadius * viewRadius)
         {
-            resp.Objects.Add(new ObjectViewDto
+            resp.Entities.Add(new ObjectViewDto
             {
                 Id = mob.Id,
                 Type = mob.Type,
@@ -139,11 +139,8 @@ static GameStateResponse BuildGameStateResponse(GameState state, GameConfig conf
     foreach (var obj in state.StaticObjects)
     {
         if (!obj.IsAlive) continue;
-
-        var dx = obj.Position.X - px;
-        var dy = obj.Position.Y - py;
-
-        if (Math.Abs(dx) <= radiusX && Math.Abs(dy) <= radiusY)
+        
+        if (obj.Position.SquaredDistanceTo(player.Position) < viewRadius * viewRadius)
         {
             resp.Objects.Add(new ObjectViewDto
             {

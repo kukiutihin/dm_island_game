@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Microsoft.VisualBasic.CompilerServices;
 
 namespace RoguelikeServerMVP.Game
@@ -8,6 +9,26 @@ namespace RoguelikeServerMVP.Game
         Down,
         Left,
         Right
+    }
+
+    public static class DirectionUtil
+    {
+        public static Direction TurnLeft(Direction dir)
+        {
+            return dir switch
+            {
+                Direction.Up => Direction.Right,
+                Direction.Down => Direction.Left,
+                Direction.Left => Direction.Up,
+                Direction.Right => Direction.Down,
+                _ => throw new ArgumentOutOfRangeException(nameof(dir), dir, null)
+            };
+        }
+        
+        public static Direction TurnRight(Direction dir)
+        {
+            return TurnLeft(TurnLeft(TurnLeft(dir)));
+        }
     }
 
     public struct Position(int x, int y) : IEquatable<Position>
@@ -44,6 +65,11 @@ namespace RoguelikeServerMVP.Game
         public static Position operator +(Position self, Position other)
         {
             return new Position(self.X + other.X, self.Y + other.Y);
+        }
+        
+        public static Position operator -(Position self, Position other)
+        {
+            return new Position(self.X - other.X, self.Y - other.Y);
         }
 
         public int SquaredDistanceTo(Position other)

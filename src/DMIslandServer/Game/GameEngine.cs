@@ -4,6 +4,7 @@ using RoguelikeServerMVP.Api;
 using RoguelikeServerMVP.Game.Dungeon;
 using RoguelikeServerMVP.Game.Entities;
 using RoguelikeServerMVP.Game.Entities.Factory.Preset;
+using RoguelikeServerMVP.Game.Entities.Factory.Preset.Mob;
 using RoguelikeServerMVP.Game.Entities.Pickups;
 
 namespace RoguelikeServerMVP.Game;
@@ -105,8 +106,11 @@ public class GameEngine
     private void ProcessMobsTurn()
     {
         foreach (var p in State.Projectiles) p.PerformTurn(State);
+        foreach (var p in State.DelayedProjectiles) p.PerformTurn(State);
         foreach (var m in State.Mobs) m.PerformTurn(State);
         foreach (var e in State.Items) e.PerformTurn(State);
+        State.Projectiles.AddRange(State.DelayedProjectiles);
+        State.DelayedProjectiles.Clear();
         CleanupDeadMobs();
     }
 
@@ -179,9 +183,11 @@ public class GameEngine
 
     private void SpawnEntities(DungeonRoom target)
     {
-        foreach (var spawn in target.MobSpawns)
+        foreach (var spawn in target.Template.MobSpawns)
             State.AddMob(CreateMob(spawn.Type, spawn.Position));
-        foreach (var spawn in target.ItemSpawns)
+        foreach (var pos in target.Template.WallSpawns)
+            State.AddObject(new Wall(pos));
+        foreach (var spawn in target.Template.ItemSpawns)
             State.AddItem(CreateItem(spawn.Type, spawn.Position));
         target.Spawned = true;
     }
@@ -217,6 +223,11 @@ public class GameEngine
     {
         EntityType.Lambda => new Lambda(pos),
         EntityType.ModusPonens => new ModusPonens(pos),
+        EntityType.Nerd => new Nerd(pos),
+        EntityType.NuclearNerd => new NuclearNerd(pos),
+        EntityType.Skolem => new Skolem(pos),
+        EntityType.Monad => new Monad(pos),
+        EntityType.Mole => new Mole(pos),
         _ => new ModusPonens(pos)
     };
 
