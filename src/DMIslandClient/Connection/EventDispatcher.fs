@@ -49,11 +49,15 @@ type EventDispatcher(entities: EntityGroup, effects: EffectGroup, objects: Entit
         ui.SetMaxHealth(player.MaxHp)
         camera.SetPosition(posOfDto player.Position)
     
+    let processItems (items: ItemType seq) =
+        ui.SetItems(items)
+    
     member public x.ProcessUpdate(data: GameStateResponse) =
         data.Events |> Seq.iter processEvent
         data.Entities |> Seq.append [ data.Player ] |> processEntities
         data.Objects |> processObjects
         data.Player |> processPlayer
+        data.Items |> processItems
         ui.SetFloor(data.Floor)
         ui.SetMinimap(data.Rooms)
 

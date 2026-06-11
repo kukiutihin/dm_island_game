@@ -37,10 +37,10 @@ type TiledRoomRenderer(floorTextures: string seq) =
 module RoomRenderer =
     let getFor (t: RoomType) : IRoomRenderer =
         match t with
-        | Beach  -> TiledRoomRenderer([| Resources.Texture.SAND; Resources.Texture.SAND; Resources.Texture.SAND; Resources.Texture.SANDSTONE |])
+        | Beach -> TiledRoomRenderer([| Resources.Texture.SAND; Resources.Texture.SAND; Resources.Texture.SAND; Resources.Texture.SANDSTONE |])
         | Forest -> TiledRoomRenderer([| Resources.Texture.GRASS; Resources.Texture.GRASS; Resources.Texture.GRASS; Resources.Texture.GRASS_DARK |])
-        | Swamp   -> TiledRoomRenderer([| Resources.Texture.SWAMP;Resources.Texture.SWAMP; Resources.Texture.SWAMP; Resources.Texture.SWAMP_BLAZE |])
-        | Snow   -> TiledRoomRenderer([| Resources.Texture.SNOW;  Resources.Texture.SNOW_DARK |])
+        | Swamp -> TiledRoomRenderer([| Resources.Texture.SWAMP;Resources.Texture.SWAMP; Resources.Texture.SWAMP; Resources.Texture.SWAMP_BLAZE |])
+        | NerdForest -> TiledRoomRenderer([| Resources.Texture.LEAVES; Resources.Texture.LEAVES;  Resources.Texture.LEAVES_DARK |])
 
     /// Maps the server's biome string to a room type (defaults to Beach).
     let ofString (s: string) : RoomType =
@@ -48,4 +48,4 @@ module RoomRenderer =
         | "beach" -> Beach
         | "forest" -> Forest
         | "swamp" -> Swamp
-        | "nerds" -> NerdForest
+        | "nerd" -> NerdForest

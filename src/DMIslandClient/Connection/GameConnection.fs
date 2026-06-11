@@ -9,6 +9,9 @@ open System.Net.Http
 type GameConnection(serverUrl) =
     let actionEndpoint = $"{serverUrl}/action"
     
+    let options = JsonSerializerOptions()
+    do options.Converters.Add(JsonStringEnumConverter())
+    
     let sendRequest (req: PlayerActionRequest) = task {
         use client = new HttpClient()
         let content = JsonContent.Create(req)
@@ -18,13 +21,13 @@ type GameConnection(serverUrl) =
     
     let actionAndCallback (action: PlayerActionRequest) (callback: GameStateResponse -> unit) = task {
         let! response = sendRequest action |> Async.AwaitTask
-        let! content = response.Content.ReadFromJsonAsync<GameStateResponse>() |> Async.AwaitTask
+        let! content = response.Content.ReadFromJsonAsync<GameStateResponse>(options) |> Async.AwaitTask
         callback content
     }
     
     member _.SendCallback(req: PlayerActionRequest, callback: GameStateResponse -> unit) = task {
         let! response = sendRequest req |> Async.AwaitTask
-        let! content = response.Content.ReadFromJsonAsync<GameStateResponse>() |> Async.AwaitTask
+        let! content = response.Content.ReadFromJsonAsync<GameStateResponse>(options) |> Async.AwaitTask
         callback content
     }
     

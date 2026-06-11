@@ -7,6 +7,11 @@ module MobGroupTextures =
         Resources.Entity.STEVE
         Resources.Entity.LAMBDA
         Resources.Entity.MODUS_PONENS
+        Resources.Entity.NERD
+        Resources.Entity.NUCLEAR_NERD
+        Resources.Entity.MONAD
+        Resources.Entity.SKOLEM
+        Resources.Entity.MOLE
         Resources.Particle.BUBBLE
         Resources.Particle.ENEMY_PROJECTILE
         Resources.Item.CPP
@@ -15,7 +20,20 @@ module MobGroupTextures =
         Resources.UI.HALF_HEART
         Resources.UI.FULL_HEART
         Resources.Item.AMETHYST_SHARD
-        Resources.Item.JAVA 
+        Resources.Item.JAVA
+        Resources.Item.OCAML
+        Resources.Item.GO
+        Resources.Item.ZIG
+        Resources.Item.RUST
+        Resources.Item.ANSIC
+        Resources.Item.FSHARP
+        Resources.Item.ROC
+        Resources.Item.ONEF
+        Resources.Item.JS
+        Resources.Item.TS
+        Resources.Item.KOTLIN
+        Resources.Item.X86
+        Resources.Item.SCALA3 
     |]
 
 type MobGroup() =

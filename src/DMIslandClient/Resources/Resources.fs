@@ -10,18 +10,24 @@ module Resources =
         let STONE = "Resources/Textures/stone.png"
         let STONE_1 = "Resources/Textures/stones1.png"
         let STONE_2 = "Resources/Textures/stones2.png"
+        let GRASS_WALL = "Resources/Textures/grass_wall.png"
         let STONE_DARK = "Resources/Textures/stones_dark.png"
         let THORNS = "Resources/Textures/thorns.png"
         let SWAMP = "Resources/Textures/swamp.png"
         let SWAMP_BLAZE = "Resources/Textures/swamp_blaze.png"
-        let SNOW = "Resources/Textures/snow.png"
-        let SNOW_DARK = "Resources/Textures/snow_dark.png"
+        let LEAVES = "Resources/Textures/leaves.png"
+        let LEAVES_DARK = "Resources/Textures/leaves_dark.png"
         let SHADE = "Resources/Textures/shade.png"
 
     module Entity =
-        let STEVE = "Resources/Textures/steve.png"
-        let LAMBDA = "Resources/Textures/lambda.png"
-        let MODUS_PONENS = "Resources/Textures/modus-ponens.png"
+        let STEVE = "Resources/Entity/steve.png"
+        let LAMBDA = "Resources/Entity/lambda.png"
+        let MODUS_PONENS = "Resources/Entity/modus-ponens.png"
+        let NERD = "Resources/Entity/nerd.webp"
+        let MONAD = "Resources/Entity/monad.png"
+        let NUCLEAR_NERD = "Resources/Entity/nuclear_nerd.png"
+        let SKOLEM = "Resources/Entity/skolem.png"
+        let MOLE = "Resources/Entity/mole.png"
     
     
     module Particle =
@@ -39,6 +45,20 @@ module Resources =
         let PYTHON3 = "Resources/Item/haskell.png"
         let JAVA = "Resources/Item/java.png"
         let HASKELL = "Resources/Item/python3.png"
+        let OCAML = "Resources/Item/ocaml.png"
+        let ONEF = "Resources/Item/1f.png"
+        let GO = "Resources/Item/go.png"
+        let ANSIC = "Resources/Item/ansic.png"
+        let FSHARP = "Resources/Item/fsharp.png"
+        let JS = "Resources/Item/js.png"
+        let KOTLIN = "Resources/Item/kotlin.png"
+        let ROC = "Resources/Item/roc.png"
+        let SCALA3 = "Resources/Item/scala3.png"
+        let TS = "Resources/Item/ts.png"
+        let X86 = "Resources/Item/x86.png"
+        let ZIG = "Resources/Item/zig.png"
+        let RUST = "Resources/Item/rust.png"
+        
     
     module UI =
         let ISLAND = "Resources/UI/island.png"

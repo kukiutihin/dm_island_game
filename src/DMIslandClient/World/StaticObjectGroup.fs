@@ -11,6 +11,7 @@ module WallTextures =
     let textures = [|
         Resources.Texture.STONE_1
         Resources.Texture.STONE_2
+        Resources.Texture.GRASS_WALL
         Resources.Texture.THORNS
         Resources.Texture.STONE_DARK
     |]
@@ -40,4 +41,6 @@ type StaticObjectGroup() =
     member x.SetBiome(biome) =
         match biome with
         | "swamp" -> [| Resources.Texture.STONE_DARK; Resources.Texture.THORNS |] |> factory.SetTextures
+        | "nerd" -> [| Resources.Texture.STONE_DARK; Resources.Texture.THORNS |] |> factory.SetTextures
+        | "forest" -> [| Resources.Texture.STONE_1; Resources.Texture.STONE_2; Resources.Texture.THORNS |] |> factory.SetTextures
         | _ -> [| Resources.Texture.STONE_1; Resources.Texture.STONE_2 |] |> factory.SetTextures

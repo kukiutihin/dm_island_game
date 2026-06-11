@@ -10,6 +10,7 @@ type GameUI() =
     let uiCamera = Camera()
     let healthBar = HealthBar(3)
     let floorText = Text("Floor 1", Pos(0f, 0f))
+    let itemList = ItemList(Pos(0f, 0f))
     let minimap = Minimap()
     let mutable frame = 0
 
@@ -19,6 +20,9 @@ type GameUI() =
     member x.SetMaxHealth(health) =
         healthBar.UpdateMaxHealth(health)
 
+    member x.SetItems(items) =
+        itemList.SetItems(items)
+    
     member x.SetFloor(n: int) =
         floorText.SetText($"Floor {n}")
 
@@ -33,12 +37,14 @@ type GameUI() =
         healthBar.Render(uiCamera)
         floorText.Render(uiCamera)
         minimap.Render(uiCamera)
+        itemList.Render(uiCamera)
 
     member x.Load() =
         ()
 
     member x.Resize(window: Window) =
         let top = float32 window.ClientSize.Y / float32 window.ClientSize.X
+        let bottom = -top
         let left = -1f
         let right = 1f
         let ratio = top / right
@@ -54,3 +60,7 @@ type GameUI() =
 
         // Minimap — top-right corner.
         minimap.SetLayout(Pos(right - 0.05f * scaling, top - ratio * 0.08f), 0.2f * scaling)
+        
+        // Item list — bottom-right corner.
+        itemList.SetScale(0.1f * scaling)
+        itemList.SetOrigin(Pos(right - 0.08f * scaling, bottom + ratio * 0.08f))
