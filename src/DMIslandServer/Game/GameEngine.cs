@@ -25,7 +25,7 @@ public class GameEngine
 
         State = new GameState(player, new Room(config.RoomWidth, config.RoomHeight));
 
-        StartNewRun(4);
+        StartNewRun(1);
     }
 
     /// <summary>Begins a brand-new run from floor 1 with a healed player (used on restart).</summary>
@@ -183,9 +183,11 @@ public class GameEngine
 
     private void SpawnEntities(DungeonRoom target)
     {
-        foreach (var spawn in target.MobSpawns)
+        foreach (var spawn in target.Template.MobSpawns)
             State.AddMob(CreateMob(spawn.Type, spawn.Position));
-        foreach (var spawn in target.ItemSpawns)
+        foreach (var pos in target.Template.WallSpawns)
+            State.AddObject(new Wall(pos));
+        foreach (var spawn in target.Template.ItemSpawns)
             State.AddItem(CreateItem(spawn.Type, spawn.Position));
         target.Spawned = true;
     }
