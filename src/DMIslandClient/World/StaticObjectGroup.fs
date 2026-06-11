@@ -23,7 +23,7 @@ type StaticObjectFactory(wallTextures: string seq) =
         let texture = GameRandom.choice textures
         let sprite = Sprite(pos, atlas, texture)
         group.AddSprite(sprite)
-        Entity(sprite, LinearAnimatablePos(1f, pos))
+        Entity(sprite, LinearAnimatablePos(1f, pos), 1f)
     
     interface IEntityFactory with
         member _.CreateEntity(t, atlas, group, pos) =

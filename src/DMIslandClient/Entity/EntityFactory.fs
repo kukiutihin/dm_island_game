@@ -14,15 +14,15 @@ type IEntityFactory =
 type MobFactory() =
     let createLambda atlas (spriteGroup: SpriteGroup) pos =
         let sprite = Sprite(pos, atlas, Resources.Entity.LAMBDA)
-        let entity = Entity(sprite, EaseOutAnimatablePos(4f, pos))
+        let entity = Entity(sprite, EaseOutAnimatablePos(4f, pos), 1f)
         spriteGroup.AddSprite(sprite)
         entity.SetFlip(false)
         entity
     
     let createMp atlas (spriteGroup: SpriteGroup) pos =
         let sprite = Sprite(pos, atlas, Resources.Entity.MODUS_PONENS)
-        let entity = Entity(sprite, SmoothAnimatablePos(4f, pos))
-        sprite.Height <- 0.4f
+        let entity = Entity(sprite, SmoothAnimatablePos(4f, pos), 1f)
+        entity.SetScale(1f, 0.4f)
         spriteGroup.AddSprite(sprite)
         entity.SetFlip(false)
         entity
@@ -30,51 +30,61 @@ type MobFactory() =
     let createProjectile atlas (spriteGroup: SpriteGroup) texture pos =
         let sprite = Sprite(pos, atlas, texture)
         spriteGroup.AddSprite(sprite)
-        Entity(sprite, SmoothAnimatablePos(4f, pos))
+        Entity(sprite, SmoothAnimatablePos(4f, pos), 1f)
 
     let createPlayer atlas (spriteGroup: SpriteGroup) pos =
         let sprite = Sprite(pos, atlas, Resources.Entity.STEVE)
         spriteGroup.AddSprite(sprite)
-        let entity = Entity(sprite, EaseOutAndBounceAnimatablePos(0.5f, 4f, pos))
+        let entity = Entity(sprite, EaseOutAndBounceAnimatablePos(0.5f, 4f, pos), 1f)
         entity.SetFlip(true)
         entity
         
     let createItem atlas (spriteGroup: SpriteGroup) texture pos =
         let sprite = Sprite(pos, atlas, texture)
         spriteGroup.AddSprite(sprite)
-        sprite.Height <- 0.6f
-        sprite.Width <- 0.6f
-        Entity(sprite, SmoothAnimatablePos(4f, pos))
+        Entity(sprite, SmoothAnimatablePos(4f, pos), 0.6f)
         
     let createMonad atlas (spriteGroup: SpriteGroup) pos =
         let sprite = Sprite(pos, atlas, Resources.Entity.MONAD)
         spriteGroup.AddSprite(sprite)
-        let entity = Entity(sprite, EaseOutAndBounceAnimatablePos(0.5f, 4f, pos))
-        entity
+        Entity(sprite, EaseOutAndBounceAnimatablePos(0.5f, 4f, pos), 1f)
         
     let createNerd atlas (spriteGroup: SpriteGroup) pos =
         let sprite = Sprite(pos, atlas, Resources.Entity.NERD)
         spriteGroup.AddSprite(sprite)
-        let entity = Entity(sprite, EaseOutAndBounceAnimatablePos(0.5f, 4f, pos))
+        let entity = Entity(sprite, EaseOutAndBounceAnimatablePos(0.5f, 4f, pos), 1f)
+        entity.SetScale(0.75f, 0.75f)
         entity
         
     let createNuclearNerd atlas (spriteGroup: SpriteGroup) pos =
         let sprite = Sprite(pos, atlas, Resources.Entity.NUCLEAR_NERD)
         spriteGroup.AddSprite(sprite)
-        let entity = Entity(sprite, EaseOutAndBounceAnimatablePos(0.5f, 4f, pos))
-        entity
+        Entity(sprite, EaseOutAndBounceAnimatablePos(0.5f, 4f, pos), 1f)
         
     let createMole atlas (spriteGroup: SpriteGroup) pos =
         let sprite = Sprite(pos, atlas, Resources.Entity.MOLE)
         spriteGroup.AddSprite(sprite)
-        let entity = Entity(sprite, EaseOutAndBounceAnimatablePos(0.5f, 4f, pos))
-        entity
+        Entity(sprite, EaseOutAndBounceAnimatablePos(0.5f, 4f, pos), 1f)
         
     let createSkolem atlas (spriteGroup: SpriteGroup) pos =
         let sprite = Sprite(pos, atlas, Resources.Entity.SKOLEM)
         spriteGroup.AddSprite(sprite)
-        let entity = Entity(sprite, EaseOutAndBounceAnimatablePos(0.5f, 4f, pos))
+        Entity(sprite, EaseOutAndBounceAnimatablePos(0.5f, 4f, pos), 1f)
+        
+    let createTheta atlas (spriteGroup: SpriteGroup) pos =
+        let sprite = Sprite(pos, atlas, Resources.Particle.THETA)
+        spriteGroup.AddSprite(sprite)
+        let entity = Entity(sprite, LinearAnimatablePos(0.5f, pos), 0f)
+        entity.SetScale(1f, 1f)
         entity
+        
+    let createAttack atlas (spriteGroup: SpriteGroup) pos =
+        let sprite = Sprite(pos, atlas, Resources.Particle.ATTACK_INDICATOR)
+        spriteGroup.AddSprite(sprite)
+        let entity = Entity(sprite, LinearAnimatablePos(0.5f, pos), 0f)
+        entity.SetScale(1f, 1f)
+        entity
+        
     
     interface IEntityFactory with
         member _.CreateEntity(t, atlas, group, pos) =
@@ -110,4 +120,6 @@ type MobFactory() =
             | EntityType.KotlinItem -> createItem atlas group Resources.Item.KOTLIN pos
             | EntityType.AsmItem -> createItem atlas group Resources.Item.X86 pos
             | EntityType.Scala3Item -> createItem atlas group Resources.Item.SCALA3 pos
+            | EntityType.ThetaAttack -> createTheta atlas group pos
+            | EntityType.AttackIndicator -> createAttack atlas group pos
             | _ -> failwith $"Cannot create entity of type {t}"

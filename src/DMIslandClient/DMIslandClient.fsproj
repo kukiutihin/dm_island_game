@@ -11,10 +11,10 @@
             <Link>.dockerignore</Link>
         </Content>
         <Content Include="Dockerfile" />
-        <Content Include="Resources\Entities\**">
+        <Content Include="Resources\Entity\**">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </Content>
-        <Content Include="Resources\Items\**">
+        <Content Include="Resources\Item\**">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </Content>
         <Content Include="Resources\Textures\**">

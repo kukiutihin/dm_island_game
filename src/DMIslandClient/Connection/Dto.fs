@@ -42,6 +42,8 @@ module Dto =
         | NuclearNerd = 29
         | Skolem = 30
         | Mole = 31
+        | AttackIndicator = 32
+        | ThetaAttack = 33
 
     type ItemType =
         | Heart = 1

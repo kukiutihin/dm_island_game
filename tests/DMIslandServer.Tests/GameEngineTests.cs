@@ -21,10 +21,10 @@ public class GameEngineTests
     private static (GameEngine engine, Player player, GameState state) CreateGame(int px, int py)
     {
         var config = CreateConfig();
-        var player = new Player(new Position(px, py), config.PlayerDefaultMaxHp, config.PlayerAttackDamage);
+        var player = new Player(new Position(px, py), config.PlayerDefaultMaxHp);
         var room = new Room(10, 10);
         var state = new GameState(player, room);
-        return (new GameEngine(state, config), player, state);
+        return (new GameEngine(config), player, state);
     }
 
     [Fact]

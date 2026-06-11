@@ -2,6 +2,7 @@ namespace DMIslandClient
 
 open DMIslandClient.Scenes
 open LadaEngine
+open OpenTK.Windowing.Common
 
 type Game () =
     let window = Window.Create(800, 600, "DM Island: Main Menu")
@@ -21,5 +22,6 @@ type Game () =
         window.FixedUpdate.Add(fun _ -> scene.FixedUpdate())
         window.Update.Add(fun dt -> scene.Update dt)
         window.Resized.Add(fun () -> scene.Resize())
+        window.UpdateFrequency <- 240.
 
     member x.Run() = window.Run()

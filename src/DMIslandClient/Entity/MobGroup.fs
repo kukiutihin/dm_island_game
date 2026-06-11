@@ -33,7 +33,9 @@ module MobGroupTextures =
         Resources.Item.TS
         Resources.Item.KOTLIN
         Resources.Item.X86
-        Resources.Item.SCALA3 
+        Resources.Item.SCALA3
+        Resources.Particle.THETA
+        Resources.Particle.ATTACK_INDICATOR
     |]
 
 type MobGroup() =

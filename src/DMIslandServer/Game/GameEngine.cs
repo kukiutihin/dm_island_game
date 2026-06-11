@@ -25,7 +25,7 @@ public class GameEngine
 
         State = new GameState(player, new Room(config.RoomWidth, config.RoomHeight));
 
-        StartNewRun(1);
+        StartNewRun(4);
     }
 
     /// <summary>Begins a brand-new run from floor 1 with a healed player (used on restart).</summary>
@@ -106,8 +106,11 @@ public class GameEngine
     private void ProcessMobsTurn()
     {
         foreach (var p in State.Projectiles) p.PerformTurn(State);
+        foreach (var p in State.DelayedProjectiles) p.PerformTurn(State);
         foreach (var m in State.Mobs) m.PerformTurn(State);
         foreach (var e in State.Items) e.PerformTurn(State);
+        State.Projectiles.AddRange(State.DelayedProjectiles);
+        State.DelayedProjectiles.Clear();
         CleanupDeadMobs();
     }
 

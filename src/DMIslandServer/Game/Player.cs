@@ -16,6 +16,7 @@ public class Player(Position startPos, int maxHp)
         if (!state.CanMoveTo(targetPos))
             return;
 
+        PreviousPosition = Position;
         Position = targetPos;
     }
 

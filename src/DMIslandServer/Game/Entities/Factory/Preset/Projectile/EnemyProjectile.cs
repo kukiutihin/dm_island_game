@@ -3,14 +3,14 @@ using RoguelikeServerMVP.Game.Entities.Behaviour;
 using RoguelikeServerMVP.Game.Entities.Behaviour.ProjectileBehaviour;
 using RoguelikeServerMVP.Game.Events;
 
-namespace RoguelikeServerMVP.Game.Entities.Factory.Preset;
+namespace RoguelikeServerMVP.Game.Entities.Factory.Preset.Projectile;
 
 /// <summary>
 /// Enemy projectile
 /// </summary>
 /// <param name="direction"></param>
 /// <param name="position"></param>
-public class EnemyProjectile(Direction direction, Position position) : Projectile(EntityType.EnemyProjectile, position, 1) 
+public class EnemyProjectile(Direction direction, Position position) : Entities.Projectile(EntityType.EnemyProjectile, position, 1) 
 {
     private readonly IBehaviour _behaviour = new CompositeBehaviour([
         new DestroyIfInBlockBehaviour(),

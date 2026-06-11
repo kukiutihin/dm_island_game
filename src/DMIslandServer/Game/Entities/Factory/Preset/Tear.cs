@@ -12,7 +12,7 @@ namespace RoguelikeServerMVP.Game.Entities.Factory.Preset;
 /// <param name="direction"></param>
 /// <param name="items"></param>
 /// <param name="position"></param>
-public class Tear(Direction direction, IEnumerable<ItemType> items, Position position) : Projectile(EntityType.Tear, position, 1)
+public class Tear(Direction direction, IEnumerable<ItemType> items, Position position) : Entities.Projectile(EntityType.Tear, position, 1)
 {
     private readonly IBehaviour _behaviour = new ProjectileBehaviourBuilder(direction, items).Build();
     

@@ -35,6 +35,10 @@ module Resources =
         let SMOKE1 = "Resources/Textures/Particle/generic_3.png"
         let SMOKE2 = "Resources/Textures/Particle/generic_6.png"
         let ENEMY_PROJECTILE = "Resources/Textures/Particle/enemy_proj.png"
+        let THETA = "Resources/Textures/Particle/theta.png"
+        let ATTACK_INDICATOR = "Resources/Textures/Particle/attack.png"
+        
+        
     
     module Font =
         let FONT_QUICKSAND_PREFIX = "Resources/Font/Quicksand-Light.ttf/"

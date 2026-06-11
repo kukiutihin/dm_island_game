@@ -158,6 +158,8 @@ public enum EntityType
     Mole,
     Tear,
     
+    AttackIndicator,
+    ThetaAttack,
     EnemyProjectile,
     Wall,
     

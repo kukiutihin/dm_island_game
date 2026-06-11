@@ -66,6 +66,11 @@ namespace RoguelikeServerMVP.Game
         {
             return new Position(self.X + other.X, self.Y + other.Y);
         }
+        
+        public static Position operator -(Position self, Position other)
+        {
+            return new Position(self.X - other.X, self.Y - other.Y);
+        }
 
         public int SquaredDistanceTo(Position other)
         {

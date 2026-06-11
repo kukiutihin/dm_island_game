@@ -131,8 +131,7 @@ public static class DungeonGenerator
                 EntityType.Nerd,
                 EntityType.NuclearNerd,
                 EntityType.Skolem,
-                EntityType.Mole,
-                EntityType.Tear,
+                EntityType.Mole
             ];
             var enemyType = enemyTypes[rand.Next(enemyTypes.Count)];
             room.MobSpawns.Add(new MobSpawn(enemyType, new Position(x, y)));
