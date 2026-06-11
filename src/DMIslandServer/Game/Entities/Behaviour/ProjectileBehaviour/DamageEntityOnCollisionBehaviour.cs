@@ -4,9 +4,8 @@ public class DamageEntityOnCollisionBehaviour(int damage) : IBehaviour
 {
     private static Entity? GetCollisionInRange(Position from, Position to, GameState state)
     {
-        var positions = Position.CreateRectangle(from, to);
-        
-        return positions
+        return Position.CreateRectangle(from, to)
+            .OrderBy(p => from.SquaredDistanceTo(p))
             .Select(state.GetCollision)
             .FirstOrDefault(entity => entity != null);
     }

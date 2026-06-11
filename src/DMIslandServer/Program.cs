@@ -111,6 +111,7 @@ static GameStateResponse BuildGameStateResponse(GameState state, GameConfig conf
             Position = new PositionDto(player.Position),
             PreviousPosition = new PositionDto(player.PreviousPosition),
         },
+        Items = player.GetItems(),
         Objects = new List<ObjectViewDto>()
     };
 

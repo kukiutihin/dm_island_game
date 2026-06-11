@@ -94,6 +94,9 @@ public class GameStateResponse
 
     [JsonPropertyName("completed")]
     public bool Completed { get; set; }
+    
+    [JsonPropertyName("items")]
+    public List<ItemType>? Items { get; set; }
 
     [JsonPropertyName("room")]
     public RoomDto Room { get; set; }
@@ -138,16 +141,23 @@ public enum EventType
 {
     PlayerDied,
     EntityDeath,
+    EnemyProjectilePop,
     TearPop
 }
 
 public enum EntityType
 {
     Player, 
+    
     ModusPonens,
     Lambda,
     Monad,
+    Nerd,
+    NuclearNerd,
+    Skolem,
+    Mole,
     Tear,
+    
     EnemyProjectile,
     Wall,
     
@@ -158,8 +168,23 @@ public enum EntityType
     CppItem,
     HaskellItem,
     Python3Item,
+    JavaItem,
+    OCamlItem,
+    ZigItem,
+    RustItem,
+    AnsiCItem,
+    FSharpItem,
+    RocItem,
+    OneFItem,
+    JavaScriptItem,
+    TypeScriptItem,
+    GoItem,
+    KotlinItem,
+    AsmItem,
+    Scala3Item
 }
 
+[JsonConverter(typeof(JsonStringEnumConverter))]
 public enum ItemType
 {
     Heart,
@@ -169,4 +194,18 @@ public enum ItemType
     Cpp, 
     Haskell,
     Python3,
+    Java,
+    OCaml,
+    Zig,
+    Rust,
+    AnsiC,
+    FSharp,
+    Roc,
+    OneF,
+    JavaScript,
+    TypeScript,
+    Go,
+    Kotlin,
+    Asm,
+    Scala3
 }

@@ -11,10 +11,19 @@ public class ProjectileBehaviourBuilder(Direction direction, IEnumerable<ItemTyp
         return new CompositeBehaviour([
             new DestroyIfInBlockBehaviour(),
             new StraightLineBehaviour(GetSpeed(), direction),
+            new FollowEntityBehaviour(GetSpeed(), GetFollowRange()),
             new DamageEntityOnCollisionBehaviour(GetDamage()),
             new TimedDieBehaviour(GetTtl()),
         ]);
     }
+    // TODO:
+    // OCaml,
+    // Zig,
+    // Roc,
+    // JavaScript,
+    // TypeScript,
+    // Go,x
+    // Scala3
 
     private int GetDamage()
     {
@@ -36,8 +45,21 @@ public class ProjectileBehaviourBuilder(Direction direction, IEnumerable<ItemTyp
         var speed = 1;
         foreach (var item in _items)
         {
-            if (item == ItemType.Cpp) speed++;
+            if (item == ItemType.Asm) speed += 3;
+            if (item == ItemType.AnsiC) speed += 1;
+            if (item == ItemType.Rust) speed += 1;
         }
         return speed;
+    }
+
+    private int GetFollowRange()
+    {
+        var range = 0;
+        foreach (var item in _items)
+        {
+            if (item == ItemType.OCaml) range += 3;
+            if (item == ItemType.Scala3) range += 1;
+        }
+        return range;
     }
 }

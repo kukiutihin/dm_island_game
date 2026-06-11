@@ -4,6 +4,7 @@ using RoguelikeServerMVP.Api;
 using RoguelikeServerMVP.Game.Dungeon;
 using RoguelikeServerMVP.Game.Entities;
 using RoguelikeServerMVP.Game.Entities.Factory.Preset;
+using RoguelikeServerMVP.Game.Entities.Factory.Preset.Mob;
 using RoguelikeServerMVP.Game.Entities.Pickups;
 
 namespace RoguelikeServerMVP.Game;
@@ -217,6 +218,11 @@ public class GameEngine
     {
         EntityType.Lambda => new Lambda(pos),
         EntityType.ModusPonens => new ModusPonens(pos),
+        EntityType.Nerd => new Nerd(pos),
+        EntityType.NuclearNerd => new NuclearNerd(pos),
+        EntityType.Skolem => new Skolem(pos),
+        EntityType.Monad => new Monad(pos),
+        EntityType.Mole => new Mole(pos),
         _ => new ModusPonens(pos)
     };
 

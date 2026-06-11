@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using RoguelikeServerMVP.Api;
+using RoguelikeServerMVP.Game.Entities.Pickups;
 
 namespace RoguelikeServerMVP.Game.Dungeon;
 
@@ -15,14 +16,14 @@ public static class DungeonGenerator
     private const int GridSize = 9;
 
     private static readonly Direction[] AllDirections =
-        { Direction.Up, Direction.Down, Direction.Left, Direction.Right };
+        [Direction.Up, Direction.Down, Direction.Left, Direction.Right];
 
     public static Floor Generate(GameConfig config, int floorNumber, int seed)
     {
         var rand = new Random(seed);
         var rooms = new DungeonRoom?[GridSize, GridSize];
         
-        var floorBiomes = new[] { "beach", "forest", "cave", "snow" };
+        var floorBiomes = new[] { "beach", "forest", "swamp", "nerd" };
         var biome = floorBiomes[(floorNumber - 1) % floorBiomes.Length];
 
         var cx = GridSize / 2;
@@ -81,15 +82,25 @@ public static class DungeonGenerator
         foreach (var room in placed.Where(r => !r.IsStart))
             PopulatePack(room, config, packSize, rand);
         
-        var itemRoom = placed[rand.Next(placed.Count)];
-        CreateItem(itemRoom, rand);
+        for (var i = 0; i < 2; i++) 
+        {
+            var itemRoom = placed[rand.Next(placed.Count)];
+            CreateItem(itemRoom, rand);
+        }
 
         return new Floor(floorNumber, rooms, cx, cy);
     }
 
     private static void CreateItem(DungeonRoom room, Random rand)
     {
-        var type = rand.Next(0, 2) == 0 ? ItemType.Cpp : ItemType.Python3;
+        List<ItemType> variants = [ItemType.Haskell,
+            ItemType.Python3, ItemType.Cpp, ItemType.Java,
+            ItemType.OCaml, ItemType.Zig, ItemType.Rust,
+            ItemType.AnsiC, ItemType.FSharp, ItemType.Roc,
+            ItemType.OneF, ItemType.JavaScript, ItemType.TypeScript,
+            ItemType.Go, ItemType.Kotlin, ItemType.Asm, ItemType.Scala3
+        ];
+        var type = variants[rand.Next(variants.Count)];
         var position = new Position(7, 5);
         room.ItemSpawns.Add(new ItemSpawn(type, position));
     }
@@ -113,12 +124,22 @@ public static class DungeonGenerator
 
             used.Add((x, y));
 
-            var type = rand.Next(2) == 0 ? EntityType.Lambda : EntityType.ModusPonens;
-            room.MobSpawns.Add(new MobSpawn(type, new Position(x, y)));
+            List<EntityType> enemyTypes = [
+                EntityType.ModusPonens,
+                EntityType.Lambda,
+                EntityType.Monad,
+                EntityType.Nerd,
+                EntityType.NuclearNerd,
+                EntityType.Skolem,
+                EntityType.Mole,
+                EntityType.Tear,
+            ];
+            var enemyType = enemyTypes[rand.Next(enemyTypes.Count)];
+            room.MobSpawns.Add(new MobSpawn(enemyType, new Position(x, y)));
         }
     }
 
-    private static IEnumerable<Direction> Shuffle(Direction[] source, Random rand)
+    private static List<Direction> Shuffle(Direction[] source, Random rand)
     {
         var list = source.ToList();
         for (var i = list.Count - 1; i > 0; i--)
