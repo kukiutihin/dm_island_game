@@ -14,16 +14,15 @@ public class ProjectileBehaviourBuilder(Direction direction, IEnumerable<ItemTyp
             new FollowEntityBehaviour(GetSpeed(), GetFollowRange() * GetSpeed()),
             new DamageEntityOnCollisionBehaviour(GetDamage()),
             new TimedDieBehaviour(GetTtl()),
+            new ChanceBehaviour(new HitPlayerWithLightningBehaviour(), GetSelfLightningChance()),
+            new ChanceBehaviour(new SpawnLightningOnCollisionBehaviour(), GetLightningChance())
         ]);
     }
     // TODO:
-    // OCaml,
-    // Zig,
     // Roc,
     // JavaScript,
     // TypeScript,
-    // Go,x
-    // Scala3
+    // Go,
 
     private int GetDamage()
     {
@@ -45,11 +44,34 @@ public class ProjectileBehaviourBuilder(Direction direction, IEnumerable<ItemTyp
         var speed = 1;
         foreach (var item in _items)
         {
-            if (item == ItemType.Asm) speed += 3;
+            if (item == ItemType.Asm) speed += 2;
             if (item == ItemType.AnsiC) speed += 1;
             if (item == ItemType.Rust) speed += 1;
         }
         return speed;
+    }
+
+    private double GetLightningChance()
+    {
+        var chance = 0f;
+        foreach (var item in _items)
+        {
+            if (item == ItemType.Zig) chance += 0.15f;
+            if (item == ItemType.Cpp) chance += 0.05f;
+            if (item == ItemType.Rust) chance += 0.025f;
+            if (item == ItemType.Asm) chance += 0.025f;
+        }
+        return chance;
+    }
+    
+    private double GetSelfLightningChance()
+    {
+        var chance = 0f;
+        foreach (var item in _items)
+        {
+            if (item == ItemType.Cpp) chance += 0.01f;
+        }
+        return chance;
     }
 
     private int GetFollowRange()

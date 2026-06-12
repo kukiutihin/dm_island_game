@@ -15,7 +15,7 @@ public class EnemyProjectile(Direction direction, Position position) : Entities.
     private readonly IBehaviour _behaviour = new CompositeBehaviour([
         new DestroyIfInBlockBehaviour(),
         new StraightLineBehaviour(1, direction),
-        new DamagePlayerOnCollisionBehaviour(),
+        new DamagePlayerOnCollisionBehaviour(1),
     ]);
     
     public override void PerformTurn(GameState state)

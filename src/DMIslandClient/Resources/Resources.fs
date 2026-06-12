@@ -37,6 +37,7 @@ module Resources =
         let ENEMY_PROJECTILE = "Resources/Textures/Particle/enemy_proj.png"
         let THETA = "Resources/Textures/Particle/theta.png"
         let ATTACK_INDICATOR = "Resources/Textures/Particle/attack.png"
+        let LIGHTNING = "Resources/Textures/Particle/lightning.png"
         
         
     

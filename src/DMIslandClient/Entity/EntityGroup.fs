@@ -24,9 +24,9 @@ type EntityGroup(textures, entityFactory: IEntityFactory) =
             entity.SetTarget(pos)
             entities.Add(id, entity)
         | true, v ->
-            if Pos.len (v.Position.GetTarget()) pos > 5f then
-                v.Position.Teleport(pos)
-            v.Position.SetTarget(pos)
+            if Pos.len (v.GetTarget()) pos > 5f then
+                v.Teleport(pos)
+            v.SetTarget(pos)
     
     member x.RemoveEntity(id: Guid) =
         let entity = entities[id]
@@ -50,7 +50,7 @@ type EntityGroup(textures, entityFactory: IEntityFactory) =
     member x.MoveEntityTo(guid: Guid, pos: Pos) =
         match entities.TryGetValue(guid) with
         | true, ent ->
-            if Pos.len (ent.Position.GetTarget()) pos > 5f then
-                ent.Position.Teleport(pos)
-            ent.Position.SetTarget(pos)
+            if Pos.len (ent.GetTarget()) pos > 5f then
+                ent.Teleport(pos)
+            ent.SetTarget(pos)
         | false, _ -> ()
