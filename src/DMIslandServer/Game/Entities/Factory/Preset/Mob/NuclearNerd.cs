@@ -15,7 +15,7 @@ public class NuclearNerd(Position position) : Entities.Mob(EntityType.NuclearNer
                 new TimedBehaviour(new ThetaDiamondAttackBehaviour(), 12)
             ]),
             new CompositeBehaviour([
-                new TimedBehaviour(new ThetaRandomAttackBehaviour(10), 15),
+                new TimedBehaviour(new ThetaRandomAttackBehaviour(24), 15),
                 new RandomWalkBehaviour(5, 1),
             ]),
             3f

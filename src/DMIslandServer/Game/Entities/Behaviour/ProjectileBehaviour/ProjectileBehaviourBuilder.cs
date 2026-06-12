@@ -11,7 +11,7 @@ public class ProjectileBehaviourBuilder(Direction direction, IEnumerable<ItemTyp
         return new CompositeBehaviour([
             new DestroyIfInBlockBehaviour(),
             new StraightLineBehaviour(GetSpeed(), direction),
-            new FollowEntityBehaviour(GetSpeed(), GetFollowRange()),
+            new FollowEntityBehaviour(GetSpeed(), GetFollowRange() * GetSpeed()),
             new DamageEntityOnCollisionBehaviour(GetDamage()),
             new TimedDieBehaviour(GetTtl()),
         ]);
