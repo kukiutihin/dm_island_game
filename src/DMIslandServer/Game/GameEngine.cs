@@ -92,7 +92,8 @@ public class GameEngine
     private void AfterTurn()
     {
         var cur = Floor.Current;
-        if (!cur.Cleared && !State.Mobs.Any(m => m.IsAlive))
+        var somethingLeft = State.Mobs.Any(m => m.IsAlive) || State.Items.Any(m => m.IsAlive);
+        if (!cur.Cleared && !somethingLeft)
         {
             cur.Cleared = true;
             OpenDoors(cur);
@@ -141,8 +142,10 @@ public class GameEngine
 
         State.Player.Teleport(playerPos);
 
+        var somethingLeft = State.Mobs.Any(m => m.IsAlive) || State.Items.Any(m => m.IsAlive);
+
         // A room with no mobs (e.g. the start room) is already clear.
-        if (!target.Cleared && !State.Mobs.Any(m => m.IsAlive))
+        if (!target.Cleared && !somethingLeft)
         {
             target.Cleared = true;
             OpenDoors(target);

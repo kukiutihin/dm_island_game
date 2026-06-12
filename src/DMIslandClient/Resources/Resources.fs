@@ -21,9 +21,9 @@ module Resources =
 
     module Entity =
         let STEVE = "Resources/Entity/steve.png"
-        let LAMBDA = "Resources/Entity/lambda.png"
+        let LAMBDA = "Resources/Entity/lambda_px.png"
         let MODUS_PONENS = "Resources/Entity/modus-ponens.png"
-        let NERD = "Resources/Entity/nerd.webp"
+        let NERD = "Resources/Entity/nerd_px.png"
         let MONAD = "Resources/Entity/monad.png"
         let NUCLEAR_NERD = "Resources/Entity/nuclear_nerd.png"
         let SKOLEM = "Resources/Entity/skolem.png"
@@ -37,6 +37,7 @@ module Resources =
         let ENEMY_PROJECTILE = "Resources/Textures/Particle/enemy_proj.png"
         let THETA = "Resources/Textures/Particle/theta.png"
         let ATTACK_INDICATOR = "Resources/Textures/Particle/attack.png"
+        let LIGHTNING = "Resources/Textures/Particle/lightning.png"
         
         
     

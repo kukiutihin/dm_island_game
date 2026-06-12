@@ -84,6 +84,14 @@ type MobFactory() =
         let entity = Entity(sprite, LinearAnimatablePos(0.5f, pos), 0f)
         entity.SetScale(1f, 1f)
         entity
+
+    let createLightning atlas (spriteGroup: SpriteGroup) pos =
+        let sprite = Sprite(pos + Pos(0f, 4f), atlas, Resources.Particle.LIGHTNING)
+        spriteGroup.AddSprite(sprite)
+        let entity = ImmovableEntity(sprite, LinearAnimatablePos(0.5f, pos + Pos(0f, 4f)), 10f)
+        entity.SetScale(8f, 8f)
+        entity
+        
         
     
     interface IEntityFactory with
@@ -122,4 +130,5 @@ type MobFactory() =
             | EntityType.Scala3Item -> createItem atlas group Resources.Item.SCALA3 pos
             | EntityType.ThetaAttack -> createTheta atlas group pos
             | EntityType.AttackIndicator -> createAttack atlas group pos
+            | EntityType.Lightning -> createLightning atlas group pos
             | _ -> failwith $"Cannot create entity of type {t}"

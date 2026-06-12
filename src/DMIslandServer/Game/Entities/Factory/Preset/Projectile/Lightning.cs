@@ -4,18 +4,18 @@ using RoguelikeServerMVP.Game.Entities.Behaviour.ProjectileBehaviour;
 
 namespace RoguelikeServerMVP.Game.Entities.Factory.Preset.Projectile;
 
-public class ThetaAttack(Position position) : Entities.Projectile(EntityType.ThetaAttack, position, int.MaxValue)
+public class Lightning(Position position) : Entities.Projectile(EntityType.Lightning, position, int.MaxValue)
 {
     private readonly IBehaviour _behaviour = new CompositeBehaviour([
-        new TimedDieBehaviour(2),
-        new DamagePlayerOnCollisionBehaviour(2)
+        new TimedDieBehaviour(0),
+        new DamagePlayerOnCollisionBehaviour(2),
+        new DamageEntityOnCollisionBehaviour(4),
     ]);
-    
+
     public override void PerformTurn(GameState state)
     {
-        base.PerformTurn(state);
         _behaviour.PerformTurn(this, state);
     }
-    
+
     protected override void OnDamage(int damage, GameState state) { }
 }

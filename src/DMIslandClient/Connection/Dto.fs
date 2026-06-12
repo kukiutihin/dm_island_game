@@ -44,6 +44,7 @@ module Dto =
         | Mole = 31
         | AttackIndicator = 32
         | ThetaAttack = 33
+        | Lightning = 34
 
     type ItemType =
         | Heart = 1

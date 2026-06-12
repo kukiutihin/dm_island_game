@@ -160,6 +160,7 @@ public enum EntityType
     
     AttackIndicator,
     ThetaAttack,
+    Lightning,
     EnemyProjectile,
     Wall,
     

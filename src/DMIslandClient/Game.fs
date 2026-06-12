@@ -22,6 +22,6 @@ type Game () =
         window.FixedUpdate.Add(fun _ -> scene.FixedUpdate())
         window.Update.Add(fun dt -> scene.Update dt)
         window.Resized.Add(fun () -> scene.Resize())
-        window.UpdateFrequency <- 240.
+        window.UpdateFrequency <- 120.
 
     member x.Run() = window.Run()

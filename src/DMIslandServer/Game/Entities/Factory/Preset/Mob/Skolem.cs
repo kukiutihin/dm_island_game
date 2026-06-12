@@ -12,8 +12,8 @@ public class Skolem(Position position) : Entities.Mob(EntityType.Skolem, positio
 {
     private readonly IBehaviour _behaviour = 
         new ChooseOnPlayerDistanceBehaviour(
-            new ChasePlayerBehaviour(4),
-            new TimedBehaviour(new RandomWalkBehaviour(5, 1), 2),
+            new ChasePlayerBehaviour(2),
+            new TimedBehaviour(new RandomWalkBehaviour(3, 1), 2),
             3f
         );
     
