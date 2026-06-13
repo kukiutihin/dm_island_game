@@ -15,7 +15,7 @@ public class Player(Position startPos, int maxHp)
 
         if (!state.CanMoveTo(targetPos))
             return;
-
+        
         PreviousPosition = Position;
         Position = targetPos;
     }
@@ -32,6 +32,8 @@ public class Player(Position startPos, int maxHp)
             state.AddProjectile(new Tear(dir, _items, Position.Move(DirectionUtil.TurnRight(dir))));
         
         state.AddProjectile(new Tear(dir, _items, Position));
+        
+        PreviousPosition = Position;
     }
     
     public void PickupItem(ItemType itemType)

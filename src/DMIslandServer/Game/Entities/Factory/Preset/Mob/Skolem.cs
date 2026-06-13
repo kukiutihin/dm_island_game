@@ -10,10 +10,10 @@ namespace RoguelikeServerMVP.Game.Entities.Factory.Preset.Mob;
 /// </summary>
 public class Skolem(Position position) : Entities.Mob(EntityType.Skolem, position, 10)
 {
-    private readonly IBehaviour _behaviour = 
-        new ChooseOnPlayerDistanceBehaviour(
+    private readonly IBehaviour<Entity> _behaviour = 
+        new ChooseOnPlayerDistanceBehaviour<Entity>(
             new ChasePlayerBehaviour(2),
-            new TimedBehaviour(new RandomWalkBehaviour(3, 1), 2),
+            new TimedBehaviour<Entity>(new RandomWalkBehaviour(3), 1),
             3f
         );
     

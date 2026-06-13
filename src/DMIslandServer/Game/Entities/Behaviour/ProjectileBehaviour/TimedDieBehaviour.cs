@@ -1,11 +1,11 @@
 namespace RoguelikeServerMVP.Game.Entities.Behaviour.ProjectileBehaviour;
 
-public class TimedDieBehaviour(int ttl) : IBehaviour
+public class TimedDieBehaviour(int ttl) : IBehaviour<Projectile>
 {
     private int _ttl = ttl;
     
-    public void PerformTurn(Entity self, GameState state)
+    public void PerformTurn(Projectile self, GameState state)
     {
-        if (_ttl-- < 0) self.Kill(state);
+        if (_ttl-- <= 0) self.KillOnNextMove(state);
     }
 }

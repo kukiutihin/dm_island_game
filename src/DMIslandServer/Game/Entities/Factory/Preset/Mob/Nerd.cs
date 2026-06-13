@@ -11,15 +11,15 @@ namespace RoguelikeServerMVP.Game.Entities.Factory.Preset.Mob;
 /// </summary>
 public class Nerd(Position position) : Entities.Mob(EntityType.Nerd, position, 20)
 {
-    private readonly IBehaviour _behaviour = 
-        new ChooseOnPlayerDistanceBehaviour(
-            new CompositeBehaviour([
+    private readonly IBehaviour<Entity> _behaviour = 
+        new ChooseOnPlayerDistanceBehaviour<Entity>(
+            new CompositeBehaviour<Entity>([
                 new ChasePlayerBehaviour(1),
-                new TimedBehaviour(new ThetaDiamondAttackBehaviour(), 8)
+                new TimedBehaviour<Entity>(new ThetaDiamondAttackBehaviour(), 8)
             ]),
-            new CompositeBehaviour([
-                new TimedBehaviour(new ThetaInLineAttackBehavior(5), 10),
-                new RandomWalkBehaviour(5, 1),
+            new CompositeBehaviour<Entity>([
+                new TimedBehaviour<Entity>(new ThetaInLineAttackBehavior(5), 10),
+                new RandomWalkBehaviour(5),
             ]),
             3f
         );

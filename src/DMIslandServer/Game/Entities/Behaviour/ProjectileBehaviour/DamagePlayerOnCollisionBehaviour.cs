@@ -1,18 +1,19 @@
 namespace RoguelikeServerMVP.Game.Entities.Behaviour.ProjectileBehaviour;
 
-public class DamagePlayerOnCollisionBehaviour(int damage) : IBehaviour
+public class DamagePlayerOnCollisionBehaviour(int damage) : IBehaviour<Projectile>
 {
-    public void PerformTurn(Entity self, GameState state)
+    public void PerformTurn(Projectile self, GameState state)
     {
         var positionsCollided =
             self.Position == state.Player.Position ||
             self.PreviousPosition == state.Player.Position ||
             self.PreviousPosition == state.Player.PreviousPosition;
+
+        if (!positionsCollided)
+            return;
         
-        if (positionsCollided)
-        {
-            Console.WriteLine($"Damaging player ({state.Player.Position}/{state.Player.PreviousPosition}): {self.Position}/{self.PreviousPosition}");
-            state.Player.TakeDamage(damage, state);
-        }
+        Console.WriteLine($"Damaging player ({state.Player.Position}/{state.Player.PreviousPosition}): {self.Position}/{self.PreviousPosition}");
+        state.Player.TakeDamage(damage, state);
+        self.KillOnNextMove(state);
     }
 }

@@ -2,7 +2,7 @@ using RoguelikeServerMVP.Game.Entities.Factory.Preset.Projectile;
 
 namespace RoguelikeServerMVP.Game.Entities.Behaviour.EntityBehaviour;
 
-public class ThetaDiamondAttackBehaviour : IBehaviour
+public class ThetaDiamondAttackBehaviour : IBehaviour<Entity>
 {
     private static readonly string[] Attack = ["00100", "01010", "10001", "01010", "00100"];
     

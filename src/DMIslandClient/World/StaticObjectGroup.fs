@@ -44,3 +44,4 @@ type StaticObjectGroup() =
         | "nerd" -> [| Resources.Texture.STONE_DARK; Resources.Texture.THORNS |] |> factory.SetTextures
         | "forest" -> [| Resources.Texture.STONE_1; Resources.Texture.STONE_2; Resources.Texture.THORNS |] |> factory.SetTextures
         | _ -> [| Resources.Texture.STONE_1; Resources.Texture.STONE_2 |] |> factory.SetTextures
+    

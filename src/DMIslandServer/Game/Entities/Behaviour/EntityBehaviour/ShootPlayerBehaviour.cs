@@ -3,7 +3,7 @@ using RoguelikeServerMVP.Game.Entities.Factory.Preset.Projectile;
 
 namespace RoguelikeServerMVP.Game.Entities.Behaviour.EntityBehaviour;
 
-public class ShootPlayerBehaviour(int cooldown) : IBehaviour
+public class ShootPlayerBehaviour(int cooldown) : IBehaviour<Entity>
 {
     private int _currentCooldown = cooldown;
     

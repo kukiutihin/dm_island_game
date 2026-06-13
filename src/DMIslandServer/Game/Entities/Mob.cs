@@ -38,6 +38,11 @@ public abstract class Mob(EntityType name, Position position, int maxHp) : Entit
     {
         _debuffs.Add(new Debuff(DebuffType.Stunned, 3));
     }
+
+    public void AddDebuff(DebuffType type, int duration)
+    {
+        _debuffs.Add(new Debuff(type, duration));
+    }
     
     public override void TryMoveTo(Position target)
     {

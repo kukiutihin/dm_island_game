@@ -6,8 +6,8 @@ namespace RoguelikeServerMVP.Game.Entities.Factory.Preset.Projectile;
 
 public class ThetaAttack(Position position) : Entities.Projectile(EntityType.ThetaAttack, position, int.MaxValue)
 {
-    private readonly IBehaviour _behaviour = new CompositeBehaviour([
-        new TimedDieBehaviour(2),
+    private readonly IBehaviour<Entities.Projectile> _behaviour = new CompositeBehaviour<Entities.Projectile>([
+        new TimedDieBehaviour(1),
         new DamagePlayerOnCollisionBehaviour(2)
     ]);
     

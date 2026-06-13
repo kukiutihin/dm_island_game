@@ -2,7 +2,7 @@ using RoguelikeServerMVP.Game.Entities.Factory.Preset.Projectile;
 
 namespace RoguelikeServerMVP.Game.Entities.Behaviour.ProjectileBehaviour;
 
-public class SpawnLightningOnCollisionBehaviour : IBehaviour
+public class SpawnLightningOnCollisionBehaviour<T> : IBehaviour<T> where T : Entity
 {
     private static Entity? GetCollisionInRange(Position from, Position to, GameState state)
     {
@@ -12,7 +12,7 @@ public class SpawnLightningOnCollisionBehaviour : IBehaviour
             .FirstOrDefault(entity => entity != null);
     }
     
-    public void PerformTurn(Entity self, GameState state)
+    public void PerformTurn(T self, GameState state)
     {
         var collision = GetCollisionInRange(self.PreviousPosition, self.Position, state);
 

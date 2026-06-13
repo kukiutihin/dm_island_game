@@ -54,3 +54,5 @@ type EntityGroup(textures, entityFactory: IEntityFactory) =
                 ent.Teleport(pos)
             ent.SetTarget(pos)
         | false, _ -> ()
+
+    member x.GetGroup() = spriteGroup

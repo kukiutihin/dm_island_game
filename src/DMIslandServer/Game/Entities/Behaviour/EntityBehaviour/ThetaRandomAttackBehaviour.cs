@@ -2,7 +2,7 @@ using RoguelikeServerMVP.Game.Entities.Factory.Preset.Projectile;
 
 namespace RoguelikeServerMVP.Game.Entities.Behaviour.EntityBehaviour;
 
-public class ThetaRandomAttackBehaviour(int count) : IBehaviour
+public class ThetaRandomAttackBehaviour(int count) : IBehaviour<Entity>
 {
     public void PerformTurn(Entity self, GameState state)
     {

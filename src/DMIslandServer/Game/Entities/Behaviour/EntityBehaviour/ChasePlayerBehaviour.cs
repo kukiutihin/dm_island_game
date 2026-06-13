@@ -1,6 +1,6 @@
 namespace RoguelikeServerMVP.Game.Entities.Behaviour.EntityBehaviour;
 
-public class ChasePlayerBehaviour(int skipMoves) : IBehaviour
+public class ChasePlayerBehaviour(int skipMoves) : IBehaviour<Entity>
 {
     private int _step = skipMoves;
     

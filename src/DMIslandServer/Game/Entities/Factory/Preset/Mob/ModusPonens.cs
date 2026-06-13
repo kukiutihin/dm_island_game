@@ -10,11 +10,11 @@ namespace RoguelikeServerMVP.Game.Entities.Factory.Preset.Mob;
 /// <param name="position"></param>
 public class ModusPonens(Position position) : Entities.Mob(EntityType.ModusPonens, position, 3)
 {
-    private readonly IBehaviour _behaviour = new CompositeBehaviour([
+    private readonly IBehaviour<Entity> _behaviour = new CompositeBehaviour<Entity>([
         new DamageWhenNearBehaviour(),
-        new ChooseOnPlayerDistanceBehaviour(
+        new ChooseOnPlayerDistanceBehaviour<Entity>(
             new ChasePlayerBehaviour(1),
-            new RandomWalkBehaviour(5, 1),
+            new RandomWalkBehaviour(5),
             4f
         )
     ]);

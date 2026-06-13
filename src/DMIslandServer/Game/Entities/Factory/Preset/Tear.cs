@@ -14,13 +14,15 @@ namespace RoguelikeServerMVP.Game.Entities.Factory.Preset;
 /// <param name="position"></param>
 public class Tear(Direction direction, IEnumerable<ItemType> items, Position position) : Entities.Projectile(EntityType.Tear, position, 1)
 {
-    private readonly IBehaviour _behaviour = new ProjectileBehaviourBuilder(direction, items).Build();
+    private readonly IBehaviour<Entities.Projectile> _behaviour = new ProjectileBehaviourBuilder(direction, items).Build();
     
     public override bool IsBlocking => false;
     
     public override void PerformTurn(GameState state)
     {
         base.PerformTurn(state);
+        if (!IsAlive)
+            return;
         _behaviour.PerformTurn(this, state);
     }
 
