@@ -1,4 +1,4 @@
-namespace RoguelikeServerMVP
+namespace RoguelikeServerMVP.Game
 {
     public class GameConfig
     {

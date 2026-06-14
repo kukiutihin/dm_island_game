@@ -5,7 +5,7 @@ open DMIslandClient.Connection
 open LadaEngine
 open OpenTK.Windowing.GraphicsLibraryFramework
 
-type PlayerController(connection: GameConnection) =
+type PlayerController(connection: IGameConnection) =
     let subscriptions = ResizeArray()
     let mutable onAttack : unit -> unit = ignore
     let mutable onFace : bool -> unit = ignore

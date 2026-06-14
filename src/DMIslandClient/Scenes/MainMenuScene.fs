@@ -4,8 +4,11 @@ open DMIslandClient.Connection
 open DMIslandClient.UI
 open LadaEngine
 
-type MainMenuScene(loadScene, window: Window) =
-    let connection = GameConnection("http://localhost:5229")
+type MainMenuScene(loadScene, window: Window, detachedMode: bool, url) =
+    let connection: IGameConnection =
+        if detachedMode
+        then PingGameConnection(url)
+        else GameConnection(url)
     let gameScene = GameScene(connection, window)
     
     let ui = MainMenuUI()

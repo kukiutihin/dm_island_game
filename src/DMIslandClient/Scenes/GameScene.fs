@@ -11,7 +11,7 @@ open DMIslandClient.World
 open LadaEngine
 
 
-type GameScene(connection: GameConnection, window: Window) =
+type GameScene(connection: IGameConnection, window: Window) =
     let mutable currentRoom: Room option = None
     let entities = MobGroup()
     let objects = StaticObjectGroup()

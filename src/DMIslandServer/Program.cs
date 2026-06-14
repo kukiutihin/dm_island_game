@@ -60,6 +60,9 @@ app.MapPost("/action", (PlayerActionRequest request, GameEngine engine) =>
             // Start a fresh run from floor 1 with a healed player (respawn after death).
             engine.Restart();
             break;
+        case "ping":
+            // Do nothing
+            break;
         default:
             // неизвестное действие — ничего не делаем
             Console.WriteLine($"Unknown action: {action}");

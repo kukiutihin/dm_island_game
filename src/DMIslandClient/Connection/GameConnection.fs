@@ -4,8 +4,18 @@ open System
 open System.Net.Http.Json
 open System.Text.Json
 open System.Text.Json.Serialization
+open System.Threading.Tasks
 open DMIslandClient.Connection.Dto
 open System.Net.Http
+
+type IGameConnection =
+    abstract member SendCallback: PlayerActionRequest * (GameStateResponse -> unit) -> Task<unit>
+    abstract member MoveCallback: string * (GameStateResponse -> unit) -> unit
+    abstract member ShootCallback: string * (GameStateResponse -> unit) -> unit
+    abstract member SkibCallback: (GameStateResponse -> unit) -> unit
+    abstract member RestartCallback: (GameStateResponse -> unit) -> unit
+    abstract member CheckAlive: (bool -> unit) -> unit
+    
 type GameConnection(serverUrl) =
     let actionEndpoint = $"{serverUrl}/action"
     
@@ -25,36 +35,37 @@ type GameConnection(serverUrl) =
         callback content
     }
     
-    member _.SendCallback(req: PlayerActionRequest, callback: GameStateResponse -> unit) = task {
-        let! response = sendRequest req |> Async.AwaitTask
-        let! content = response.Content.ReadFromJsonAsync<GameStateResponse>(options) |> Async.AwaitTask
-        callback content
-    }
-    
-    member _.MoveCallback(direction: string, callback: GameStateResponse -> unit) =
-        let action = { Action = "move"; Direction = Some direction }
-        actionAndCallback action callback |> Async.AwaitTask |> Async.RunSynchronously
-    
-    member _.ShootCallback(direction: string, callback: GameStateResponse -> unit) =
-        let action = { Action = "attack"; Direction = Some direction }
-        actionAndCallback action callback |> Async.AwaitTask |> Async.RunSynchronously
-    
-    member _.SkibCallback(callback: GameStateResponse -> unit) =
-        let action = { Action = "skip"; Direction = None  }
-        actionAndCallback action callback |> Async.AwaitTask |> Async.RunSynchronously
+    interface IGameConnection with
+        member _.SendCallback(req: PlayerActionRequest, callback: GameStateResponse -> unit) = task {
+            let! response = sendRequest req |> Async.AwaitTask
+            let! content = response.Content.ReadFromJsonAsync<GameStateResponse>(options) |> Async.AwaitTask
+            callback content
+        }
+        
+        member _.MoveCallback(direction: string, callback: GameStateResponse -> unit) =
+            let action = { Action = "move"; Direction = Some direction }
+            actionAndCallback action callback |> Async.AwaitTask |> Async.RunSynchronously
+        
+        member _.ShootCallback(direction: string, callback: GameStateResponse -> unit) =
+            let action = { Action = "attack"; Direction = Some direction }
+            actionAndCallback action callback |> Async.AwaitTask |> Async.RunSynchronously
+        
+        member _.SkibCallback(callback: GameStateResponse -> unit) =
+            let action = { Action = "skip"; Direction = None  }
+            actionAndCallback action callback |> Async.AwaitTask |> Async.RunSynchronously
 
-    member _.RestartCallback(callback: GameStateResponse -> unit) =
-        let action = { Action = "restart"; Direction = None }
-        actionAndCallback action callback |> Async.AwaitTask |> Async.RunSynchronously
+        member _.RestartCallback(callback: GameStateResponse -> unit) =
+            let action = { Action = "restart"; Direction = None }
+            actionAndCallback action callback |> Async.AwaitTask |> Async.RunSynchronously
 
-    member _.CheckAlive(callback: bool -> unit) =
-        let action = { Action = "ping"; Direction = None }
-        try
-            actionAndCallback action ignore |> Async.AwaitTask |> Async.RunSynchronously
-            callback true
-        with
-        | :? HttpRequestException -> callback false
-        | :? AggregateException as e ->
-            printfn "%s" <| e.Message.ToString()
-            printfn "%s" <| e.StackTrace.ToString()
-            callback false
+        member _.CheckAlive(callback: bool -> unit) =
+            let action = { Action = "ping"; Direction = None }
+            try
+                actionAndCallback action ignore |> Async.AwaitTask |> Async.RunSynchronously
+                callback true
+            with
+            | :? HttpRequestException -> callback false
+            | :? AggregateException as e ->
+                printfn "%s" <| e.Message.ToString()
+                printfn "%s" <| e.StackTrace.ToString()
+                callback false
