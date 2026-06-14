@@ -58,7 +58,6 @@ type PlayerController(connection: GameConnection) =
     member _.SetOnFace(callback: bool -> unit) = onFace <- callback
 
     member _.SubscribeToUpdate(callback: GameStateResponse -> unit) =
-        printfn "123"
         subscriptions.Add(callback)
 
     member _.SendInitial() = connection.SkibCallback(notifyAll)
