@@ -19,5 +19,8 @@ module Controls =
     /// True only on the frame the key went down
     let keyPressedOnce (key: Keys) = Keyboard.IsKeyPressed key
 
+    /// True every frame the key is held down
+    let keyHeld (key: Keys) = Keyboard.IsKeyDown key
+
     /// True only on the frame the mouse button went down
     let mouseButtonPressedOnce (button: MouseButton) = Mouse.IsButtonPressed button

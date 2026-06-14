@@ -59,6 +59,10 @@ type GameScene(connection: GameConnection, window: Window) =
                         [| Resources.Entity.STOY_ATTACK; Resources.Entity.STOY_IDLE |],
                         4f,
                         false))
+            // Turn the character to face the side of the last horizontal key pressed.
+            controller.SetOnFace(fun faceRight ->
+                if playerId <> Guid.Empty then
+                    entities.SetFacing(playerId, faceRight))
             controller.SendInitial()
             camera.GetCamera().Zoom <- 7f
             ui.Load()
@@ -85,7 +89,7 @@ type GameScene(connection: GameConnection, window: Window) =
                 if Controls.keyPressedOnce(OpenTK.Windowing.GraphicsLibraryFramework.Keys.R) then
                     connection.RestartCallback(fun resp -> sync.AddEvent(fun () -> applyUpdate resp))
             else
-                controller.Update()
+                controller.Update(dt)
             currentRoom |> Option.iter (_.Update(dt))
             sync.ExecuteAll()
             objects.GetGroup().Update(dt)

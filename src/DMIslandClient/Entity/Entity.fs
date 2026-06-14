@@ -10,6 +10,8 @@ type Entity (sprite: Sprite, position: IAnimatablePos, scale: float32) =
     let spriteFlipper = SpriteFlipper(sprite)
     let scaleControl: IAnimatablePos = LinearAnimatablePos(10f, Pos(scale, scale))
     let mutable flipping = false
+    // Horizontal facing: true = sprite drawn normally (right), false = mirrored (left).
+    let mutable facingRight = true
     // Optional frame-by-frame animation that cycles the sprite's texture.
     let mutable animation : SpriteAnimation option = None
 
@@ -34,7 +36,9 @@ type Entity (sprite: Sprite, position: IAnimatablePos, scale: float32) =
         scaleControl.Update(dt)
         // Advance frames before the SpriteGroup rebuilds its vertices this frame.
         animation |> Option.iter (fun a -> a.Update(dt))
-        x.Sprite.Width <- scaleControl.GetValue().X
+        // Width magnitude comes from the scale; its sign mirrors the sprite to face left/right.
+        let w = abs (scaleControl.GetValue().X)
+        x.Sprite.Width <- (if facingRight then w else -w)
         x.Sprite.Height <- scaleControl.GetValue().Y
         x.Sprite.Position <- position.GetValue()
 
@@ -46,6 +50,9 @@ type Entity (sprite: Sprite, position: IAnimatablePos, scale: float32) =
     default x.Teleport(pos: Pos) = position.Teleport(pos: Pos)
     
     member public x.SetFlip(b) = flipping <- b
+
+    /// Sets which way the sprite faces. true = right (default art), false = mirrored to the left.
+    member public x.SetFacingRight(b) = facingRight <- b
     
     member public x.SetScale(width: float32, height: float32) = scaleControl.SetTarget(Pos(width, height))
     
