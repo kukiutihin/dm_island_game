@@ -9,11 +9,10 @@ and talks to an authoritative game server over HTTP.
 .
 ├── DMIsland.sln               # solution referencing all projects
 ├── Directory.Build.props      # shared build settings
-├── build.sh                   # build everything
-├── run.sh                     # start server + client
+├── docker-compose.yml         # build + run the server in Docker
 ├── src/
 │   ├── LadaEngine/            # 2D OpenGL engine (OpenTK, F#) — used by the client
-│   ├── DMIslandServer/        # authoritative game server (ASP.NET, C#)
+│   ├── DMIslandServer/        # authoritative game server (ASP.NET, C#) + Dockerfile
 │   └── DMIslandClient/        # game client (F#), renders via LadaEngine
 └── tests/
     └── DMIslandServer.Tests/  # xUnit tests for the server game logic
@@ -25,27 +24,33 @@ layout was consolidated, so no namespaces had to change.
 
 ## Requirements
 
-- .NET 10 SDK (all projects target `net10.0`).
-
-## Build
-
-```bash
-./build.sh
-```
+- Docker (with Compose v2) — to run the server.
+- .NET 10 SDK — to run the client and the tests (all projects target `net10.0`).
 
 ## Run
 
+The server runs in Docker; the client is a desktop OpenGL window, so it runs on
+your host machine.
+
 ```bash
-./run.sh
+# 1) build + start the server (http://localhost:5229)
+docker compose up --build        # add -d to run in the background
+
+# 2) in another terminal, start the client (connects to localhost:5229)
+dotnet run --project src/DMIslandClient
 ```
 
-This starts the server on `http://localhost:5229`, waits a moment, then opens
-the client window. The client connects to that URL (configured in
-`src/DMIslandClient/Scenes/MainMenuScene.fs`). Closing the client stops the
-server.
+Stop the server with `docker compose down` (or Ctrl-C if running in the
+foreground). The client connects to `http://localhost:5229`, configured in
+`src/DMIslandClient/Scenes/MainMenuScene.fs`.
 
-To run them separately, start each from its own folder (the client loads its
-textures/fonts using paths relative to the working directory):
+> The client can't run in a container on macOS/Windows because it needs a
+> display and the GPU. `docker-compose.yml` includes a commented-out, Linux-only
+> X11 client service if you want to containerize it on a Linux host.
+
+### Running without Docker
+
+The server is a plain ASP.NET app, so you can also run both with the SDK:
 
 ```bash
 # terminal 1 — server

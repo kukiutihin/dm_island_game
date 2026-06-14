@@ -1,7 +1,0 @@
-﻿services:
-  dmislandclient:
-    image: dmislandclient
-    build:
-      context: .
-      dockerfile: DMIslandClient/Dockerfile
-

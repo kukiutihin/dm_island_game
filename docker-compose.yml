@@ -1,0 +1,53 @@
+# Runs the DM Island game server.
+#
+#   docker compose up --build      # build + start the server (replaces build.sh / run.sh)
+#   docker compose up -d           # start in the background
+#   docker compose down            # stop and remove
+#
+# The server listens on http://localhost:5229 (mapped below).
+#
+# The game CLIENT is an OpenGL/OpenTK desktop window and cannot be shown from a
+# container on macOS/Windows, so run it on the host (it connects to localhost:5229):
+#
+#   dotnet run --project src/DMIslandClient
+#
+# (A Linux-only X11 client service is sketched at the bottom of this file.)
+
+services:
+  server:
+    build:
+      context: .
+      dockerfile: src/DMIslandServer/Dockerfile
+    image: dmisland-server
+    container_name: dmisland-server
+    ports:
+      - "5229:5229"
+    environment:
+      ASPNETCORE_URLS: http://0.0.0.0:5229
+      ASPNETCORE_ENVIRONMENT: Development
+    restart: unless-stopped
+
+# ---------------------------------------------------------------------------
+# Optional: run the client in a container too. Only viable on a Linux host with
+# an X11 server (it needs the display and GPU). On macOS/Windows run the client
+# on the host instead (see the comment above). Enable with:
+#
+#   xhost +local:docker
+#   docker compose --profile client up --build
+#
+# Note: the client hard-codes http://localhost:5229
+# (src/DMIslandClient/Scenes/MainMenuScene.fs); point it at http://server:5229
+# or share the host network for this to reach the server container.
+#
+#  client:
+#    profiles: ["client"]
+#    build:
+#      context: .
+#      dockerfile: src/DMIslandClient/Dockerfile
+#    image: dmisland-client
+#    depends_on: [server]
+#    network_mode: host
+#    environment:
+#      DISPLAY: ${DISPLAY}
+#    volumes:
+#      - /tmp/.X11-unix:/tmp/.X11-unix:rw

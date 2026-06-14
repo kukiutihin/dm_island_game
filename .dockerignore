@@ -1,0 +1,11 @@
+# Keep the build context small and reproducible.
+**/bin
+**/obj
+**/.git
+**/.vs
+**/.vscode
+**/.idea
+**/*.user
+**/.DS_Store
+README.md
+LICENSE
