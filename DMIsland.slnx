@@ -4,7 +4,7 @@
     <Project Path="src/LadaEngine/LadaEngine.fsproj" />
   </Folder>
   <Folder Name="/src/DMIslandServer/">
-    <Project Path="src/DMIslandServer/RoguelikeServerMVP.csproj" />
+    <Project Path="services/DMIslandServer/RoguelikeServerMVP.csproj" />
   </Folder>
   <Folder Name="/tests/" />
   <Folder Name="/tests/DMIslandServer.Tests/">

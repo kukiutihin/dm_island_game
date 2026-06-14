@@ -19,7 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\DMIslandServer\RoguelikeServerMVP.csproj" />
+    <ProjectReference Include="..\..\services\DMIslandServer\RoguelikeServerMVP.csproj" />
   </ItemGroup>
 
 </Project>

@@ -28,19 +28,27 @@ public class GameEngine
 
         State = new GameState(player, new Room(config.RoomWidth, config.RoomHeight));
 
-        StartNewRun(1);
+        StartNewRun(1, Random.Shared.Next());
     }
 
     /// <summary>Begins a brand-new run from floor 1 with a healed player (used on restart).</summary>
     public void Restart()
     {
         State.Player.RestoreFullHealth();
-        StartNewRun(1);
+        StartNewRun(1, Random.Shared.Next());
     }
 
-    private void StartNewRun(int floorNumber)
+    /// <summary>Starts a new run with a specific seed (used for reproducible eval).</summary>
+    public void StartWithSeed(int seed)
     {
-        Floor = DungeonGenerator.Generate(Config, floorNumber, Random.Shared.Next());
+        State.Player.RestoreFullHealth();
+        State.TurnNumber = 0;
+        StartNewRun(1, seed);
+    }
+
+    private void StartNewRun(int floorNumber, int seed)
+    {
+        Floor = DungeonGenerator.Generate(Config, floorNumber, seed);
         var start = Floor.Current;
         EnterRoom(start, new Position(start.Width / 2, start.Height / 2));
     }
@@ -202,7 +210,7 @@ public class GameEngine
 
         // Last floor is won via the Completed flag (floor fully cleared); only descend below it.
         if (Floor.Number < Config.MaxFloors)
-            StartNewRun(Floor.Number + 1);
+            StartNewRun(Floor.Number + 1, Random.Shared.Next());
 
         return true;
     }

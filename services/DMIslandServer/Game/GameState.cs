@@ -17,7 +17,7 @@ public class GameState(Player player, Room room)
     
     public List<Entity> StaticObjects { get; } = [];
     private Room _currentRoom = room;
-    public int TurnNumber { get; private set; }
+    public int TurnNumber { get; set; }
 
     private readonly GameRandom _random = new GameRandom(123);
 

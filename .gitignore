@@ -13,7 +13,7 @@ artifacts/
 *.suo
 *.userprefs
 *.DotSettings.user
-
+.env
 # Test results
 [Tt]est[Rr]esults/
 *.trx

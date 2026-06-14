@@ -70,6 +70,22 @@ app.MapPost("/action", (PlayerActionRequest request, GameEngine engine) =>
     return Results.Json(response);
 });
 
+app.MapGet("/state", (GameEngine engine) =>
+    {
+        var response = BuildGameStateResponse(engine.State,engine.Config,engine.Floor);
+        return Results.Json(response);
+    }
+);
+
+app.MapPost("/start_game", (int? seed, GameEngine engine) =>
+{
+    var s = seed ?? Random.Shared.Next();
+    Console.WriteLine($"Starting new game with seed={s}");
+    engine.StartWithSeed(s);
+    var response = BuildGameStateResponse(engine.State, engine.Config, engine.Floor);
+    return Results.Json(response);
+});
+
 app.Run();
 
 // --------- вспомогательная функция ---------
