@@ -5,6 +5,8 @@ open DMIslandClient.Resources
 module MobGroupTextures =
     let textures = [|
         Resources.Entity.STEVE
+        Resources.Entity.STOY_IDLE
+        Resources.Entity.STOY_ATTACK
         Resources.Entity.LAMBDA
         Resources.Entity.MODUS_PONENS
         Resources.Entity.NERD

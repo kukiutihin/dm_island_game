@@ -1,9 +1,11 @@
 namespace DMIslandClient.Scenes
 
+open System
 open DMIslandClient
 open DMIslandClient.Connection
 open DMIslandClient.Effect
 open DMIslandClient.Entity
+open DMIslandClient.Resources
 open DMIslandClient.UI
 open DMIslandClient.World
 open LadaEngine
@@ -22,6 +24,7 @@ type GameScene(connection: GameConnection, window: Window) =
 
     let mutable isDead = false
     let mutable won = false
+    let mutable playerId = Guid.Empty
 
     let controller = PlayerController(connection)
     let dispatcher = EventDispatcher(entities, effects, objects.GetGroup(), ui, camera)
@@ -37,6 +40,7 @@ type GameScene(connection: GameConnection, window: Window) =
         objects.SetBiome(event.Room.Biome)
         dispatcher.ProcessUpdate(event)
         updateRoom event
+        playerId <- event.Player.Id
         isDead <- event.Player.Hp = 0
         won <- event.Completed
 
@@ -47,6 +51,14 @@ type GameScene(connection: GameConnection, window: Window) =
 
         member this.Load() =
             controller.SubscribeToUpdate(fun event -> sync.AddEvent(fun () -> applyUpdate event))
+            // Briefly show Stoy's attack stance when the player fires, then revert to idle.
+            controller.SetOnAttack(fun () ->
+                if playerId <> Guid.Empty then
+                    entities.PlayAnimation(
+                        playerId,
+                        [| Resources.Entity.STOY_ATTACK; Resources.Entity.STOY_IDLE |],
+                        4f,
+                        false))
             controller.SendInitial()
             camera.GetCamera().Zoom <- 7f
             ui.Load()

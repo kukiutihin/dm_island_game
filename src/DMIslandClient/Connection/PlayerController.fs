@@ -7,7 +7,8 @@ open OpenTK.Windowing.GraphicsLibraryFramework
 
 type PlayerController(connection: GameConnection) =
     let subscriptions = ResizeArray()
-    
+    let mutable onAttack : unit -> unit = ignore
+
     let getMoveDirection () =
         if Controls.keyPressedOnce(Keys.D) then Some "right"
         else if Controls.keyPressedOnce(Keys.A) then Some "left"
@@ -27,7 +28,12 @@ type PlayerController(connection: GameConnection) =
         
     member _.Update() =
         getMoveDirection () |> Option.iter (fun dir -> connection.MoveCallback(dir, notifyAll))
-        getShootDirection () |> Option.iter (fun dir -> connection.ShootCallback(dir, notifyAll))
+        getShootDirection () |> Option.iter (fun dir ->
+            connection.ShootCallback(dir, notifyAll)
+            onAttack ())
+
+    /// Called locally the moment the player fires (used to play the attack pose).
+    member _.SetOnAttack(callback: unit -> unit) = onAttack <- callback
 
     member _.SubscribeToUpdate(callback: GameStateResponse -> unit) =
         subscriptions.Add(callback)

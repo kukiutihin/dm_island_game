@@ -12,6 +12,7 @@
         <Compile Include="Engine/TextureAtlas.fs" />
         <Compile Include="Engine/Camera.fs" />
         <Compile Include="Engine/Sprite.fs" />
+        <Compile Include="Engine/SpriteAnimation.fs" />
         <Compile Include="Engine/SpriteGroup.fs" />
         <Compile Include="Engine/Box.fs" />
         <Compile Include="Engine/FrameBuffer.fs" />
