@@ -44,4 +44,17 @@ public static class CommonAlgorithms
 
         return null;
     }
+    
+    public static Position ChooseNewPoint(Position fallback, GameState state)
+    {
+        var width = state.GetCurrentRoom().Width - 1;
+        var height = state.GetCurrentRoom().Height - 1;
+        for (var i = 0; i < 1000; i++)
+        {
+            var position = state.GetRandom().RandomPosition(width, height);
+            if (state.CanMoveTo(position))
+                return position;
+        }
+        return fallback;
+    }
 }

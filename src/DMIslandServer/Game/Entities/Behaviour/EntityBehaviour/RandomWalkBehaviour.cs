@@ -15,7 +15,7 @@ public class RandomWalkBehaviour(int waitingTime) : IBehaviour<Entity>
         if (_state == State.Waiting && state.GetRandom().OneIn(waitingTime))
         {
             _state = State.GoingToAPoint;
-            _target = ChooseNewPoint(_target, state);
+            _target = CommonAlgorithms.ChooseNewPoint(_target, state);
         }
 
         if (_state == State.GoingToAPoint && self.Position == _target)
@@ -28,21 +28,8 @@ public class RandomWalkBehaviour(int waitingTime) : IBehaviour<Entity>
             var nextStep = CommonAlgorithms.Pathfind(self, state, _target);
             
             if (nextStep.HasValue) self.TryMoveTo(nextStep.Value);
-            else _target = ChooseNewPoint(_target, state);
+            else _target = CommonAlgorithms.ChooseNewPoint(_target, state);
         }
-    }
-
-    private static Position ChooseNewPoint(Position fallback, GameState state)
-    {
-        var width = state.GetCurrentRoom().Width - 1;
-        var height = state.GetCurrentRoom().Height - 1;
-        for (var i = 0; i < 1000; i++)
-        {
-            var position = state.GetRandom().RandomPosition(width, height);
-            if (state.CanMoveTo(position))
-                return position;
-        }
-        return fallback;
     }
     
     private enum State
