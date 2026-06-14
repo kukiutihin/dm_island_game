@@ -44,13 +44,14 @@ type GameScene(connection: GameConnection, window: Window) =
         isDead <- event.Player.Hp = 0
         won <- event.Completed
 
-
+    do controller.SubscribeToUpdate(fun event -> sync.AddEvent(fun () -> applyUpdate event))
+    
     interface IScene with
         member this.FixedUpdate() = ()
         member this.Name = "Gaming"
 
         member this.Load() =
-            controller.SubscribeToUpdate(fun event -> sync.AddEvent(fun () -> applyUpdate event))
+            
             // Briefly show Stoy's attack stance when the player fires, then revert to idle.
             controller.SetOnAttack(fun () ->
                 if playerId <> Guid.Empty then
