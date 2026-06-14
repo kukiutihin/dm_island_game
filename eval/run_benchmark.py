@@ -913,10 +913,15 @@ def main():
 
             results.append(result)
 
+        print(f"\n  --- {agent_name} summary ---")
+        if not results:
+            print("  No games completed — every start_game/run attempt failed.")
+            print("  Check the game service is up and exposes /start_game, /state, /action.")
+            continue
+
         agg = aggregate(results)
         agg_results[agent_name] = agg
 
-        print(f"\n  --- {agent_name} summary ---")
         print(f"  Win rate:  {agg['win_rate']:.0%} ({agg['wins']}/{agg['n']})")
         print(f"  Avg floor: {agg['avg_floor']:.1f}  Max floor: {agg['max_floor']}")
         print(f"  Avg HP:    {agg['avg_final_hp']:.0f}")

@@ -18,6 +18,9 @@ public class GameEngine
     /// <summary>The dungeon room currently loaded into the live state, so we can save its items on leave.</summary>
     private DungeonRoom? _loadedRoom;
 
+    /// <summary>Source of per-floor generation seeds. Re-seed via StartWithSeed for reproducible runs.</summary>
+    private Random _seedSource = new Random();
+
     public GameEngine(GameConfig config)
     {
         Config = config;
@@ -38,9 +41,20 @@ public class GameEngine
         StartNewRun(1);
     }
 
+    /// <summary>
+    /// Begins a fresh, reproducible run from floor 1 using <paramref name="seed"/> as the
+    /// generation seed (used by the eval harness's /start_game). Same seed → same floors.
+    /// </summary>
+    public void StartWithSeed(int seed)
+    {
+        _seedSource = new Random(seed);
+        State.Player.RestoreFullHealth();
+        StartNewRun(1);
+    }
+
     private void StartNewRun(int floorNumber)
     {
-        Floor = DungeonGenerator.Generate(Config, floorNumber, Random.Shared.Next());
+        Floor = DungeonGenerator.Generate(Config, floorNumber, _seedSource.Next());
         var start = Floor.Current;
         EnterRoom(start, new Position(start.Width / 2, start.Height / 2));
     }
