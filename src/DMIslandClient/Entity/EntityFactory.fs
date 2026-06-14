@@ -38,10 +38,8 @@ type MobFactory() =
         let sprite = Sprite(pos, atlas, Resources.Entity.STOY_IDLE)
         spriteGroup.AddSprite(sprite)
         let entity = Entity(sprite, EaseOutAndBounceAnimatablePos(0.5f, 4f, pos), 1f)
-        // Stoy's sprite is tall (~170x320), so keep that aspect instead of a square.
         entity.SetScale(0.58f, 1.1f)
-        // Facing is driven explicitly by the last horizontal key pressed (see GameScene).
-        entity.SetFacingRight(true)
+        entity.SetFlip(true)
         entity
         
     let createItem atlas (spriteGroup: SpriteGroup) texture pos =

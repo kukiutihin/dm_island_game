@@ -46,17 +46,10 @@ type EntityGroup(textures, entityFactory: IEntityFactory) =
     member x.Update(dt) =
         Seq.iter (fun (e: Entity) -> e.Update(dt)) entities.Values
         spriteGroup.Update()
-    
-    /// Plays a frame animation on the entity with the given id, if present.
+
     member x.PlayAnimation(id: Guid, frames: string[], fps: float32, looping: bool) =
         match entities.TryGetValue(id) with
         | true, e -> e.SetAnimation(frames, fps, looping = looping)
-        | false, _ -> ()
-
-    /// Sets the facing (true = right, false = left) of the entity with the given id, if present.
-    member x.SetFacing(id: Guid, faceRight: bool) =
-        match entities.TryGetValue(id) with
-        | true, e -> e.SetFacingRight(faceRight)
         | false, _ -> ()
 
     member x.MoveEntityTo(guid: Guid, pos: Pos) =

@@ -51,8 +51,6 @@ type GameScene(connection: GameConnection, window: Window) =
         member this.Name = "Gaming"
 
         member this.Load() =
-            
-            // Briefly show Stoy's attack stance when the player fires, then revert to idle.
             controller.SetOnAttack(fun () ->
                 if playerId <> Guid.Empty then
                     entities.PlayAnimation(
@@ -60,10 +58,6 @@ type GameScene(connection: GameConnection, window: Window) =
                         [| Resources.Entity.STOY_ATTACK; Resources.Entity.STOY_IDLE |],
                         4f,
                         false))
-            // Turn the character to face the side of the last horizontal key pressed.
-            controller.SetOnFace(fun faceRight ->
-                if playerId <> Guid.Empty then
-                    entities.SetFacing(playerId, faceRight))
             controller.SendInitial()
             camera.GetCamera().Zoom <- 7f
             ui.Load()

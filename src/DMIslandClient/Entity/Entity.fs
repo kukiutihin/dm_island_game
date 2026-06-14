@@ -33,7 +33,7 @@ type Entity (sprite: Sprite, position: IAnimatablePos, scale: float32) =
         position.Update(dt)
         scaleControl.Update(dt)
         // Advance frames before the SpriteGroup rebuilds its vertices this frame.
-        animation |> Option.iter (_.Update(dt))
+        animation |> Option.iter _.Update(dt)
         x.Sprite.Width <- (sign x.Sprite.Width |> float32) * scaleControl.GetValue().X
         x.Sprite.Height <- scaleControl.GetValue().Y
         x.Sprite.Position <- position.GetValue()

@@ -54,7 +54,6 @@ type SpriteFlipper(sprite: Sprite) =
     member x.SetTarget(pos: Pos) =
         let delta = current.X - pos.X
         let looksRightNow = delta < 0f
-        printfn $"Prev: {current}, new: {pos}, {looksRight}{looksRightNow}"
         if abs delta > 0.01f && (looksRight <> looksRightNow) then
             looksRight <- looksRightNow
             sprite.Width <- -sprite.Width
