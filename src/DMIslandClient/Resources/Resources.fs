@@ -37,14 +37,13 @@ module Resources =
     
     
     module Particle =
-        let BUBBLE = "Resources/Textures/Particle/bubble.png"
+        let BUBBLE = "Resources/Textures/Particle/dollar.png"
         let SMOKE1 = "Resources/Textures/Particle/generic_3.png"
         let SMOKE2 = "Resources/Textures/Particle/generic_6.png"
         let ENEMY_PROJECTILE = "Resources/Textures/Particle/enemy_proj.png"
         let THETA = "Resources/Textures/Particle/theta.png"
         let ATTACK_INDICATOR = "Resources/Textures/Particle/attack.png"
         let LIGHTNING = "Resources/Textures/Particle/lightning.png"
-        // TODO(art): placeholder melee-hit spark — swap for real art.
         let HIT_SPARK = "Resources/Textures/Particle/hit_spark.png"
         
         
