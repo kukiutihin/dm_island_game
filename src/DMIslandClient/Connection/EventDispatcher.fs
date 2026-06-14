@@ -34,6 +34,10 @@ type EventDispatcher(entities: EntityGroup, effects: EffectGroup, objects: Entit
         | EventType.EnemyProjectilePop ->
             entities.MoveEntityTo(Guid.Parse(e.Payload), posOfDto e.Position)
             effects.CreateEffect(EtProjectilePop, posOfDto e.Position)
+        | EventType.MobAttack ->
+            // Melee hit: spark burst at the mob plus a quick camera kick.
+            effects.CreateEffect(EtMobAttack, posOfDto e.Position)
+            camera.Shake(0.35f)
         | _ -> ArgumentOutOfRangeException() |> raise
 
     let processEntities (updates: ObjectViewDto seq)=

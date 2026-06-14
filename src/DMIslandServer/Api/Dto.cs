@@ -152,7 +152,8 @@ public enum EventType
     PlayerDied,
     EntityDeath,
     EnemyProjectilePop,
-    TearPop
+    TearPop,
+    MobAttack
 }
 
 public enum EntityType

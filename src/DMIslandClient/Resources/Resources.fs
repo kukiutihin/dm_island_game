@@ -40,6 +40,8 @@ module Resources =
         let THETA = "Resources/Textures/Particle/theta.png"
         let ATTACK_INDICATOR = "Resources/Textures/Particle/attack.png"
         let LIGHTNING = "Resources/Textures/Particle/lightning.png"
+        // TODO(art): placeholder melee-hit spark — swap for real art.
+        let HIT_SPARK = "Resources/Textures/Particle/hit_spark.png"
         
         
     

@@ -9,6 +9,7 @@ module Dto =
         | EntityDeath = 1
         | TearPop = 2
         | EnemyProjectilePop = 3
+        | MobAttack = 4
 
     type EntityType =
         | Player = 1

@@ -62,3 +62,7 @@ type TearPopEffect(a, b, c) =
     
 type ProjectilePopEffect(a, b, c) =
     inherit ExplosionEffect([Resources.Particle.ENEMY_PROJECTILE], 0.9f, 1, 2f, a, b, c)
+
+/// Quick spark burst shown when a mob lands a melee hit.
+type MobAttackEffect(a, b, c) =
+    inherit ExplosionEffect([Resources.Particle.HIT_SPARK], 0.8f, 7, 2.5f, a, b, c)
