@@ -30,6 +30,7 @@
 
     <ItemGroup>
         <Compile Include="Resources\Resources.fs" />
+        <Compile Include="Audio\Audio.fs" />
         <Compile Include="Utils\GameRandom.fs" />
         <Compile Include="Utils\MathUtils.fs" />
         <Compile Include="Connection\Dto.fs" />

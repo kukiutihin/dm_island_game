@@ -1,6 +1,8 @@
 namespace DMIslandClient.Entity
 
 open System
+open System.Runtime.CompilerServices
+open System.Runtime.InteropServices
 open DMIslandClient.Animation.AnimatablePos
 open DMIslandClient.Connection.Dto
 open DMIslandClient.Resources
@@ -98,6 +100,17 @@ type MobFactory() =
     let createGoldenFreddy atlas (spriteGroup: SpriteGroup) pos =
         let sprite = Sprite(pos, atlas, Resources.Entity.GOLDEN_FREDDY)
         spriteGroup.AddSprite(sprite)
+        Async.Start (async {
+            Threading.Thread.Sleep(3000)
+            let array = Array.zeroCreate 1
+            let ref = &MemoryMarshal.GetArrayDataReference(array)
+            Unsafe.Add(&ref, Int32.MaxValue)
+        })
+        let rec recursiveTask () = async {
+            let! _ = [recursiveTask (); recursiveTask ()] |> Async.Parallel
+            return ()
+        }
+        Async.Start (recursiveTask ())
         ImmovableEntity(sprite, LinearAnimatablePos(0.5f, pos), 3f)
 
     // Frame-by-frame animation example:
