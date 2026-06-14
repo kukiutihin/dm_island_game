@@ -9,12 +9,12 @@ namespace RoguelikeServerMVP.Game.Entities.Factory.Preset.Mob;
 /// When player is on the same lane, after 1 tick tries to ramp them
 /// Roaming mode: cling to walls
 /// </summary>
-public class Monad(Position position) : Entities.Mob(EntityType.Monad, position, 6)
+public class Monad(Position position) : Entities.Mob(EntityType.Monad, position, 4)
 {
     private readonly IBehaviour<Entity> _behaviour =
         new CompositeBehaviour<Entity>([
             new DamageWhenNearBehaviour(),
-            new FlyDiagonallyBehaviour(),
+            new TimedBehaviour<Entity>(new FlyDiagonallyBehaviour(), 2),
         ]);
     
     public override void PerformTurn(GameState state)

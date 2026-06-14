@@ -9,7 +9,7 @@ namespace RoguelikeServerMVP.Game.Entities.Factory.Preset.Mob;
 /// 1. Attacks in a diamond pattern with theta hat (dist = 2) (when near player)
 /// 2. Attacks in a straight line with theta hat (dist = 5)
 /// </summary>
-public class Nerd(Position position) : Entities.Mob(EntityType.Nerd, position, 20)
+public class Nerd(Position position) : Entities.Mob(EntityType.Nerd, position, 10)
 {
     private readonly IBehaviour<Entity> _behaviour = 
         new ChooseOnPlayerDistanceBehaviour<Entity>(
