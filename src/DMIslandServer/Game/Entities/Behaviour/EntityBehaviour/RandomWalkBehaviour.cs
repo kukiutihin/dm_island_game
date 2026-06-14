@@ -1,6 +1,6 @@
 namespace RoguelikeServerMVP.Game.Entities.Behaviour.EntityBehaviour;
 
-public class RandomWalkBehaviour(int waitingTime, int stepChance) : IBehaviour
+public class RandomWalkBehaviour(int waitingTime) : IBehaviour<Entity>
 {
     private State _state = State.Waiting;
     private Position _target;

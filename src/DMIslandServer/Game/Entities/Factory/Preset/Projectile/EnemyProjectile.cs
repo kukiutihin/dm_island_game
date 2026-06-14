@@ -12,9 +12,9 @@ namespace RoguelikeServerMVP.Game.Entities.Factory.Preset.Projectile;
 /// <param name="position"></param>
 public class EnemyProjectile(Direction direction, Position position) : Entities.Projectile(EntityType.EnemyProjectile, position, 1) 
 {
-    private readonly IBehaviour _behaviour = new CompositeBehaviour([
-        new DestroyIfInBlockBehaviour(),
-        new StraightLineBehaviour(1, direction),
+    private readonly IBehaviour<Entities.Projectile> _behaviour = new CompositeBehaviour<Entities.Projectile>([
+        new DestroyIfInBlockBehaviour<Entities.Projectile>(),
+        new StraightLineBehaviour<Entities.Projectile>(1, direction),
         new DamagePlayerOnCollisionBehaviour(1),
     ]);
     

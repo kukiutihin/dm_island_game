@@ -74,7 +74,7 @@ type GameScene(connection: GameConnection, window: Window) =
                     connection.RestartCallback(fun resp -> sync.AddEvent(fun () -> applyUpdate resp))
             else
                 controller.Update()
-
+            currentRoom |> Option.iter (_.Update(dt))
             sync.ExecuteAll()
             objects.GetGroup().Update(dt)
             entities.Update(dt)

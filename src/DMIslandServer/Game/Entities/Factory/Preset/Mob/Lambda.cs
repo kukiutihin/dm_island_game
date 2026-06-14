@@ -10,9 +10,9 @@ namespace RoguelikeServerMVP.Game.Entities.Factory.Preset.Mob;
 /// <param name="position"></param>
 public class Lambda(Position position) : Entities.Mob(EntityType.Lambda, position, 3)
 {
-    private readonly IBehaviour _behaviour = new CompositeBehaviour([
+    private readonly IBehaviour<Entity> _behaviour = new CompositeBehaviour<Entity>([
         new ShootPlayerBehaviour(4),
-        new RandomWalkBehaviour(1, 1)
+        new RandomWalkBehaviour(1)
     ]);
     
     public override void PerformTurn(GameState state)

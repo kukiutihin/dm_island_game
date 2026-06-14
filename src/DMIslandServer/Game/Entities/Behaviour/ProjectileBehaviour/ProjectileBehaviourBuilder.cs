@@ -6,23 +6,38 @@ public class ProjectileBehaviourBuilder(Direction direction, IEnumerable<ItemTyp
 {
     private readonly List<ItemType> _items = modifiers.ToList();
     
-    public IBehaviour Build()
+    public IBehaviour<Projectile> Build()
     {
-        return new CompositeBehaviour([
-            new DestroyIfInBlockBehaviour(),
-            new StraightLineBehaviour(GetSpeed(), direction),
-            new FollowEntityBehaviour(GetSpeed(), GetFollowRange() * GetSpeed()),
+        return new CompositeBehaviour<Projectile>([
+            new DestroyIfInBlockBehaviour<Projectile>(),
+            new StraightLineBehaviour<Projectile>(GetSpeed(), direction),
+            new FollowEntityBehaviour<Projectile>(GetSpeed(), GetFollowRange() * GetSpeed()),
             new DamageEntityOnCollisionBehaviour(GetDamage()),
             new TimedDieBehaviour(GetTtl()),
-            new ChanceBehaviour(new HitPlayerWithLightningBehaviour(), GetSelfLightningChance()),
-            new ChanceBehaviour(new SpawnLightningOnCollisionBehaviour(), GetLightningChance())
+            new ChanceBehaviour<Projectile>(new HitPlayerWithLightningBehaviour<Projectile>(), GetSelfLightningChance()),
+            new ChanceBehaviour<Projectile>(new SpawnLightningOnCollisionBehaviour<Projectile>(), GetLightningChance()),
+            new ChanceBehaviour<Projectile>(new StunEnemyBehaviour(5), GetStunChance())
         ]);
     }
     // TODO:
     // Roc,
+    // Haskell,
     // JavaScript,
     // TypeScript,
     // Go,
+
+    private float GetStunChance()
+    {
+        var stunChance = 3f;
+        foreach (var item in _items)
+        {
+            if (item == ItemType.Python3) stunChance += 0.05f;
+            if (item == ItemType.Haskell) stunChance += 0.025f;
+            if (item == ItemType.JavaScript) stunChance += 0.025f;
+            if (item == ItemType.TypeScript) stunChance += 0.025f;
+        }
+        return stunChance;
+    }
 
     private int GetDamage()
     {
@@ -31,12 +46,7 @@ public class ProjectileBehaviourBuilder(Direction direction, IEnumerable<ItemTyp
 
     private int GetTtl()
     {
-        var ttl = 5;
-        foreach (var item in _items)
-        {
-            if (item == ItemType.Python3) ttl += 2;
-        }
-        return ttl;
+        return 3;
     }
     
     private int GetSpeed()
@@ -56,10 +66,11 @@ public class ProjectileBehaviourBuilder(Direction direction, IEnumerable<ItemTyp
         var chance = 0f;
         foreach (var item in _items)
         {
-            if (item == ItemType.Zig) chance += 0.15f;
-            if (item == ItemType.Cpp) chance += 0.05f;
-            if (item == ItemType.Rust) chance += 0.025f;
-            if (item == ItemType.Asm) chance += 0.025f;
+            if (item == ItemType.Zig) chance += 0.05f;
+            if (item == ItemType.Cpp) chance += 0.01f;
+            if (item == ItemType.Rust) chance += 0.005f;
+            if (item == ItemType.Asm) chance += 0.005f;
+            if (item == ItemType.AnsiC) chance += 0.01f;
         }
         return chance;
     }
@@ -69,7 +80,7 @@ public class ProjectileBehaviourBuilder(Direction direction, IEnumerable<ItemTyp
         var chance = 0f;
         foreach (var item in _items)
         {
-            if (item == ItemType.Cpp) chance += 0.01f;
+            if (item == ItemType.Cpp) chance += 0.005f;
         }
         return chance;
     }
@@ -79,7 +90,7 @@ public class ProjectileBehaviourBuilder(Direction direction, IEnumerable<ItemTyp
         var range = 0;
         foreach (var item in _items)
         {
-            if (item == ItemType.OCaml) range += 3;
+            if (item == ItemType.OCaml) range += 2;
             if (item == ItemType.Scala3) range += 1;
         }
         return range;

@@ -1,9 +1,9 @@
 namespace RoguelikeServerMVP.Game.Entities.Behaviour;
 
-public class TimedBehaviour(IBehaviour behaviour, int time) : IBehaviour
+public class TimedBehaviour<T>(IBehaviour<T> behaviour, int time) : IBehaviour<T> where T : Entity
 {
     private int _time = time;
-    public void PerformTurn(Entity self, GameState state)
+    public void PerformTurn(T self, GameState state)
     {
         if (--_time >= 0)
             return;

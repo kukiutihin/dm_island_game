@@ -6,7 +6,7 @@ namespace RoguelikeServerMVP.Game.Entities.Pickups;
 
 public sealed class Item(ItemType type, Position position) : Entity(GetEntityType(type), position, Int32.MaxValue)
 {
-    private readonly IBehaviour _behaviour = new PickupOnCollisionBehaviour();
+    private readonly PickupOnCollisionBehaviour _behaviour = new();
     
     protected override void OnDeath(GameState state) { }
     protected override void OnDamage(int damage, GameState state) { }

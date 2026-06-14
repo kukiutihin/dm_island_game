@@ -1,6 +1,6 @@
 namespace RoguelikeServerMVP.Game.Entities.Behaviour.EntityBehaviour;
 
-public class DamageWhenNearBehaviour : IBehaviour
+public class DamageWhenNearBehaviour : IBehaviour<Entity>
 {
     public void PerformTurn(Entity self, GameState state)
     {
