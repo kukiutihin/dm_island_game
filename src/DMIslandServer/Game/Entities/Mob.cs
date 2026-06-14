@@ -36,7 +36,8 @@ public abstract class Mob(EntityType name, Position position, int maxHp) : Entit
 
     protected override void OnDamage(int damage, GameState state)
     {
-        _debuffs.Add(new Debuff(DebuffType.Stunned, 1));
+        if (state.GetRandom().OneIn(4))
+            _debuffs.Add(new Debuff(DebuffType.Stunned, 1));
     }
 
     public void AddDebuff(DebuffType type, int duration)

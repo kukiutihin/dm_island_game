@@ -21,9 +21,8 @@ module Resources =
 
     module Entity =
         let STEVE = "Resources/Entity/steve.png"
-        // Player character "Stoy": idle stance and attack stance (same canvas, aligned).
-        let STOY_IDLE = "Resources/Entity/stoy_idle.png"
-        let STOY_ATTACK = "Resources/Entity/stoy_attack.png"
+        let STOY_IDLE = "Resources/Entity/mini_stoy.png"
+        let STOY_ATTACK = "Resources/Entity/mini_stoy_atk.png"
         let LAMBDA = "Resources/Entity/lambda_px.png"
         let MODUS_PONENS = "Resources/Entity/modus-ponens.png"
         let NERD = "Resources/Entity/nerd_px.png"

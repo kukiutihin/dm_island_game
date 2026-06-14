@@ -10,7 +10,7 @@ namespace RoguelikeServerMVP.Game.Entities.Factory.Preset.Mob;
 public class Mole(Position position) : Entities.Mob(EntityType.Mole, position, 5)
 {
     private IBehaviour<Entity> _behaviour = new CompositeBehaviour<Entity>([
-        new ShootPlayerBehaviour(3),
+        new ShootPlayerBehaviour(1),
         new TimedBehaviour<Entity>(new TeleportBehaviour(), 5)
     ]);
 
