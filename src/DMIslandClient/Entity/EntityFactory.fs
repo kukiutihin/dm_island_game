@@ -92,7 +92,6 @@ type MobFactory() =
         entity.SetScale(8f, 8f)
         entity
         
-        
     
     interface IEntityFactory with
         member _.CreateEntity(t, atlas, group, pos) =

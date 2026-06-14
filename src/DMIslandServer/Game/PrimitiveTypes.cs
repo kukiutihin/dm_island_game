@@ -29,6 +29,11 @@ namespace RoguelikeServerMVP.Game
         {
             return TurnLeft(TurnLeft(TurnLeft(dir)));
         }
+
+        public static Direction Flip(Direction dir)
+        {
+            return TurnLeft(TurnLeft(dir));
+        }
     }
 
     public struct Position(int x, int y) : IEquatable<Position>

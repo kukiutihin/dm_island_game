@@ -14,15 +14,9 @@ module WallTextures =
         Resources.Texture.GRASS_WALL
         Resources.Texture.THORNS
         Resources.Texture.STONE_DARK
+        Resources.Entity.EXIT
+        Resources.Entity.EXIT_LOCKED
     |]
-
-/// The full set of textures packed into the static-object atlas: every wall
-/// variant plus the exit portal. The atlas can only draw textures listed here.
-module StaticObjectTextures =
-    let all =
-        Array.append
-            WallTextures.textures
-            [| Resources.Entity.EXIT_PORTAL; Resources.Entity.EXIT_PORTAL_CLOSED |]
 
 type StaticObjectFactory(wallTextures: string seq) =
     let mutable textures = wallTextures
@@ -36,13 +30,13 @@ type StaticObjectFactory(wallTextures: string seq) =
     let createExitWith texture atlas (group: SpriteGroup) pos =
         let sprite = Sprite(pos, atlas, texture)
         group.AddSprite(sprite)
-        Entity(sprite, LinearAnimatablePos(1f, pos), 1f)
+        Entity(sprite, LinearAnimatablePos(1f, pos), 2f)
 
     interface IEntityFactory with
         member _.CreateEntity(t, atlas, group, pos) =
             match t with
-            | EntityType.Exit -> createExitWith Resources.Entity.EXIT_PORTAL atlas group pos
-            | EntityType.ExitClosed -> createExitWith Resources.Entity.EXIT_PORTAL_CLOSED atlas group pos
+            | EntityType.Exit -> createExitWith Resources.Entity.EXIT atlas group pos
+            | EntityType.ExitClosed -> createExitWith Resources.Entity.EXIT_LOCKED atlas group pos
             | EntityType.Wall -> createWall atlas group pos
             | _ -> createWall atlas group pos
 
@@ -52,7 +46,7 @@ type StaticObjectFactory(wallTextures: string seq) =
 
 type StaticObjectGroup() =
     let factory = StaticObjectFactory(WallTextures.textures)
-    let actualGroup = EntityGroup(StaticObjectTextures.all, factory)
+    let actualGroup = EntityGroup(WallTextures.textures, factory)
     member x.GetGroup() = actualGroup
     member x.SetBiome(biome) =
         match biome with

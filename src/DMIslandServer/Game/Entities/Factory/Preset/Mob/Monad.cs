@@ -1,4 +1,6 @@
 using RoguelikeServerMVP.Api;
+using RoguelikeServerMVP.Game.Entities.Behaviour;
+using RoguelikeServerMVP.Game.Entities.Behaviour.EntityBehaviour;
 
 namespace RoguelikeServerMVP.Game.Entities.Factory.Preset.Mob;
 
@@ -9,5 +11,15 @@ namespace RoguelikeServerMVP.Game.Entities.Factory.Preset.Mob;
 /// </summary>
 public class Monad(Position position) : Entities.Mob(EntityType.Monad, position, 6)
 {
+    private readonly IBehaviour<Entity> _behaviour =
+        new CompositeBehaviour<Entity>([
+            new DamageWhenNearBehaviour(),
+            new FlyDiagonallyBehaviour(),
+        ]);
     
+    public override void PerformTurn(GameState state)
+    {
+        base.PerformTurn(state);
+        _behaviour.PerformTurn(this, state);
+    }
 }
