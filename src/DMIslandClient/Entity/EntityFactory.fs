@@ -37,8 +37,7 @@ type MobFactory() =
     let createPlayer atlas (spriteGroup: SpriteGroup) pos =
         let sprite = Sprite(pos, atlas, Resources.Entity.STOY_IDLE)
         spriteGroup.AddSprite(sprite)
-        let entity = Entity(sprite, EaseOutAndBounceAnimatablePos(0.5f, 4f, pos), 1f)
-        entity.SetScale(0.58f, 1.1f)
+        let entity = Entity(sprite, EaseOutAndBounceAnimatablePos(0.5f, 4f, pos), 1.5f)
         entity.SetFlip(true)
         entity
         
