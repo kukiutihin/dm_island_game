@@ -276,7 +276,10 @@
 | `player.position.x` | int | Координата X |
 | `player.position.y` | int | Координата Y |
 | `entities[]` | array | Видимые мобы/снаряды (type, hp, position) |
+| `objects[]` | array | Статические объекты: стены и выход (type, position) |
 | `items[]` | array | Список предметов в инвентаре |
+
+> Примечание: поле `id` в JSON-RPC может быть строкой или числом — сервер возвращает его без изменений.
 
 ---
 

@@ -3,7 +3,8 @@ using System.Net.Sockets;
 using System.Text;
 using System.Text.Json;
 
-var gameUrl = Environment.GetEnvironmentVariable("GAME_SERVICE_URL") ?? "http://localhost:5555";
+// Defaults to the local game server port; compose overrides this with the service URL.
+var gameUrl = Environment.GetEnvironmentVariable("GAME_SERVICE_URL") ?? "http://localhost:5229";
 var game = new GameClient(gameUrl);
 var useStdio = args.Length > 0 && args[0] == "--stdio";
 
@@ -39,18 +40,22 @@ static async Task HandleStream(TextReader reader, TextWriter writer, GameClient 
     while ((line = await reader.ReadLineAsync()) != null)
     {
         var response = await ProcessMessage(line, game);
+        // Notifications (no id) return null and must not produce a response line.
+        if (response is null) continue;
         await writer.WriteLineAsync(response);
         await writer.FlushAsync();
     }
 }
 
-static async Task<string> ProcessMessage(string raw, GameClient game)
+static async Task<string?> ProcessMessage(string raw, GameClient game)
 {
     try
     {
         using var doc = JsonDocument.Parse(raw);
         var root = doc.RootElement;
-        var id = root.TryGetProperty("id", out var idProp) ? idProp.GetString() : null;
+        // Echo the id back verbatim: JSON-RPC ids may be a string OR a number, so we
+        // must not coerce with GetString() (which throws on numeric ids).
+        object? id = root.TryGetProperty("id", out var idProp) ? (object)idProp : null;
         var method = root.GetProperty("method").GetString();
         if (method == "tools/list")
         {
@@ -89,9 +94,9 @@ static async Task<string> ProcessMessage(string raw, GameClient game)
                 }
             });
         }
-        if (method == "notifications/initialized")
+        if (method is not null && method.StartsWith("notifications/"))
         {
-            return "";
+            return null;
         }
         return JsonSerializer.Serialize(new
         {
@@ -155,7 +160,7 @@ static object[] GetToolList()
         },
         new {
             name = "get_state",
-            description = "Get the current game state (player, enemies, items, map)",
+            description = "Get the current game state: player (hp, position), visible entities (mobs/projectiles), static objects (walls, exit portal), and collected items",
             inputSchema = new { type = "object", properties = new { }, required = new string[0] }
         },
         new {
@@ -219,43 +224,53 @@ static string FilterState(JsonDocument doc)
     var root = doc.RootElement;
     var filtered = new Dictionary<string, object?>
     {
-        ["turn"] = root.TryGetProperty("turn", out var t) ? t.GetInt32() : 0,
-        ["floor"] = root.TryGetProperty("floor", out var f) ? f.GetInt32() : 0,
-        ["completed"] = root.TryGetProperty("completed", out var c) ? c.GetBoolean() : false,
+        ["turn"] = ReadInt(root, "turn"),
+        ["floor"] = ReadInt(root, "floor"),
+        ["completed"] = root.TryGetProperty("completed", out var c) && c.ValueKind == JsonValueKind.True,
         ["player"] = root.TryGetProperty("player", out var p) ? ParsePlayer(p) : null,
-        ["entities"] = root.TryGetProperty("entities", out var e) ? ParseEntities(e) : null,
-        ["items"] = root.TryGetProperty("items", out var i) ? i.EnumerateArray().Select(x => x.GetString()).ToList() : null
+        // Visible mobs/projectiles (and floor pickups) the server reports near the player.
+        ["entities"] = root.TryGetProperty("entities", out var e) ? ParseEntities(e) : new List<object>(),
+        // Static objects: walls and the exit portal — needed to navigate and find the exit.
+        ["objects"] = root.TryGetProperty("objects", out var o) ? ParseObjects(o) : new List<object>(),
+        // Inventory: items the player has collected.
+        ["items"] = root.TryGetProperty("items", out var i) && i.ValueKind == JsonValueKind.Array
+            ? i.EnumerateArray().Select(x => x.GetString()).ToList()
+            : new List<string?>()
     };
     return JsonSerializer.Serialize(filtered);
 }
 
-static object? ParsePlayer(JsonElement p)
+static object? ParsePlayer(JsonElement p) =>
+    new { hp = ReadInt(p, "hp"), maxHp = ReadInt(p, "maxHp"), position = ReadPos(p) };
+
+static object ParseEntities(JsonElement arr)
 {
-    return new
-    {
-        hp = p.GetProperty("hp").GetInt32(),
-        maxHp = p.GetProperty("maxHp").GetInt32(),
-        position = new
-        {
-            x = p.GetProperty("position").GetProperty("x").GetInt32(),
-            y = p.GetProperty("position").GetProperty("y").GetInt32()
-        }
-    };
+    if (arr.ValueKind != JsonValueKind.Array) return new List<object>();
+    return arr.EnumerateArray()
+        .Select(e => (object)new { type = ReadString(e, "type"), hp = ReadInt(e, "hp"), position = ReadPos(e) })
+        .ToList();
 }
 
-static object? ParseEntities(JsonElement arr)
+static object ParseObjects(JsonElement arr)
 {
-    return arr.EnumerateArray().Select(e => new
-    {
-        type = e.GetProperty("type").GetString(),
-        hp = e.GetProperty("hp").GetInt32(),
-        position = new
-        {
-            x = e.GetProperty("position").GetProperty("x").GetInt32(),
-            y = e.GetProperty("position").GetProperty("y").GetInt32()
-        }
-    }).ToList();
+    if (arr.ValueKind != JsonValueKind.Array) return new List<object>();
+    return arr.EnumerateArray()
+        .Select(o => (object)new { type = ReadString(o, "type"), position = ReadPos(o) })
+        .ToList();
 }
+
+// --- Defensive readers: never throw on a missing/oddly-typed field. ---
+
+static int ReadInt(JsonElement el, string name) =>
+    el.TryGetProperty(name, out var v) && v.ValueKind == JsonValueKind.Number ? v.GetInt32() : 0;
+
+static string? ReadString(JsonElement el, string name) =>
+    el.TryGetProperty(name, out var v) && v.ValueKind == JsonValueKind.String ? v.GetString() : null;
+
+static object? ReadPos(JsonElement el) =>
+    el.TryGetProperty("position", out var pos)
+        ? new { x = ReadInt(pos, "x"), y = ReadInt(pos, "y") }
+        : null;
 
 static string Error(string msg)
 {
