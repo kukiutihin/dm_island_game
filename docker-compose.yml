@@ -39,15 +39,15 @@ services:
 # (src/DMIslandClient/Scenes/MainMenuScene.fs); point it at http://server:5229
 # or share the host network for this to reach the server container.
 #
-#  client:
-#    profiles: ["client"]
-#    build:
-#      context: .
-#      dockerfile: src/DMIslandClient/Dockerfile
-#    image: dmisland-client
-#    depends_on: [server]
-#    network_mode: host
-#    environment:
-#      DISPLAY: ${DISPLAY}
-#    volumes:
-#      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+client:
+ profiles: ["client"]
+ build:
+   context: .
+   dockerfile: src/DMIslandClient/Dockerfile
+ image: dmisland-client
+ depends_on: [server]
+ network_mode: host
+ environment:
+   DISPLAY: ${DISPLAY}
+ volumes:
+   - /tmp/.X11-unix:/tmp/.X11-unix:rw
