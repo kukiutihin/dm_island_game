@@ -8,7 +8,7 @@ open LadaEngine
 /// Isaac-style floor map. Cleared rooms are bright, not-yet-cleared rooms are
 /// dark, and the current room is marked. Anchored to the top-right corner.
 type Minimap() =
-    let textures = [| Resources.UI.ROOM_CLEAR; Resources.UI.ROOM_UNCLEAR; Resources.Entity.STEVE |]
+    let textures = [| Resources.UI.ROOM_CLEAR; Resources.UI.ROOM_UNCLEAR; Resources.Entity.STEVE; Resources.UI.ROOM_EXIT |]
     let atlas = TextureAtlas(textures)
     let group = SpriteGroup(atlas)
 
@@ -28,6 +28,13 @@ type Minimap() =
         sprite.Width <- cellSize * 0.6f
         sprite.Height <- cellSize * 0.6f
         group.AddSprite(sprite)
+
+    // Marks the (open) exit room on the minimap with its own placeholder texture.
+    let addExitMarker (x: float32) (y: float32) =
+        let sprite = Sprite(Pos(x, y), atlas, Resources.UI.ROOM_EXIT)
+        sprite.Width <- cellSize * 0.7f
+        sprite.Height <- cellSize * 0.7f
+        group.AddSprite(sprite)
     
     let rebuild () =
         group.Sprites.Clear()
@@ -45,6 +52,7 @@ type Minimap() =
                 let cy = anchor.Y - float32 (-minY - room.Y) * cellSize * yScale
                 let tex = if room.Cleared then Resources.UI.ROOM_CLEAR else Resources.UI.ROOM_UNCLEAR
                 addCell cx cy tex
+                if room.IsExit then addExitMarker cx cy
                 if room.Current then addSteve cx cy
         group.Update()
 

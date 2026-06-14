@@ -28,6 +28,9 @@ module Resources =
         let NUCLEAR_NERD = "Resources/Entity/nuclear_nerd.png"
         let SKOLEM = "Resources/Entity/skolem.png"
         let MOLE = "Resources/Entity/mole.png"
+        // TODO(art): placeholder portal textures — swap for real exit art.
+        let EXIT_PORTAL = "Resources/Entity/exit_portal.png"
+        let EXIT_PORTAL_CLOSED = "Resources/Entity/exit_portal_closed.png"
     
     
     module Particle =
@@ -72,4 +75,6 @@ module Resources =
         let HALF_HEART = "Resources/UI/half.png"
         let ROOM_CLEAR = "Resources/UI/room_clear.png"
         let ROOM_UNCLEAR = "Resources/UI/room_unclear.png"
+        // TODO(art): placeholder minimap exit marker — swap for real art.
+        let ROOM_EXIT = "Resources/UI/room_exit.png"
         

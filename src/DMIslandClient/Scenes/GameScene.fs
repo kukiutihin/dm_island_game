@@ -30,7 +30,7 @@ type GameScene(connection: GameConnection, window: Window) =
         match currentRoom with
         | Some room when room.Id = event.Room.Id -> ()
         | _ -> 
-            let room = Room(event.Room.Id, 13, 9, RoomRenderer.ofString event.Room.Biome)
+            let room = Room(event.Room.Id, event.Room.Width, event.Room.Height, RoomRenderer.ofString event.Room.Biome)
             currentRoom <- Some room
 
     let applyUpdate (event: Dto.GameStateResponse) =

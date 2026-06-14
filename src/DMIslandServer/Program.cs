@@ -78,7 +78,8 @@ static GameStateResponse BuildGameStateResponse(GameState state, GameConfig conf
 {
     var viewWidth = config.ViewWidth;
     var viewHeight = config.ViewHeight;
-    var viewRadius = 20;
+    // Large enough to cover the enlarged exit room corner-to-corner so its walls/objects don't pop in.
+    var viewRadius = 26;
 
     var player = state.Player;
 
@@ -92,7 +93,9 @@ static GameStateResponse BuildGameStateResponse(GameState state, GameConfig conf
         Room = new RoomDto
         {
             Id = state.GetCurrentRoom().Id,
-            Biome = floor.Current.Biome
+            Biome = floor.Current.Biome,
+            Width = floor.Current.Width,
+            Height = floor.Current.Height
         },
         Rooms = floor.AllRooms.Select(r => new RoomCellDto
         {
@@ -100,7 +103,9 @@ static GameStateResponse BuildGameStateResponse(GameState state, GameConfig conf
             Y = r.GridY,
             Visited = r.Visited,
             Cleared = r.Cleared,
-            Current = r.GridX == floor.CurrentX && r.GridY == floor.CurrentY
+            Current = r.GridX == floor.CurrentX && r.GridY == floor.CurrentY,
+            // Only mark the exit on the minimap once it's open (whole floor cleared).
+            IsExit = r.IsExit && floor.AllCleared
         }).ToList(),
         Player = new ObjectViewDto
         {

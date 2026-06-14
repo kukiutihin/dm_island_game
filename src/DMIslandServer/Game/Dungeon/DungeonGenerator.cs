@@ -46,9 +46,14 @@ public static class DungeonGenerator
         var cx = GridSize / 2;
         var cy = GridSize / 2;
 
+        // The exit room is enlarged for emphasis; everything else uses the config default.
+        var exitWidth = config.RoomWidth + 6;
+        var exitHeight = config.RoomHeight + 4;
+
         var start = new DungeonRoom(cx, cy, DungeonRoomTemplate.Empty(floorNumber))
         {
-            IsStart = true, Visited = true, Cleared = true
+            IsStart = true, Visited = true, Cleared = true,
+            Width = config.RoomWidth, Height = config.RoomHeight
         };
         rooms[cx, cy] = start;
 
@@ -59,7 +64,11 @@ public static class DungeonGenerator
             config.BaseRooms + (floorNumber - 1) * config.RoomsPerFloor
         );
 
-        var templates = CreateTemplateList(rand, targetRooms)
+        // The start room uses a separate empty template, so we only need a template
+        // per *non-start* room. (Generating targetRooms templates here would leave the
+        // last one — the exit room — unplaced.)
+        var nonStartRooms = targetRooms - 1;
+        var templates = CreateTemplateList(rand, nonStartRooms)
             .Select(x => DungeonRoomTemplate.OfString(rand, floorNumber, x))
             .ToList();
 
@@ -79,7 +88,18 @@ public static class DungeonGenerator
                 if (nx < 0 || ny < 0 || nx >= GridSize || ny >= GridSize) continue;
                 if (rooms[nx, ny] != null) continue;
 
-                var room = new DungeonRoom(nx, ny, templates[templateIndex++]);
+                var room = new DungeonRoom(nx, ny, templates[templateIndex++])
+                {
+                    Width = config.RoomWidth, Height = config.RoomHeight
+                };
+                if (room.Template.ExitPosition is not null)
+                {
+                    room.IsExit = true;
+                    room.Width = exitWidth;
+                    room.Height = exitHeight;
+                    // Centre the portal in the (larger) exit room.
+                    room.ExitTile = new Position(exitWidth / 2, exitHeight / 2);
+                }
                 rooms[nx, ny] = room;
                 placed.Add(room);
                 break;
@@ -102,7 +122,21 @@ public static class DungeonGenerator
         
         foreach (var room in placed)
             room.Biome = biome;
-        
+
+        // Safety net: every floor must have an exit. If placement fell short and none
+        // was placed, promote the last non-start room to be the exit.
+        if (!placed.Any(r => r.IsExit))
+        {
+            var fallback = placed.LastOrDefault(r => !r.IsStart);
+            if (fallback is not null)
+            {
+                fallback.IsExit = true;
+                fallback.Width = exitWidth;
+                fallback.Height = exitHeight;
+                fallback.ExitTile = new Position(exitWidth / 2, exitHeight / 2);
+            }
+        }
+
         return new Floor(floorNumber, rooms, cx, cy);
     }
 

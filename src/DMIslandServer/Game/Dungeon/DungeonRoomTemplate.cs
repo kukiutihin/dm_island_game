@@ -7,7 +7,10 @@ public class DungeonRoomTemplate(int floor)
     public List<MobSpawn> MobSpawns { get; } = [];
     public List<Position> WallSpawns { get; } = [];
     public List<ItemSpawn> ItemSpawns { get; } = [];
-    
+
+    /// <summary>Tile marked 'E' in the template — where the floor exit sits (null if this isn't an exit room).</summary>
+    public Position? ExitPosition { get; private set; }
+
     public static DungeonRoomTemplate Empty(int floor) => new DungeonRoomTemplate(floor);
 
     public static DungeonRoomTemplate OfString(Random rand, int floor, string source)
@@ -33,6 +36,9 @@ public class DungeonRoomTemplate(int floor)
                 
                 if (lines[y][x] == 'I')
                     template.ItemSpawns.Add(ChooseItem(rand, new Position(x + 1, y + 1)));
+
+                if (lines[y][x] == 'E')
+                    template.ExitPosition = new Position(x + 1, y + 1);
             }
         }
         

@@ -39,9 +39,15 @@ public class RoomDto
 {
     [JsonPropertyName("id")]
     public Guid Id { get; set; }
-    
+
     [JsonPropertyName("biome")]
     public string Biome { get; set; } = "beach";
+
+    [JsonPropertyName("width")]
+    public int Width { get; set; }
+
+    [JsonPropertyName("height")]
+    public int Height { get; set; }
 }
 
 public class ObjectViewDto
@@ -121,6 +127,10 @@ public class RoomCellDto
 
     [JsonPropertyName("current")]
     public bool Current { get; set; }
+
+    /// <summary>True when this room holds the (active) floor exit — used to mark it on the minimap.</summary>
+    [JsonPropertyName("isExit")]
+    public bool IsExit { get; set; }
 }
 
 public class EventDto
@@ -163,7 +173,9 @@ public enum EntityType
     Lightning,
     EnemyProjectile,
     Wall,
-    
+    Exit,
+    ExitClosed,
+
     HeartItem,
     HalfHeartItem,
     AmethystItem,

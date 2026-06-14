@@ -26,6 +26,10 @@ public class DungeonRoom(int gridX, int gridY, DungeonRoomTemplate template)
     public int GridX => gridX;
     public int GridY => gridY;
 
+    /// <summary>Tile dimensions of this room. Most rooms use the config default; the exit room is larger.</summary>
+    public int Width { get; set; }
+    public int Height { get; set; }
+
     /// <summary>Sides of the room that have a door to a neighbouring room.</summary>
     public HashSet<Direction> Doors { get; } = [];
 
@@ -40,6 +44,12 @@ public class DungeonRoom(int gridX, int gridY, DungeonRoomTemplate template)
 
     /// <summary>True once this room's mobs have been instantiated into the live world.</summary>
     public bool Spawned { get; set; }
+
+    /// <summary>True if this is the floor's exit room (holds the portal to the next floor).</summary>
+    public bool IsExit { get; set; }
+
+    /// <summary>The tile where the exit portal sits (only meaningful when <see cref="IsExit"/>).</summary>
+    public Position? ExitTile { get; set; }
 
     /// <summary>
     /// Items left on this room's floor (un-collected pickups, mob drops). Persisted

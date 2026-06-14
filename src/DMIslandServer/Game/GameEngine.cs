@@ -41,7 +41,8 @@ public class GameEngine
     private void StartNewRun(int floorNumber)
     {
         Floor = DungeonGenerator.Generate(Config, floorNumber, Random.Shared.Next());
-        EnterRoom(Floor.Current, new Position(Config.RoomWidth / 2, Config.RoomHeight / 2));
+        var start = Floor.Current;
+        EnterRoom(start, new Position(start.Width / 2, start.Height / 2));
     }
 
     // ---- Player actions -----------------------------------------------------
@@ -58,13 +59,18 @@ public class GameEngine
             var side = DoorSideAt(cur, dest);
             if (side.HasValue && Floor.Neighbour(side.Value) is { } neighbour)
             {
-                var entry = RoomGeometry.EntryTile(Config.RoomWidth, Config.RoomHeight, side.Value);
+                // Land just inside the destination room, sized to that room's dimensions.
+                var entry = RoomGeometry.EntryTile(neighbour.Width, neighbour.Height, side.Value);
                 EnterRoom(neighbour, entry);
                 return; // changing rooms doesn't advance the turn
             }
         }
 
         State.Player.TryMove(dir, State);
+
+        // Walking onto the open exit portal carries the player to the next floor.
+        if (TryUseExit()) return; // changing floors doesn't advance the turn
+
         ProcessMobsTurn();
         State.NextTurn();
         AfterTurn();
@@ -102,9 +108,11 @@ public class GameEngine
             cur.Cleared = true;
             OpenDoors(cur);
 
-            // Auto-descend, unless this was the final floor (then the run is won).
-            if (Floor.AllCleared && Floor.Number < Config.MaxFloors)
-                StartNewRun(Floor.Number + 1);
+            // Once the whole floor is cleared, the exit "opens". If the player happens
+            // to be in the exit room when that happens, activate the portal now;
+            // otherwise it's activated when they (re-)enter the exit room.
+            if (Floor.AllCleared)
+                SyncExitPortal(cur);
         }
     }
 
@@ -137,7 +145,7 @@ public class GameEngine
         Floor.CurrentY = target.GridY;
         target.Visited = true;
 
-        var room = new Room(Config.RoomWidth, Config.RoomHeight);
+        var room = new Room(target.Width, target.Height);
         ApplyLayout(room, target);
 
         State.SetRoom(room);
@@ -162,6 +170,41 @@ public class GameEngine
             target.Cleared = true;
             OpenDoors(target);
         }
+
+        // The exit room always shows a portal: deactivated until the floor is cleared, then active.
+        SyncExitPortal(target);
+    }
+
+    /// <summary>
+    /// Ensures the exit room holds a portal matching the floor's state: deactivated
+    /// (<see cref="EntityType.ExitClosed"/>) while mobs remain anywhere on the floor,
+    /// active (<see cref="EntityType.Exit"/>) once the whole floor is cleared.
+    /// </summary>
+    private void SyncExitPortal(DungeonRoom target)
+    {
+        if (!target.IsExit || target.ExitTile is not { } tile) return;
+
+        var shouldBeActive = Floor.AllCleared;
+        var existing = State.StaticObjects.OfType<Exit>().FirstOrDefault();
+        if (existing is not null && existing.IsActive == shouldBeActive) return; // already correct
+
+        if (existing is not null) State.StaticObjects.Remove(existing);
+        State.AddObject(new Exit(tile, shouldBeActive));
+    }
+
+    /// <summary>If the player is standing on an *active* exit portal, advance to the next floor. Returns true if so.</summary>
+    private bool TryUseExit()
+    {
+        var onActivePortal = State.StaticObjects
+            .OfType<Exit>()
+            .Any(e => e.IsActive && e.Position.Equals(State.Player.Position));
+        if (!onActivePortal) return false;
+
+        // Last floor is won via the Completed flag (floor fully cleared); only descend below it.
+        if (Floor.Number < Config.MaxFloors)
+            StartNewRun(Floor.Number + 1);
+
+        return true;
     }
 
     /// <summary>Saves the live items of the currently-loaded room back onto it, so they persist while away.</summary>
@@ -181,8 +224,8 @@ public class GameEngine
 
     private void ApplyLayout(Room room, DungeonRoom target)
     {
-        var w = Config.RoomWidth;
-        var h = Config.RoomHeight;
+        var w = room.Width;
+        var h = room.Height;
 
         for (var x = 0; x < w; x++)
         for (var y = 0; y < h; y++)
@@ -199,8 +242,8 @@ public class GameEngine
 
     private void AddWalls(Room room)
     {
-        var w = Config.RoomWidth;
-        var h = Config.RoomHeight;
+        var w = room.Width;
+        var h = room.Height;
 
         for (var x = 0; x < w; x++)
         for (var y = 0; y < h; y++)
@@ -231,8 +274,8 @@ public class GameEngine
     private void OpenDoors(DungeonRoom target)
     {
         var room = State.GetCurrentRoom();
-        var w = Config.RoomWidth;
-        var h = Config.RoomHeight;
+        var w = room.Width;
+        var h = room.Height;
 
         foreach (var dir in target.Doors)
         {
@@ -244,8 +287,8 @@ public class GameEngine
 
     private Direction? DoorSideAt(DungeonRoom room, Position pos)
     {
-        var w = Config.RoomWidth;
-        var h = Config.RoomHeight;
+        var w = room.Width;
+        var h = room.Height;
 
         foreach (var dir in new[] { Direction.Up, Direction.Down, Direction.Left, Direction.Right })
             if (room.Doors.Contains(dir) && RoomGeometry.DoorTile(w, h, dir).Equals(pos))

@@ -45,6 +45,8 @@ module Dto =
         | AttackIndicator = 32
         | ThetaAttack = 33
         | Lightning = 34
+        | Exit = 35
+        | ExitClosed = 36
 
     type ItemType =
         | Heart = 1
@@ -94,6 +96,12 @@ module Dto =
         
         [<JsonPropertyName("biome")>]
         Biome: String
+
+        [<JsonPropertyName("width")>]
+        Width: int
+
+        [<JsonPropertyName("height")>]
+        Height: int
     }
 
     [<CLIMutable>]
@@ -150,6 +158,9 @@ module Dto =
 
         [<JsonPropertyName("current")>]
         Current: bool
+
+        [<JsonPropertyName("isExit")>]
+        IsExit: bool
     }
 
     [<CLIMutable>]
