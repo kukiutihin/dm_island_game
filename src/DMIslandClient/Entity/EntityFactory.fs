@@ -92,6 +92,10 @@ type MobFactory() =
         entity.SetScale(8f, 8f)
         entity
         
+    let createGoldenFreddy atlas (spriteGroup: SpriteGroup) pos =
+        let sprite = Sprite(pos, atlas, Resources.Entity.GOLDEN_FREDDY)
+        spriteGroup.AddSprite(sprite)
+        ImmovableEntity(sprite, LinearAnimatablePos(0.5f, pos), 3f)
     
     interface IEntityFactory with
         member _.CreateEntity(t, atlas, group, pos) =
@@ -130,4 +134,5 @@ type MobFactory() =
             | EntityType.ThetaAttack -> createTheta atlas group pos
             | EntityType.AttackIndicator -> createAttack atlas group pos
             | EntityType.Lightning -> createLightning atlas group pos
+            | EntityType.GoldenFreddy -> createGoldenFreddy atlas group pos
             | _ -> failwith $"Cannot create entity of type {t}"

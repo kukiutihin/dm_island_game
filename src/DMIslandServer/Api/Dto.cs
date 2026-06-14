@@ -168,6 +168,7 @@ public enum EntityType
     Skolem,
     Mole,
     Tear,
+    GoldenFreddy,
     
     AttackIndicator,
     ThetaAttack,

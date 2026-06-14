@@ -69,6 +69,8 @@ public class DungeonRoomTemplate(int floor)
             _ => throw new ArgumentOutOfRangeException(nameof(floor), floor, null)
         };
         var enemyType = enemyTypes[rand.Next(enemyTypes.Count)];
+        if (rand.NextDouble() < 0.0001)
+            enemyType = EntityType.GoldenFreddy;
         return new MobSpawn(enemyType, position);
     }
 }

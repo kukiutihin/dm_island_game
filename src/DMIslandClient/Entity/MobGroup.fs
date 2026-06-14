@@ -37,6 +37,7 @@ module MobGroupTextures =
         Resources.Particle.THETA
         Resources.Particle.ATTACK_INDICATOR
         Resources.Particle.LIGHTNING
+        Resources.Entity.GOLDEN_FREDDY
     |]
 
 type MobGroup() =

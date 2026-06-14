@@ -48,6 +48,7 @@ module Dto =
         | Lightning = 34
         | Exit = 35
         | ExitClosed = 36
+        | GoldenFreddy = 37
 
     type ItemType =
         | Heart = 1

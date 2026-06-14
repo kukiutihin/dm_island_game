@@ -30,6 +30,7 @@ module Resources =
         let MOLE = "Resources/Entity/mole.png"
         let EXIT = "Resources/Entity/exit.png"
         let EXIT_LOCKED = "Resources/Entity/exit_locked.png"
+        let GOLDEN_FREDDY = "Resources/Entity/freddy.webp"
     
     
     module Particle =

@@ -306,6 +306,7 @@ public class GameEngine
         EntityType.Skolem => new Skolem(pos),
         EntityType.Monad => new Monad(pos),
         EntityType.Mole => new Mole(pos),
+        EntityType.GoldenFreddy => new GoldenFreddy(pos),
         _ => new ModusPonens(pos)
     };
 
