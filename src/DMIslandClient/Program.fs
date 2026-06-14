@@ -1,10 +1,13 @@
 ﻿namespace DMIslandClient
 
+open Argu
+
 module Program =
-    let f (a: 'a -> 'a): 'b = a
-    
     [<EntryPoint>]
     let main args =
-        let game = Game()
+        let parser = ArgumentParser.Create<CliArguments>()
+        let results = parser.Parse(args)
+        let all = results.GetAllResults()
+        let game = Game(all)
         game.Run()
         0
