@@ -14,9 +14,7 @@ public abstract class Projectile(EntityType name, Position position, int maxHp) 
         PreviousPosition = Position;
     }
 
-    protected override void OnDeath(GameState state)
-    {
-    }
+    protected override void OnDeath(GameState state) { }
 
     public void KillOnNextMove(GameState state)
     {

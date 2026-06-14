@@ -51,6 +51,7 @@
         <Compile Include="Entity\EntityFactory.fs" />
         <Compile Include="Entity\EntityGroup.fs" />
         <Compile Include="Entity\MobGroup.fs" />
+        <Compile Include="World\RoomRendererShaders.fs" />
         <Compile Include="World\RoomRenderer.fs" />
         <Compile Include="World\RoomVignette.fs" />
         <Compile Include="World\Room.fs" />
