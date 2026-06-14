@@ -27,6 +27,41 @@ services:
       ASPNETCORE_ENVIRONMENT: Development
     restart: unless-stopped
 
+  # AI stack: an MCP server exposing the game as tools, and an LLM agent that plays it.
+  # `docker compose up server mcp-server` runs just the game + tool server;
+  # the agent needs LLM keys (set them in a .env / your shell — see services/agent-runner/.env.example).
+  mcp-server:
+    build:
+      context: ./services/mcp-server
+      dockerfile: Dockerfile
+    image: dmisland-mcp-server
+    depends_on: [server]
+    environment:
+      GAME_SERVICE_URL: http://server:5229
+      MCP_PORT: "5000"
+    ports:
+      - "5000:5000"
+    restart: unless-stopped
+
+  agent_runner:
+    build:
+      context: ./services/agent-runner
+      dockerfile: Dockerfile
+    image: dmisland-agent-runner
+    depends_on: [mcp-server]
+    environment:
+      LLM_PROVIDER: ${LLM_PROVIDER:-yandexgpt}
+      YANDEX_API_KEY: ${YANDEX_API_KEY:-}
+      YANDEX_FOLDER_ID: ${YANDEX_FOLDER_ID:-}
+      YANDEX_MODEL: ${YANDEX_MODEL:-yandexgpt/latest}
+      GIGACHAT_CLIENT_ID: ${GIGACHAT_CLIENT_ID:-}
+      GIGACHAT_CLIENT_SECRET: ${GIGACHAT_CLIENT_SECRET:-}
+      GIGACHAT_MODEL: ${GIGACHAT_MODEL:-GigaChat:latest}
+      MCP_SERVER_HOST: mcp-server
+      MCP_SERVER_PORT: "5000"
+      MAX_STEPS: ${MAX_STEPS:-100}
+      MAX_TOKENS: ${MAX_TOKENS:-50000}
+
 # ---------------------------------------------------------------------------
 # Optional: run the client in a container too. Only viable on a Linux host with
 # an X11 server (it needs the display and GPU). On macOS/Windows run the client

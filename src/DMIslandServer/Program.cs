@@ -70,6 +70,14 @@ app.MapPost("/action", (PlayerActionRequest request, GameEngine engine) =>
     return Results.Json(response);
 });
 
+// Endpoint /state — read-only snapshot of the current game (no turn advance).
+// Used by the MCP server's get_state / get_inventory tools.
+app.MapGet("/state", (GameEngine engine) =>
+{
+    var response = BuildGameStateResponse(engine.State, engine.Config, engine.Floor);
+    return Results.Json(response);
+});
+
 app.Run();
 
 // --------- вспомогательная функция ---------

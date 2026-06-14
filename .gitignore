@@ -31,3 +31,10 @@ packages/
 
 # Misc
 *.log
+
+# Python
+__pycache__/
+*.pyc
+
+# Local env / secrets
+.env
