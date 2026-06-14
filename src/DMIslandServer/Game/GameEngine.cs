@@ -15,6 +15,9 @@ public class GameEngine
     public GameConfig Config { get; }
     public Floor Floor { get; private set; }
 
+    /// <summary>The dungeon room currently loaded into the live state, so we can save its items on leave.</summary>
+    private DungeonRoom? _loadedRoom;
+
     public GameEngine(GameConfig config)
     {
         Config = config;
@@ -92,8 +95,9 @@ public class GameEngine
     private void AfterTurn()
     {
         var cur = Floor.Current;
-        var somethingLeft = State.Mobs.Any(m => m.IsAlive) || State.Items.Any(m => m.IsAlive);
-        if (!cur.Cleared && !somethingLeft)
+        // A room clears (doors open) once its mobs are gone; leftover items don't keep it locked.
+        var mobsLeft = State.Mobs.Any(m => m.IsAlive);
+        if (!cur.Cleared && !mobsLeft)
         {
             cur.Cleared = true;
             OpenDoors(cur);
@@ -126,6 +130,9 @@ public class GameEngine
 
     private void EnterRoom(DungeonRoom target, Position playerPos)
     {
+        // Persist the room we're leaving so its dropped/leftover items aren't forgotten.
+        SaveCurrentRoomState();
+
         Floor.CurrentX = target.GridX;
         Floor.CurrentY = target.GridY;
         target.Visited = true;
@@ -136,20 +143,40 @@ public class GameEngine
         State.SetRoom(room);
         State.ClearEntities();
         AddWalls(room);
+        AddTemplateWalls(target);
 
-        if (!target.Cleared && !target.Spawned)
-            SpawnEntities(target);
+        if (!target.Spawned)
+            SpawnEntities(target);          // first visit: spawn mobs + items from the template
+        else
+            RestoreRoomState(target);       // later visits: restore this room's own saved items
 
         State.Player.Teleport(playerPos);
+        _loadedRoom = target;
 
-        var somethingLeft = State.Mobs.Any(m => m.IsAlive) || State.Items.Any(m => m.IsAlive);
+        // Door opening depends on mobs only — leftover items never trap the player.
+        var mobsLeft = State.Mobs.Any(m => m.IsAlive);
 
         // A room with no mobs (e.g. the start room) is already clear.
-        if (!target.Cleared && !somethingLeft)
+        if (!target.Cleared && !mobsLeft)
         {
             target.Cleared = true;
             OpenDoors(target);
         }
+    }
+
+    /// <summary>Saves the live items of the currently-loaded room back onto it, so they persist while away.</summary>
+    private void SaveCurrentRoomState()
+    {
+        if (_loadedRoom is null) return;
+        _loadedRoom.SavedItems.Clear();
+        _loadedRoom.SavedItems.AddRange(State.Items.Where(i => i.IsAlive));
+    }
+
+    /// <summary>Restores a previously-visited room's own saved items into the live state.</summary>
+    private void RestoreRoomState(DungeonRoom target)
+    {
+        foreach (var item in target.SavedItems)
+            State.AddItem(item);
     }
 
     private void ApplyLayout(Room room, DungeonRoom target)
@@ -188,11 +215,16 @@ public class GameEngine
     {
         foreach (var spawn in target.Template.MobSpawns)
             State.AddMob(CreateMob(spawn.Type, spawn.Position));
-        foreach (var pos in target.Template.WallSpawns)
-            State.AddObject(new Wall(pos));
         foreach (var spawn in target.Template.ItemSpawns)
             State.AddItem(CreateItem(spawn.Type, spawn.Position));
         target.Spawned = true;
+    }
+
+    /// <summary>Re-adds the template's interior walls (static layout) on every visit.</summary>
+    private void AddTemplateWalls(DungeonRoom target)
+    {
+        foreach (var pos in target.Template.WallSpawns)
+            State.AddObject(new Wall(pos));
     }
 
     /// <summary>Opens this room's doorways: makes the tiles walkable and removes their wall entities.</summary>

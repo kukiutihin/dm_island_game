@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using RoguelikeServerMVP.Api;
+using RoguelikeServerMVP.Game.Entities.Pickups;
 
 namespace RoguelikeServerMVP.Game.Dungeon;
 
@@ -39,4 +40,10 @@ public class DungeonRoom(int gridX, int gridY, DungeonRoomTemplate template)
 
     /// <summary>True once this room's mobs have been instantiated into the live world.</summary>
     public bool Spawned { get; set; }
+
+    /// <summary>
+    /// Items left on this room's floor (un-collected pickups, mob drops). Persisted
+    /// when the player leaves so the room keeps its own state, and restored on return.
+    /// </summary>
+    public List<Item> SavedItems { get; } = [];
 }
