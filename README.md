@@ -1,100 +1,48 @@
-# DM Island
+# DM ISLAND
+Лучший рогалик на планете...
 
-A turn-based roguelike. The client renders the world with a custom OpenGL engine
-and talks to an authoritative game server over HTTP.
+### Разработчики
+Алексеев Артур
+Куликов Никита
+Евсеев Георгий
+Хлюпин Иван
 
-## Structure
+## Небольшое логическое описание
+Игра представляет собой рогали, сильно похожий на айзака.
 
-```
-.
-├── DMIsland.sln               # solution referencing all projects
-├── Directory.Build.props      # shared build settings
-├── docker-compose.yml         # build + run the server in Docker
-├── src/
-│   ├── LadaEngine/            # 2D OpenGL engine (OpenTK, F#) — used by the client
-│   ├── DMIslandServer/        # authoritative game server (ASP.NET, C#) + Dockerfile
-│   └── DMIslandClient/        # game client (F#), renders via LadaEngine
-└── tests/
-    └── DMIslandServer.Tests/  # xUnit tests for the server game logic
-```
+В процессе игры требуется проходить процедурно генерируемые этажи с уникальными мобами:
+- Модус поненс --- бьет вблизи, медленно подкрадывается
+- Монада IO --- летает по диагонали и бьет при контакте
+- Лямбда --- случайно летает и стреляет в персонажа
+- Сколем --- подходит близко и мешает пройти
+- Нерд --- очень опасный противник с 2 уникальными атаками (hat(theta))
+- ТурбоНерд105 --- нерд с атакой, которая засыпает все поле снарядами
+- Крот --- телепортируется по карте и стреляет во врага
 
-Project assembly names are unchanged from the original repos
-(`LadaEngine`, `RoguelikeServerMVP`, `DMIslandClient`) — only the folder
-layout was consolidated, so no namespaces had to change.
+Также на каждом этаже игрок встречает 2 предмета --- языка программирования, которые он добавляет в свой инвентарь, усиливая атаки.
+- C, Rust, Asm, Zig --- по разному увеличивают скорость снаряда, могут добавить шанс блейза
+- C++ --- помимо предыдущих добаляет шанс блейза себе в ногу
+- OCaml, Scala3, Haskell --- по разному дают небольшую самонаводку в радиусе
+- Typescript, Javascript --- повышают шанс лута
+- Python3, Haskell --- станят, один потому что медленный и с багами. другой потому что ленивый
+- И другие языки с уникальными механикми
 
-## Requirements
+Для прохождения игры необходимо зачистить всех мобов на всех этажах.
 
-- Docker (with Compose v2) — to run the server.
-- .NET 10 SDK — to run the client and the tests (all projects target `net10.0`).
+## Небольшое техническое описание
+Игра сделана в 4 сервисах:
+- Server (C# + ASP.NET) --- имеет состояние и отвечает за всю логику (движение игрока, логика мобов, предметы, генерация уровня). Слушает HTTP и отвечает на запросы
+- Client (F# + OpenGL) --- невероятный фронтенд --- рендеринг состояния с анимациями и красивыми текстурами. Рендерит и карту и UI. Обращается к серверу по HTTP. Может работать в 2 режимах: --observe-mode --- просто наблюдает за изменениями, а без него позволяет играть
+- MCP-Сервер: TODO: описание от Гоши
+- Agent-Runner: TODO: описание от Гоши
 
-## Run
+## Использованные паттерны (Сервер)
+- Огромный паттерн стратегия (25 разных поведений которые композируются как парсеры-комбинаторы), их используют все мобы. Например HitPlayerWithLightningBehaviour.cs, и вообще тут все что на Behaviour кончается и наследуется от IBehaviour<T>. Этот паттерн исплбзуется потому, что нужно задавать сложное поведение сущностям, которое местами повторяется
+- Паттерн состояние: RandomWalkBehaviour.cs --- имеет состояния, ждет или не идет в точку, в зависимости от состояния решает что делать. Используется потому, что random walk --- фактически 2 состояния.
+- Паттерн фабрика: ProjectileBehaviourBuilder.cs --- строит поведение для снаряда по набору предметов в инвентаре. Используется потому что это очень страшная и большая логика, и ответственность за это по принципу Single-Responsibility должна быть у отдельной сущности
+- И еще на самом деле много где паттерны бегают
 
-The server runs in Docker; the client is a desktop OpenGL window, so it runs on
-your host machine.
-
-```bash
-# 1) build + start the server (http://localhost:5229)
-docker compose up --build        # add -d to run in the background
-
-# 2) in another terminal, start the client (connects to localhost:5229)
-dotnet run --project src/DMIslandClient
-```
-
-Stop the server with `docker compose down` (or Ctrl-C if running in the
-foreground). The client connects to `http://localhost:5229`, configured in
-`src/DMIslandClient/Scenes/MainMenuScene.fs`.
-
-> The client can't run in a container on macOS/Windows because it needs a
-> display and the GPU. `docker-compose.yml` includes a commented-out, Linux-only
-> X11 client service if you want to containerize it on a Linux host.
-
-### Running without Docker
-
-The server is a plain ASP.NET app, so you can also run both with the SDK:
-
-```bash
-# terminal 1 — server
-cd src/DMIslandServer && dotnet run
-
-# terminal 2 — client
-cd src/DMIslandClient && dotnet run
-```
-
-## Tests
-
-```bash
-dotnet test
-```
-
-## Level generation
-
-The server now generates each room procedurally
-(`src/DMIslandServer/Game/Generation/RoomGenerators.cs`). A seeded
-cellular-automata cave generator produces the walkable layout; the player and
-mobs are snapped to valid floor tiles, and walls are emitted as entities so the
-client renders them.
-
-Configure it in `src/DMIslandServer/appsettings.json`:
-
-```jsonc
-"UseProceduralGeneration": true,  // false => empty room with a border wall
-"Seed": 12345                     // change for a different layout
-```
-
-The multi-room `Level3x3` floor generator from the `feature/room-generation`
-branch is **not** wired in yet — it needs the server's `GameState` to support
-room-to-room transitions. See the integration notes if you want that next.
-
-## Architecture
-
-```
-client (F#)  ──HTTP /action──▶  server (C#, authoritative turn logic)
-        ▲                              │
-        └──────── game state ──────────┘
-both rendered/powered by LadaEngine (client side)
-```
-
-Each `POST /action` (`move` / `attack` / `skip`, with a direction) advances one
-turn: the player acts, mobs take their turn (chase within aggro range, attack
-when adjacent, otherwise wander), then the server returns the slice of the world
-visible around the player.
+## Использованные паттерны (Клиент)
+- Стратегия для сцен в LadaEngine --- IScene и его наследники GameScene и MainMenuScene --- определяют поведение игры. Классический способ работы со сценами
+- Фабрика --- большая фабрика для сущностей которая задает параметры спрайтов, анимаций --- EntityFactory.fs, и то же для статических сущностей: StaticObjectGroup.fs, и еще ного где. Используется так как очень много тонкой настройки сущностей требуется
+- Прокси --- На 3 этаже полы рендерятся с шейдером иметирующим воду, для этого используется прокси на обычным TiledRoomRenderer, ShadedRoomRenderer. Используется так как хотелось слегка изсенить функциональность существующейго объекта
