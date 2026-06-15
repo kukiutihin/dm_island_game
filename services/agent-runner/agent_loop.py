@@ -41,11 +41,12 @@ SYSTEM_PROMPT = """Ты в рогалике. Очисти комнаты от в
 - Атака: слеза летит 1 кл/ход, 1 урон
 - Враги 3-20 HP — бей несколько раз
 - Нет врагов → двигайся в неочищ.комнату
+- Все комнаты очищены → иди в комнату с выходом и ВСТАНЬ на портал (move на него = след.этаж)
 - Стена → попробуй другое направление
 - observe() — посмотреть карту подробно
 - Айтемы (подбираются при проходе): Asm/AnsiC/Rust = скорость слезы, OCaml/Scala3 = самонаведение, Cpp/Zig = молния
 
-Читай строку РЕШ: в промпте. Не повторяй действие 3+ раз."""
+Читай строку РЕШ: в промпте — там направление к цели/выходу. Не повторяй действие 3+ раз."""
 
 
 def _dir_to_enemy(px, py, ex, ey) -> str:
@@ -111,11 +112,14 @@ def _format_state(state: dict, prev_action: str = "none", repeat_count: int = 0)
 
     rooms_info = state.get("rooms", [])
     current_room_xy = None
+    exit_room_xy = None
     uncleared = 0
     nearest_uncleared_dir = None
     for r in rooms_info:
         if r.get("current"):
             current_room_xy = (r["x"], r["y"])
+        if r.get("isExit"):
+            exit_room_xy = (r["x"], r["y"])
         if not r.get("cleared"):
             uncleared += 1
             if current_room_xy and nearest_uncleared_dir is None:
@@ -128,15 +132,42 @@ def _format_state(state: dict, prev_action: str = "none", repeat_count: int = 0)
     total_rooms = len(rooms_info)
     cleared = total_rooms - uncleared
 
-    blocked = set()
-    for dx, dy, name in [(0, -1, "up"), (0, 1, "down"), (-1, 0, "left"), (1, 0, "right")]:
-        nx, ny = px + dx, py + dy
-        for obj in objects:
-            if obj["position"]["x"] == nx and obj["position"]["y"] == ny and obj["type"] == "Wall":
-                blocked.add(name)
-                break
+    # Direction to the exit room (revealed once the floor is cleared).
+    exit_dir = None
+    if exit_room_xy and current_room_xy and exit_room_xy != current_room_xy:
+        dx = exit_room_xy[0] - current_room_xy[0]
+        dy = exit_room_xy[1] - current_room_xy[1]
+        if abs(dx) >= abs(dy):
+            exit_dir = "right" if dx > 0 else "left"
+        else:
+            exit_dir = "down" if dy > 0 else "up"
 
-    unblocked = [d for d in ["up", "down", "left", "right"] if d not in blocked]
+    # The exit portal, if it's in view (active = steppable to descend).
+    exit_portal = next((o for o in objects if o.get("type") == "Exit"), None)
+    exit_portal_dir = None
+    exit_portal_xy = None
+    if exit_portal and px is not None and py is not None:
+        ep = exit_portal.get("position", {})
+        ox, oy = ep.get("x"), ep.get("y")
+        if ox is not None and oy is not None:
+            exit_portal_xy = (ox, oy)
+            exit_portal_dir = _dir_to_enemy(px, py, ox, oy) if (ox, oy) != (px, py) else None
+
+    all_dirs = ["up", "down", "left", "right"]
+    valid_moves = state.get("validMoves")
+    if valid_moves is not None:
+        # The server tells us exactly which moves are legal right now.
+        unblocked = [d for d in all_dirs if d in valid_moves]
+        blocked = set(d for d in all_dirs if d not in unblocked)
+    else:
+        blocked = set()
+        for dx, dy, name in [(0, -1, "up"), (0, 1, "down"), (-1, 0, "left"), (1, 0, "right")]:
+            nx, ny = px + dx, py + dy
+            for obj in objects:
+                if obj["position"]["x"] == nx and obj["position"]["y"] == ny and obj["type"] == "Wall":
+                    blocked.add(name)
+                    break
+        unblocked = [d for d in all_dirs if d not in blocked]
 
     enemies_visible = alive > 0 and px is not None and py is not None
     items_visible = bool(items_on_map) and px is not None and py is not None
@@ -157,7 +188,14 @@ def _format_state(state: dict, prev_action: str = "none", repeat_count: int = 0)
             d = _dir_to_enemy(px, py, nx, ny)
             decision = f"атака({d})"
     elif uncleared == 0 and rooms_info:
-        decision = f"ищи выход ↑↓→←"
+        if exit_portal_xy == (px, py):
+            decision = "ты на выходе! любое движение = след.этаж"
+        elif exit_portal_dir:
+            decision = f"ВСТАНЬ на портал выхода({exit_portal_dir})"
+        elif exit_dir:
+            decision = f"иди к выходу({exit_dir})"
+        else:
+            decision = "ищи выход ↑↓→←"
     elif nearest_uncleared_dir:
         decision = f"двигайся({nearest_uncleared_dir})"
     else:
@@ -199,6 +237,22 @@ def _format_state(state: dict, prev_action: str = "none", repeat_count: int = 0)
             parts.append(f"❤{e['hp']}({ex},{ey}){d[0]}")
         if parts:
             lines.append("  враги: " + " ".join(parts))
+
+    doors = state.get("doors", [])
+    if doors and px is not None and py is not None:
+        parts = []
+        for d in doors:
+            dx_, dy_ = d.get("x"), d.get("y")
+            side = d.get("side", "?")
+            ddir = _dir_to_enemy(px, py, dx_, dy_) if dx_ is not None and dy_ is not None else "?"
+            parts.append(f"{side}({dx_},{dy_}){ddir[0]}")
+        lines.append("  двери(проходы): " + " ".join(parts))
+
+    if uncleared == 0 and rooms_info:
+        if exit_portal_xy:
+            lines.append(f"  выход: портал({exit_portal_xy[0]},{exit_portal_xy[1]}){(exit_portal_dir or '·')[0]} — встань на него")
+        elif exit_dir:
+            lines.append(f"  выход: в комнате {exit_dir}")
 
     return "\n".join(lines)
 
@@ -256,7 +310,12 @@ def _fallback_action(
 
     prev_is_attack = prev_action.startswith("attack")
     prev_dir = prev_action.replace("attack(", "").replace(")", "").replace("move(", "").strip()
-    unblocked = _unblocked_dirs(px, py, objects) if px is not None and py is not None else []
+    # Prefer the server's valid-move list (walls are trimmed, so scanning objects is unreliable).
+    valid_moves = state.get("validMoves")
+    if valid_moves is not None:
+        unblocked = list(valid_moves)
+    else:
+        unblocked = _unblocked_dirs(px, py, objects) if px is not None and py is not None else []
 
     def _nearest_enemy_info():
         if not alive_enemies or px is None or py is None:
@@ -522,7 +581,7 @@ def play_game(
                 result["attack_count"] += 1
                 # Track enemy HP changes
                 new_enemy_hp = {
-                    e["id"]: e.get("hp", 0)
+                    e.get("id", (e.get("position", {}).get("x"), e.get("position", {}).get("y"))): e.get("hp", 0)
                     for e in state.get("entities", [])
                     if _is_enemy(e) and e.get("hp", 0) > 0
                 }
@@ -546,11 +605,12 @@ def play_game(
                 observe_count_in_window += 1
                 observe_count_since_reset += 1
             else:
+                # No "restart" here on purpose: the agent must never reset its own run
+                # mid-game (only the harness restarts between games).
                 action_map = {
                     "move": ("move", args.get("direction")),
                     "attack": ("attack", args.get("direction")),
                     "skip_turn": ("skip", None),
-                    "restart": ("restart", None),
                 }
                 if name in action_map:
                     action, direction = action_map[name]

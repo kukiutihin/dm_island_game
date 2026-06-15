@@ -22,7 +22,7 @@ type PingGameConnection(serverUrl) =
     }
     
     let actionAndCallback (action: PlayerActionRequest) (callback: GameStateResponse -> unit) = task {
-        Threading.Thread.Sleep(100)
+        Threading.Thread.Sleep(10)
         let! response = sendRequest action |> Async.AwaitTask
         let! content = response.Content.ReadFromJsonAsync<GameStateResponse>(options) |> Async.AwaitTask
         callback content

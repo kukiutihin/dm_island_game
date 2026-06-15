@@ -153,11 +153,8 @@ static object[] GetToolList()
             description = "Skip the current turn (do nothing)",
             inputSchema = new { type = "object", properties = new { }, required = new string[0] }
         },
-        new {
-            name = "restart",
-            description = "Restart the game from floor 1",
-            inputSchema = new { type = "object", properties = new { }, required = new string[0] }
-        },
+        // Note: "restart" is intentionally NOT advertised to the agent (so it can't reset
+        // its own game), but ExecuteTool still handles it for the harness between games.
         new {
             name = "get_state",
             description = "Get the current game state: player (hp, position), visible entities (mobs/projectiles), static objects (walls, exit portal), and collected items",
@@ -221,7 +218,46 @@ static async Task<string> ExecuteTool(string? name, JsonElement? args, GameClien
 
 static string FilterState(JsonDocument doc)
 {
+    var dirs = new (string Dir, int Dx, int Dy)[]
+        { ("up", 0, -1), ("down", 0, 1), ("left", -1, 0), ("right", 1, 0) };
+    var enemyTypes = new HashSet<string>
+        { "ModusPonens", "Lambda", "Monad", "Nerd", "NuclearNerd", "Skolem", "Mole" };
+
     var root = doc.RootElement;
+
+    var (px, py) = root.TryGetProperty("player", out var pl) ? ReadXY(pl) : (0, 0);
+
+    // Collect this room's wall tiles, and the tiles occupied by living enemies (they block moves).
+    var walls = new HashSet<(int X, int Y)>();
+    if (root.TryGetProperty("objects", out var objs) && objs.ValueKind == JsonValueKind.Array)
+        foreach (var ob in objs.EnumerateArray())
+            if (ReadString(ob, "type") == "Wall" && TryXY(ob, out var w))
+                walls.Add(w);
+
+    var enemyTiles = new HashSet<(int X, int Y)>();
+    if (root.TryGetProperty("entities", out var ents) && ents.ValueKind == JsonValueKind.Array)
+        foreach (var en in ents.EnumerateArray())
+            if (enemyTypes.Contains(ReadString(en, "type") ?? "") && ReadInt(en, "hp") > 0 && TryXY(en, out var et))
+                enemyTiles.Add(et);
+
+    // Valid moves: directions where the next tile isn't a wall or a living enemy.
+    var validMoves = dirs
+        .Where(d => !walls.Contains((px + d.Dx, py + d.Dy)) && !enemyTiles.Contains((px + d.Dx, py + d.Dy)))
+        .Select(d => d.Dir)
+        .ToList();
+
+    // Doors = gaps in the wall border; interior walls = everything not on the border ring.
+    var (doors, interiorWalls) = DoorsAndInteriorWalls(walls);
+
+    // Trim the objects payload: drop the (redundant) perimeter walls, keep interior walls + exit.
+    var slimObjects = new List<object>();
+    foreach (var w in interiorWalls)
+        slimObjects.Add(new { type = "Wall", position = new { x = w.X, y = w.Y } });
+    if (root.TryGetProperty("objects", out var objs2) && objs2.ValueKind == JsonValueKind.Array)
+        foreach (var ob in objs2.EnumerateArray())
+            if (ReadString(ob, "type") != "Wall")
+                slimObjects.Add(new { type = ReadString(ob, "type"), position = ReadPos(ob) });
+
     var filtered = new Dictionary<string, object?>
     {
         ["turn"] = ReadInt(root, "turn"),
@@ -230,14 +266,48 @@ static string FilterState(JsonDocument doc)
         ["player"] = root.TryGetProperty("player", out var p) ? ParsePlayer(p) : null,
         // Visible mobs/projectiles (and floor pickups) the server reports near the player.
         ["entities"] = root.TryGetProperty("entities", out var e) ? ParseEntities(e) : new List<object>(),
-        // Static objects: walls and the exit portal — needed to navigate and find the exit.
-        ["objects"] = root.TryGetProperty("objects", out var o) ? ParseObjects(o) : new List<object>(),
+        // Interior walls + the exit portal only (the room border is summarised by doors/validMoves).
+        ["objects"] = slimObjects,
+        // Directions the player can actually step right now.
+        ["validMoves"] = validMoves,
+        // Gaps in the wall border — the room's doorways (x, y, side).
+        ["doors"] = doors,
+        // Floor minimap: which rooms exist, are cleared/current, and which is the exit.
+        ["rooms"] = root.TryGetProperty("rooms", out var rm) ? ParseRooms(rm) : new List<object>(),
         // Inventory: items the player has collected.
         ["items"] = root.TryGetProperty("items", out var i) && i.ValueKind == JsonValueKind.Array
             ? i.EnumerateArray().Select(x => x.GetString()).ToList()
             : new List<string?>()
     };
     return JsonSerializer.Serialize(filtered);
+}
+
+/// <summary>Splits the wall set into doorway gaps (on the border ring) and interior walls.</summary>
+static (List<object> doors, List<(int X, int Y)> interior) DoorsAndInteriorWalls(HashSet<(int X, int Y)> walls)
+{
+    var doors = new List<object>();
+    var interior = new List<(int X, int Y)>();
+    if (walls.Count == 0) return (doors, interior);
+
+    int minX = walls.Min(w => w.X), maxX = walls.Max(w => w.X);
+    int minY = walls.Min(w => w.Y), maxY = walls.Max(w => w.Y);
+
+    foreach (var w in walls)
+        if (w.X != minX && w.X != maxX && w.Y != minY && w.Y != maxY)
+            interior.Add(w);
+
+    // A non-wall tile on an edge (between the corners) is a doorway.
+    for (var x = minX + 1; x < maxX; x++)
+    {
+        if (!walls.Contains((x, minY))) doors.Add(new { x, y = minY, side = "up" });
+        if (!walls.Contains((x, maxY))) doors.Add(new { x, y = maxY, side = "down" });
+    }
+    for (var y = minY + 1; y < maxY; y++)
+    {
+        if (!walls.Contains((minX, y))) doors.Add(new { x = minX, y, side = "left" });
+        if (!walls.Contains((maxX, y))) doors.Add(new { x = maxX, y, side = "right" });
+    }
+    return (doors, interior);
 }
 
 static object? ParsePlayer(JsonElement p) =>
@@ -247,15 +317,23 @@ static object ParseEntities(JsonElement arr)
 {
     if (arr.ValueKind != JsonValueKind.Array) return new List<object>();
     return arr.EnumerateArray()
-        .Select(e => (object)new { type = ReadString(e, "type"), hp = ReadInt(e, "hp"), position = ReadPos(e) })
+        .Select(e => (object)new { id = ReadString(e, "id"), type = ReadString(e, "type"), hp = ReadInt(e, "hp"), position = ReadPos(e) })
         .ToList();
 }
 
-static object ParseObjects(JsonElement arr)
+static object ParseRooms(JsonElement arr)
 {
     if (arr.ValueKind != JsonValueKind.Array) return new List<object>();
     return arr.EnumerateArray()
-        .Select(o => (object)new { type = ReadString(o, "type"), position = ReadPos(o) })
+        .Select(r => (object)new
+        {
+            x = ReadInt(r, "x"),
+            y = ReadInt(r, "y"),
+            visited = ReadBool(r, "visited"),
+            cleared = ReadBool(r, "cleared"),
+            current = ReadBool(r, "current"),
+            isExit = ReadBool(r, "isExit"),
+        })
         .ToList();
 }
 
@@ -264,6 +342,9 @@ static object ParseObjects(JsonElement arr)
 static int ReadInt(JsonElement el, string name) =>
     el.TryGetProperty(name, out var v) && v.ValueKind == JsonValueKind.Number ? v.GetInt32() : 0;
 
+static bool ReadBool(JsonElement el, string name) =>
+    el.TryGetProperty(name, out var v) && v.ValueKind == JsonValueKind.True;
+
 static string? ReadString(JsonElement el, string name) =>
     el.TryGetProperty(name, out var v) && v.ValueKind == JsonValueKind.String ? v.GetString() : null;
 
@@ -271,6 +352,20 @@ static object? ReadPos(JsonElement el) =>
     el.TryGetProperty("position", out var pos)
         ? new { x = ReadInt(pos, "x"), y = ReadInt(pos, "y") }
         : null;
+
+static (int X, int Y) ReadXY(JsonElement el) =>
+    el.TryGetProperty("position", out var pos) ? (ReadInt(pos, "x"), ReadInt(pos, "y")) : (0, 0);
+
+static bool TryXY(JsonElement el, out (int X, int Y) xy)
+{
+    if (el.TryGetProperty("position", out var pos))
+    {
+        xy = (ReadInt(pos, "x"), ReadInt(pos, "y"));
+        return true;
+    }
+    xy = (0, 0);
+    return false;
+}
 
 static string Error(string msg)
 {
