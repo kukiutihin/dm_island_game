@@ -1,5 +1,6 @@
 # DM ISLAND
-Лучший рогалик на планете...
+<img width="905" height="605" alt="изображение" src="https://github.com/user-attachments/assets/052b7cf9-bc30-48ab-a0bc-a475124a5eba" />
+
 
 ### Разработчики
 Алексеев Артур
