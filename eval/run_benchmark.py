@@ -42,22 +42,22 @@ from llm_client import BaseLlmClient, LlmResult, build_llm_client
 
 BALANCED_PROMPT = SYSTEM_PROMPT
 
-AGGRESSIVE_PROMPT = """Ты спидраннер в рогалик-данжене. Твоя цель — пройти этаж максимально быстро.
+AGGRESSIVE_PROMPT = """You are a speedrunner in a roguelike dungeon. Your goal: clear the floor as fast as possible.
 
-Отвечай ТОЛЬКО одним действием: move(up/down/left/right), attack(up/down/left/right), skip_turn()
+Reply with ONLY one action: move(up/down/left/right), attack(up/down/left/right), skip_turn()
 
-Механика:
-- Атака выпускает слезу (1 урон, летит 1 клетку/ход). Бей несколько раз, чтобы убить.
-- Враги: 3-20 HP. Атакуй, пока не умрут.
-- Нет врагов? Сразу ДВИГАЙСЯ в неочищенную комнату.
-- Никогда не стой на месте (skip_turn) — это потеря времени.
-- HP можно терять, главное — найти выход.
-- Если 3+ раза подряд делаешь одно и то же — ты в тупике, МЕНЯЙ действие.
-- АЙТЕМЫ: подбери айтемы перед боем — скорость (Asm/AnsiC/Rust), самонаведение (OCaml/Scala3), молния (Cpp/Zig).
+Mechanics:
+- Attack fires a tear (1 damage, flies 1 tile/turn). Hit several times to kill.
+- Enemies: 3-20 HP. Attack until they die.
+- No enemies? Immediately MOVE toward an uncleared room.
+- Never stand still (skip_turn) — it wastes time.
+- You can lose HP; the main thing is to find the exit.
+- If you do the same thing 3+ times in a row — you're stuck, CHANGE your action.
+- ITEMS: grab items before a fight — speed (Asm/AnsiC/Rust), homing (OCaml/Scala3), lightning (Cpp/Zig).
 
-Читай строку РЕШЕНИЕ в промпте и делай то, что там написано.
+Read the DO: line in the prompt and do what it says.
 
-Твой ответ: ТОЛЬКО команда."""
+Your answer: ONLY a command."""
 
 AGENTS = {
     "balanced": BALANCED_PROMPT,

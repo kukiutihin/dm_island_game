@@ -246,12 +246,14 @@ static string FilterState(JsonDocument doc)
         .Select(d => d.Dir)
         .ToList();
 
-    // Doors = gaps in the wall border; interior walls = everything not on the border ring.
-    var (doors, interiorWalls) = DoorsAndInteriorWalls(walls);
+    // Doors = gaps in the wall border (for the navigation hints).
+    var (doors, _interior) = DoorsAndInteriorWalls(walls);
 
-    // Trim the objects payload: drop the (redundant) perimeter walls, keep interior walls + exit.
+    // Send the FULL wall map (border + interior) so the agent can pathfind AROUND interior
+    // obstacles to reach a door/exit. The agent uses these only for routing — the LLM prompt
+    // is still summarised via validMoves/doors, so this doesn't bloat the model's context.
     var slimObjects = new List<object>();
-    foreach (var w in interiorWalls)
+    foreach (var w in walls)
         slimObjects.Add(new { type = "Wall", position = new { x = w.X, y = w.Y } });
     if (root.TryGetProperty("objects", out var objs2) && objs2.ValueKind == JsonValueKind.Array)
         foreach (var ob in objs2.EnumerateArray())

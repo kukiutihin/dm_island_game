@@ -1,4 +1,5 @@
 import json
+import os
 import random
 import re
 import time
@@ -14,6 +15,15 @@ STUCK_LIMIT = 2
 OBSERVE_LIMIT = 2
 OBSERVE_WINDOW = 15
 ATTACK_FAIL_LIMIT = 4
+
+# Throttle each step so fast (no-LLM fallback) ticks don't flood the logs / observer in a
+# burst, and so watching via --observe-mode stays smooth. 0 = full speed.
+STEP_DELAY_S = max(0.0, float(os.environ.get("STEP_DELAY_MS", "150")) / 1000.0)
+
+
+def _pace():
+    if STEP_DELAY_S > 0:
+        time.sleep(STEP_DELAY_S)
 
 
 def _parse_action(text: str) -> tuple[str, dict] | None:
@@ -33,20 +43,23 @@ def _parse_action(text: str) -> tuple[str, dict] | None:
         return ("skip_turn", {})
     return None
 
-SYSTEM_PROMPT = """Ты в рогалике. Очисти комнаты от врагов, найди выход на след.этаж.
+SYSTEM_PROMPT = """You are in a roguelike. Clear rooms of enemies, find the exit to the next floor.
 
-Доступно: move(direction), attack(direction), skip_turn(), observe()
+Available: move(direction), attack(direction), skip_turn(), observe()
 
-Механика:
-- Атака: слеза летит 1 кл/ход, 1 урон
-- Враги 3-20 HP — бей несколько раз
-- Нет врагов → двигайся в неочищ.комнату
-- Все комнаты очищены → иди в комнату с выходом и ВСТАНЬ на портал (move на него = след.этаж)
-- Стена → попробуй другое направление
-- observe() — посмотреть карту подробно
-- Айтемы (подбираются при проходе): Asm/AnsiC/Rust = скорость слезы, OCaml/Scala3 = самонаведение, Cpp/Zig = молния
+Mechanics:
+- Attacks are RANGED: a tear flies in a straight line. Stand on the enemy's SAME row or
+  column and attack toward it (the DO: line tells you the direction). 1 damage per hit.
+- Enemies have 3-20 HP — hit them several times.
+- Do NOT walk onto or next to an enemy — adjacent enemies damage you every turn (you have
+  little HP). Keep your distance, line up, and shoot.
+- No enemies -> move toward an uncleared room
+- All rooms cleared -> go to the exit room and STAND on the portal (move onto it = next floor)
+- Wall -> try another direction
+- observe() — see the map in detail
+- Items (picked up by walking over them): Asm/AnsiC/Rust = tear speed, OCaml/Scala3 = homing, Cpp/Zig = lightning
 
-Читай строку РЕШ: в промпте — там направление к цели/выходу. Не повторяй действие 3+ раз."""
+Read the DO: line in the prompt — it points toward the goal/exit. Don't repeat the same action 3+ times."""
 
 
 def _dir_to_enemy(px, py, ex, ey) -> str:
@@ -55,6 +68,142 @@ def _dir_to_enemy(px, py, ex, ey) -> str:
     if abs(dx) >= abs(dy):
         return "right" if dx > 0 else "left" if dx < 0 else ("down" if dy > 0 else "up" if dy < 0 else "?")
     return "down" if dy > 0 else "up"
+
+
+def _dir_dist(px, py, tx, ty) -> tuple[str, int]:
+    """Relative direction (up/down/left/right) + Manhattan distance — far easier for an
+    LLM to act on than raw (x, y) coordinates, and shorter."""
+    dx, dy = tx - px, ty - py
+    dist = abs(dx) + abs(dy)
+    if abs(dx) >= abs(dy):
+        d = "right" if dx > 0 else "left" if dx < 0 else ("down" if dy > 0 else "up" if dy < 0 else "here")
+    else:
+        d = "down" if dy > 0 else "up"
+    return d, dist
+
+
+def _offset_str(px, py, tx, ty) -> str:
+    """Both-axis offset, e.g. 'right(6) down(1)' — tells the model it must align on BOTH
+    axes to reach a doorway tile, not just head in one direction."""
+    dx, dy = tx - px, ty - py
+    parts = []
+    if dx:
+        parts.append(f"{'right' if dx > 0 else 'left'}({abs(dx)})")
+    if dy:
+        parts.append(f"{'down' if dy > 0 else 'up'}({abs(dy)})")
+    return " ".join(parts) if parts else "here"
+
+
+def _step_toward(px, py, tx, ty, valid) -> str | None:
+    """The single best legal move that reduces distance to (tx, ty), preferring the
+    larger-delta axis. Used to walk the player onto a door tile (and through it)."""
+    dx, dy = tx - px, ty - py
+    order = []
+    if abs(dx) >= abs(dy):
+        if dx:
+            order.append("right" if dx > 0 else "left")
+        if dy:
+            order.append("down" if dy > 0 else "up")
+    else:
+        if dy:
+            order.append("down" if dy > 0 else "up")
+        if dx:
+            order.append("right" if dx > 0 else "left")
+    for c in order:
+        if not valid or c in valid:
+            return c
+    return order[0] if order else None
+
+
+def _combat_action(state) -> str | None:
+    """Deterministic combat (a weak LLM just walks into mobs and dies): if an enemy is in
+    view, line up on its row/column and SHOOT; otherwise step to line up on the shorter axis,
+    never onto the enemy. Returns 'attack(dir)'/'move(dir)', or None if no enemy is visible."""
+    player = state.get("player", {})
+    px = player.get("position", {}).get("x")
+    py = player.get("position", {}).get("y")
+    if px is None or py is None:
+        return None
+    enemies = [e for e in state.get("entities", []) if _is_enemy(e) and e.get("hp", 0) > 0]
+    if not enemies:
+        return None
+    valid = state.get("validMoves") or ["up", "down", "left", "right"]
+    e = min(enemies, key=lambda e: abs(e["position"]["x"] - px) + abs(e["position"]["y"] - py))
+    ex, ey = e["position"]["x"], e["position"]["y"]
+    edx, edy = ex - px, ey - py
+    if edx == 0 and edy == 0:
+        # Enemy on our exact tile — can't aim. Step to a free direction to open a firing lane.
+        move = next((c for c in ("up", "down", "left", "right") if c in valid), None)
+        return f"move({move})" if move else "skip_turn()"
+    if edx == 0 or edy == 0:
+        return f"attack({_dir_to_enemy(px, py, ex, ey)})"
+    primary = ("right" if edx > 0 else "left") if abs(edx) <= abs(edy) else ("down" if edy > 0 else "up")
+    secondary = ("down" if edy > 0 else "up") if abs(edx) <= abs(edy) else ("right" if edx > 0 else "left")
+    sd = {"up": (0, -1), "down": (0, 1), "left": (-1, 0), "right": (1, 0)}
+    for cand in (primary, secondary):
+        dx, dy = sd[cand]
+        if cand in valid and (px + dx, py + dy) != (ex, ey):  # never step onto the enemy
+            return f"move({cand})"
+    return None
+
+
+def _bfs_step(px, py, targets, walls, max_nodes=800) -> str | None:
+    """First move (up/down/left/right) along the shortest WALL-AVOIDING path from (px, py)
+    to the nearest target tile. This is what lets the agent route AROUND interior obstacles
+    (rock walls) instead of greedily walking into them. None if unreachable."""
+    targets = {t for t in targets if t is not None}
+    if not targets or (px, py) in targets:
+        return None
+    sd = [("up", 0, -1), ("down", 0, 1), ("left", -1, 0), ("right", 1, 0)]
+    q = deque()
+    seen = {(px, py)}
+    for name, dx, dy in sd:
+        nb = (px + dx, py + dy)
+        if nb not in walls and nb not in seen:
+            seen.add(nb)
+            q.append((nb, name))
+    nodes = 0
+    while q and nodes < max_nodes:
+        (cx, cy), first = q.popleft()
+        nodes += 1
+        if (cx, cy) in targets:
+            return first
+        for name, dx, dy in sd:
+            nb = (cx + dx, cy + dy)
+            if nb not in walls and nb not in seen:
+                seen.add(nb)
+                q.append((nb, first))
+    return None
+
+
+def _room_step_dir(rooms_info, current_xy, want_exit=False) -> str | None:
+    """BFS over the floor's room grid: the first-step direction from the current room toward
+    the nearest UNCLEARED room (or the exit room). Routes THROUGH already-cleared rooms, so
+    the agent doesn't ping-pong when no adjacent room is the goal."""
+    if not current_xy or not rooms_info:
+        return None
+    exists = {(r["x"], r["y"]) for r in rooms_info}
+    cleared = {(r["x"], r["y"]): r.get("cleared", False) for r in rooms_info}
+    is_exit = {(r["x"], r["y"]): r.get("isExit", False) for r in rooms_info}
+    sd = {"up": (0, -1), "down": (0, 1), "left": (-1, 0), "right": (1, 0)}
+    q = deque()
+    seen = {current_xy}
+    for name, (dx, dy) in sd.items():
+        nb = (current_xy[0] + dx, current_xy[1] + dy)
+        if nb in exists and nb not in seen:
+            seen.add(nb)
+            q.append((nb, name))
+    while q:
+        (cx, cy), first = q.popleft()
+        goal = is_exit.get((cx, cy), False) if want_exit else (not cleared.get((cx, cy), True))
+        if goal:
+            return first
+        for name, (dx, dy) in sd.items():
+            nb = (cx + dx, cy + dy)
+            if nb in exists and nb not in seen:
+                seen.add(nb)
+                q.append((nb, first))
+    return None
 
 
 def _unblocked_dirs(px, py, objects) -> list[str]:
@@ -114,7 +263,6 @@ def _format_state(state: dict, prev_action: str = "none", repeat_count: int = 0)
     current_room_xy = None
     exit_room_xy = None
     uncleared = 0
-    nearest_uncleared_dir = None
     for r in rooms_info:
         if r.get("current"):
             current_room_xy = (r["x"], r["y"])
@@ -122,25 +270,13 @@ def _format_state(state: dict, prev_action: str = "none", repeat_count: int = 0)
             exit_room_xy = (r["x"], r["y"])
         if not r.get("cleared"):
             uncleared += 1
-            if current_room_xy and nearest_uncleared_dir is None:
-                dx = r["x"] - current_room_xy[0]
-                dy = r["y"] - current_room_xy[1]
-                if abs(dx) >= abs(dy):
-                    nearest_uncleared_dir = "right" if dx > 0 else "left" if dx < 0 else ("down" if dy > 0 else "up")
-                else:
-                    nearest_uncleared_dir = "down" if dy > 0 else "up"
     total_rooms = len(rooms_info)
     cleared = total_rooms - uncleared
 
-    # Direction to the exit room (revealed once the floor is cleared).
-    exit_dir = None
-    if exit_room_xy and current_room_xy and exit_room_xy != current_room_xy:
-        dx = exit_room_xy[0] - current_room_xy[0]
-        dy = exit_room_xy[1] - current_room_xy[1]
-        if abs(dx) >= abs(dy):
-            exit_dir = "right" if dx > 0 else "left"
-        else:
-            exit_dir = "down" if dy > 0 else "up"
+    # First-step direction toward the nearest uncleared room / the exit room, via BFS over the
+    # room grid (handles distant rooms reached only by passing through cleared ones).
+    nearest_uncleared_dir = _room_step_dir(rooms_info, current_room_xy, want_exit=False)
+    exit_dir = _room_step_dir(rooms_info, current_room_xy, want_exit=True)
 
     # The exit portal, if it's in view (active = steppable to descend).
     exit_portal = next((o for o in objects if o.get("type") == "Exit"), None)
@@ -171,10 +307,48 @@ def _format_state(state: dict, prev_action: str = "none", repeat_count: int = 0)
 
     enemies_visible = alive > 0 and px is not None and py is not None
     items_visible = bool(items_on_map) and px is not None and py is not None
+
+    # Doors are gaps in the wall border. Map each door's side to the neighbouring room on
+    # the floor grid, so we can PREFER doors that lead to an uncleared room (and not
+    # backtrack into ones we already cleared — that caused revisits and loops).
+    doors_list = state.get("doors", [])
+    _side_delta = {"up": (0, -1), "down": (0, 1), "left": (-1, 0), "right": (1, 0)}
+    _cleared_at = {(r["x"], r["y"]): r.get("cleared", False) for r in rooms_info}
+    _cx, _cy = current_room_xy if current_room_xy else (0, 0)
+
+    def _door_neighbor(d):
+        ddx, ddy = _side_delta.get(d.get("side"), (0, 0))
+        return (_cx + ddx, _cy + ddy)
+
+    def _door_is_new(d):
+        # Unknown neighbour treated as "already seen" so we don't chase dead ends.
+        return not _cleared_at.get(_door_neighbor(d), True)
+
+    # Full wall map for pathfinding AROUND interior obstacles toward a door/exit.
+    _wall_set = {(o["position"]["x"], o["position"]["y"])
+                 for o in objects if o.get("type") == "Wall" and "position" in o}
+
+    nearest_door = None
+    if doors_list and px is not None and py is not None:
+        def _ddist(d):
+            return abs(d.get("x", 999) - px) + abs(d.get("y", 999) - py)
+        if uncleared > 0:
+            # 1) a door straight into an uncleared room; else 2) the door on the BFS path
+            # toward the nearest uncleared room (pass through cleared rooms); else 3) nearest.
+            pool = ([d for d in doors_list if _door_is_new(d)]
+                    or [d for d in doors_list if d.get("side") == nearest_uncleared_dir]
+                    or doors_list)
+        else:
+            # floor cleared -> head for the exit room specifically
+            pool = ([d for d in doors_list if _door_neighbor(d) == exit_room_xy]
+                    or [d for d in doors_list if d.get("side") == exit_dir]
+                    or doors_list)
+        nearest_door = min(pool, key=_ddist)
+
     decision = ""
 
     if items_visible and not enemies_visible:
-        decision = "иди к айтему"
+        decision = "go to item"
     elif enemies_visible:
         nearest = min(
             enemies,
@@ -185,74 +359,103 @@ def _format_state(state: dict, prev_action: str = "none", repeat_count: int = 0)
         )
         nx, ny = nearest.get("position", {}).get("x"), nearest.get("position", {}).get("y")
         if nx is not None and ny is not None:
-            d = _dir_to_enemy(px, py, nx, ny)
-            decision = f"атака({d})"
-    elif uncleared == 0 and rooms_info:
-        if exit_portal_xy == (px, py):
-            decision = "ты на выходе! любое движение = след.этаж"
-        elif exit_portal_dir:
-            decision = f"ВСТАНЬ на портал выхода({exit_portal_dir})"
-        elif exit_dir:
-            decision = f"иди к выходу({exit_dir})"
+            edx, edy = nx - px, ny - py
+            if edx == 0 or edy == 0:
+                # Lined up on the enemy's row/column -> tear flies straight into it. Shoot.
+                d = _dir_to_enemy(px, py, nx, ny)
+                decision = f"attack({d}) — lined up, SHOOT (don't walk into it)"
+            else:
+                # Not lined up: close ONLY the smaller offset to line up, keep your distance.
+                # (Don't walk diagonally onto the enemy — that's melee = you take damage.)
+                if abs(edx) <= abs(edy):
+                    align = "right" if edx > 0 else "left"
+                else:
+                    align = "down" if edy > 0 else "up"
+                decision = f"line up to shoot: move({align}) (then attack)"
+    elif uncleared == 0 and rooms_info and exit_portal_xy == (px, py):
+        decision = "you are ON the exit! any move = next floor"
+    elif uncleared == 0 and rooms_info and exit_portal_xy is not None:
+        # Path around walls onto the portal.
+        step = _bfs_step(px, py, [exit_portal_xy], _wall_set) or _step_toward(px, py, exit_portal_xy[0], exit_portal_xy[1], unblocked)
+        decision = f"STAND on exit portal: move({step})" if step else f"STAND on the exit portal({exit_portal_dir})"
+    elif nearest_door is not None:
+        dt = (nearest_door["x"], nearest_door["y"])
+        off = _offset_str(px, py, dt[0], dt[1])
+        goal = "exit room" if uncleared == 0 else "uncleared room"
+        if (px, py) == dt:
+            decision = f"move({nearest_door.get('side')}) — step through the door to the {goal}"
         else:
-            decision = "ищи выход ↑↓→←"
+            # BFS a route AROUND interior walls to the door; greedy only as a last resort.
+            step = _bfs_step(px, py, [dt], _wall_set) or _step_toward(px, py, dt[0], dt[1], unblocked)
+            decision = f"reach door to {goal} ({off}) -> move({step})" if step else f"reach door ({off})"
+    elif uncleared == 0 and exit_dir:
+        decision = f"go to exit room ({exit_dir})"
     elif nearest_uncleared_dir:
-        decision = f"двигайся({nearest_uncleared_dir})"
+        decision = f"move({nearest_uncleared_dir}) to next room"
     else:
-        decision = f"исследуй ↑↓→←"
+        decision = f"explore ↑↓→←"
 
     if repeat_count >= 3:
         decision = f"❗{repeat_count}x {decision}"
     if repeat_count >= 5 and prev_action.startswith("attack") and alive == 0:
-        decision = f"❌НЕТ ВРАГОВ " + decision
+        decision = f"❌NO ENEMIES " + decision
 
-    blocked_str = "".join(d[0] for d in sorted(blocked)) if blocked else "-"
-    unblocked_str = "".join(d[0] for d in unblocked)
+    free_str = " ".join(unblocked) if unblocked else "none"
+    next_room = f" [next:{nearest_uncleared_dir}]" if nearest_uncleared_dir else ""
 
     lines = [
-        f"F{floor}H{turn}@{hp}/{max_hp} ({px},{py}) | Вр{alive}/{total_enemies} | К{cleared}/{total_rooms}{f' [{nearest_uncleared_dir[0]}]' if nearest_uncleared_dir else ''}",
-        f"стены{blocked_str} свободно{unblocked_str} | пред:{prev_action[:12]}",
-        f">>> РЕШ: {decision}",
+        f"F{floor} H{turn} HP{hp}/{max_hp} | enemies {alive}/{total_enemies} | rooms {cleared}/{total_rooms}{next_room}",
+        f"free: {free_str} | prev:{prev_action[:14]}",
+        f">>> DO: {decision}",
     ]
 
-    if items_visible:
-        parts = []
-        for item in items_on_map:
-            pos = item.get("position", {})
-            ix, iy = pos.get("x"), pos.get("y")
-            d = _dir_to_enemy(px, py, ix, iy) if ix is not None and iy is not None else "?"
-            t = item.get("type", "?").replace("Item", "")[:4]
-            parts.append(f"{t}({ix},{iy}){d[0]}")
-        if parts:
-            lines.append("  айтемы: " + " ".join(parts))
-
+    # Enemies and items as direction + distance (no coords), nearest first.
     if enemies_visible:
+        ranked = sorted(
+            (e for e in enemies if e.get("hp", 0) > 0),
+            key=lambda e: _dir_dist(px, py, e["position"]["x"], e["position"]["y"])[1],
+        )
         parts = []
-        for e in enemies:
-            if e.get("hp", 0) <= 0:
-                continue
-            pos = e.get("position", {})
-            ex, ey = pos.get("x"), pos.get("y")
-            d = _dir_to_enemy(px, py, ex, ey) if ex is not None and ey is not None else "?"
-            parts.append(f"❤{e['hp']}({ex},{ey}){d[0]}")
-        if parts:
-            lines.append("  враги: " + " ".join(parts))
+        for e in ranked:
+            d, dist = _dir_dist(px, py, e["position"]["x"], e["position"]["y"])
+            parts.append(f"❤{e['hp']} {d}({dist})")
+        lines.append("  enemies: " + " ".join(parts))
 
-    doors = state.get("doors", [])
-    if doors and px is not None and py is not None:
+    if items_visible:
+        ranked = sorted(
+            items_on_map,
+            key=lambda it: _dir_dist(px, py, it["position"]["x"], it["position"]["y"])[1],
+        )
         parts = []
-        for d in doors:
-            dx_, dy_ = d.get("x"), d.get("y")
-            side = d.get("side", "?")
-            ddir = _dir_to_enemy(px, py, dx_, dy_) if dx_ is not None and dy_ is not None else "?"
-            parts.append(f"{side}({dx_},{dy_}){ddir[0]}")
-        lines.append("  двери(проходы): " + " ".join(parts))
+        for it in ranked:
+            d, dist = _dir_dist(px, py, it["position"]["x"], it["position"]["y"])
+            t = it.get("type", "?").replace("Item", "")[:5]
+            parts.append(f"{t} {d}({dist})")
+        lines.append("  items: " + " ".join(parts))
 
-    if uncleared == 0 and rooms_info:
-        if exit_portal_xy:
-            lines.append(f"  выход: портал({exit_portal_xy[0]},{exit_portal_xy[1]}){(exit_portal_dir or '·')[0]} — встань на него")
-        elif exit_dir:
-            lines.append(f"  выход: в комнате {exit_dir}")
+    # Navigation hints only when nothing is attacking us — keeps combat ticks focused.
+    if not enemies_visible:
+        if uncleared == 0 and rooms_info:
+            if exit_portal_xy == (px, py):
+                lines.append("  exit: you are ON the portal — any move = next floor")
+            elif exit_portal_xy is not None:
+                d, dist = _dir_dist(px, py, exit_portal_xy[0], exit_portal_xy[1])
+                lines.append(f"  exit: portal {d}({dist}) — step on it")
+            elif exit_dir:
+                lines.append(f"  exit: room {exit_dir}")
+        else:
+            if doors_list and px is not None and py is not None:
+                parts = []
+                for dr in doors_list:
+                    dx_, dy_ = dr.get("x"), dr.get("y")
+                    side = dr.get("side", "?")
+                    tag = "NEW" if _door_is_new(dr) else "seen"
+                    if dx_ is not None and dy_ is not None:
+                        parts.append(f"{side}[{_offset_str(px, py, dx_, dy_)}]{tag}")
+                    else:
+                        parts.append(f"{side}-{tag}")
+                if parts:
+                    lines.append("  doors (NEW=unexplored room, seen=already cleared): " + " ".join(parts))
 
     return "\n".join(lines)
 
@@ -348,6 +551,24 @@ def _fallback_action(
             return f"move({move_dir})"
         return "skip_turn()"
 
+    def _engage_enemy():
+        """Ranged engagement: if lined up on the enemy's row/column, SHOOT; otherwise step
+        to line up on the shorter axis (never walk straight into it = melee = damage)."""
+        if not alive_enemies or px is None or py is None:
+            return None
+        e = min(alive_enemies, key=lambda e: abs(e["position"]["x"] - px) + abs(e["position"]["y"] - py))
+        ex, ey = e["position"]["x"], e["position"]["y"]
+        edx, edy = ex - px, ey - py
+        if edx == 0 or edy == 0:
+            return f"attack({_dir_to_enemy(px, py, ex, ey)})"
+        primary = ("right" if edx > 0 else "left") if abs(edx) <= abs(edy) else ("down" if edy > 0 else "up")
+        secondary = ("down" if edy > 0 else "up") if abs(edx) <= abs(edy) else ("right" if edx > 0 else "left")
+        if primary in unblocked:
+            return f"move({primary})"
+        if secondary in unblocked:
+            return f"move({secondary})"
+        return None
+
     # === STUCK: position didn't change after move ===
     if stuck_count >= STUCK_LIMIT:
         print(f"  [fallback] stuck {stuck_count}x — forcing direction change")
@@ -397,7 +618,11 @@ def _fallback_action(
                 if item_dir:
                     return _move_to_dir(item_dir, avoid=prev_dir)
 
-    # === ENEMY LOGIC ===
+    # === ENEMY LOGIC: line up and shoot from range, never charge into melee ===
+    eng = _engage_enemy()
+    if eng:
+        return eng
+
     if prev_is_attack:
         if enemy_dist is not None and enemy_dist <= 2:
             if enemy_dir == prev_dir and repeat_count < 8:
@@ -525,9 +750,11 @@ def play_game(
 
         prompt = _format_state(state, prev_action, repeat_count)
 
-        # Override if LLM is stuck
+        # Combat is handled deterministically (a weak LLM walks into mobs and dies): whenever
+        # an enemy is in view we line up and shoot instead of trusting the model. Otherwise
+        # fall back to the anti-stuck heuristic, otherwise let the LLM decide.
         combined_stuck = stuck_count + pos_cycle_count
-        fallback = _fallback_action(
+        fallback = _combat_action(state) or _fallback_action(
             state, prev_action, repeat_count,
             stuck_count=combined_stuck,
             observe_count_in_window=observe_count_in_window,
@@ -555,7 +782,11 @@ def play_game(
                 continue
 
             budget.add_tokens(llm_result.tokens)
-            assistant_msg = llm_result.assistant_message
+            # Single-turn: the prompt already carries the full game state every tick, so we
+            # do NOT accumulate a tool-call/tool-result history. Keeping that history caused
+            # YandexGPT 400s ("tool result without a prior tool call") whenever the model
+            # replied with text instead of a native tool call.
+            assistant_msg = None
             name = llm_result.tool_name
             args = llm_result.tool_args or {}
 
@@ -618,10 +849,13 @@ def play_game(
                         state = mcp.do_action(action, direction)
                         budget.step()
                     except Exception as e:
-                        print(f"[agent] action error: {e}")
+                        # Back off so a failing MCP/socket can't spin into port exhaustion.
+                        print(f"[agent] action error: {e}; backing off 1s", flush=True)
+                        time.sleep(1)
                         continue
                 else:
-                    print(f"[agent] unknown tool: {name}")
+                    print(f"[agent] unknown tool: {name}", flush=True)
+                    time.sleep(0.2)
                     continue
 
                 new_action = f"{name}({args.get('direction', '')})"
@@ -641,6 +875,11 @@ def play_game(
 
         repeat_count = repeat_count + 1 if new_action == prev_action else 1
         prev_action = new_action
+
+        # One line per step so the LLM "thinking" gap is visible and progress is steady.
+        hp_now = state.get("player", {}).get("hp")
+        print(f"[agent] step {budget.steps}: {new_action} hp={hp_now}", flush=True)
+        _pace()
 
         # Context limit: trim multi-turn history
         if multi_turn_messages is not None and len(multi_turn_messages) > MAX_HISTORY:
@@ -742,6 +981,7 @@ def play_game_core(
         name, args = action_queue.pop(0)
         _execute_core_action(mcp, name, args, result, budget)
         state = mcp.get_state()
+        _pace()
 
     result["final_hp"] = world.hp
     result["steps"] = budget.steps
