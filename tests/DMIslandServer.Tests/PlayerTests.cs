@@ -9,7 +9,7 @@ public class PlayerTests
     [Fact]
     public void Player_Creation_ShouldInitializeProperties()
     {
-        var player = new Player(new Position(5, 10), maxHp: 6);
+        var player = new Player(new Position(5, 10), maxHp: 10);
 
         Assert.Equal(5, player.Position.X);
         Assert.Equal(10, player.Position.Y);

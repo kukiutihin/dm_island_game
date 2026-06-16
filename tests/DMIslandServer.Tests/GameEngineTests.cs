@@ -1,9 +1,13 @@
 using Xunit;
-using RoguelikeServerMVP;
 using RoguelikeServerMVP.Game;
 
 namespace GameTests;
 
+/// <summary>
+/// Player actions driven through the real GameEngine. The engine owns its own GameState
+/// (built in its constructor), so these tests act on <c>engine.State</c> rather than a
+/// hand-built state — that's the bug the earlier version of these tests had.
+/// </summary>
 public class GameEngineTests
 {
     private static GameConfig CreateConfig() => new GameConfig
@@ -15,63 +19,69 @@ public class GameEngineTests
         PlayerDefaultMaxHp = 10,
         PlayerAttackDamage = 3,
         MobAggroRange = 5,
-        AggressiveMobAggroRange = 8
+        AggressiveMobAggroRange = 8,
+        BaseRooms = 5,
+        RoomsPerFloor = 2,
+        MaxFloors = 3,
     };
-
-    private static (GameEngine engine, Player player, GameState state) CreateGame(int px, int py)
-    {
-        var config = CreateConfig();
-        var player = new Player(new Position(px, py), config.PlayerDefaultMaxHp);
-        var room = new Room(10, 10);
-        var state = new GameState(player, room);
-        return (new GameEngine(config), player, state);
-    }
 
     [Fact]
     public void PlayerMove_ValidMove_UpdatesPositionAndAdvancesTurn()
     {
-        var (engine, player, state) = CreateGame(1, 1);
-        var turn = state.TurnNumber;
+        var engine = new GameEngine(CreateConfig());
+        var start = engine.State.Player.Position;
+        var turn = engine.State.TurnNumber;
 
         engine.PlayerMove(Direction.Right);
 
-        Assert.Equal(2, player.Position.X);
-        Assert.Equal(1, player.Position.Y);
-        Assert.Equal(turn + 1, state.TurnNumber);
+        Assert.Equal(new Position(start.X + 1, start.Y), engine.State.Player.Position);
+        Assert.Equal(turn + 1, engine.State.TurnNumber);
     }
 
     [Fact]
     public void PlayerMove_BlockedByWall_DoesNotMove()
     {
-        var (engine, player, state) = CreateGame(1, 1);
-        state.AddObject(new Wall(new Position(2, 1)));
+        var engine = new GameEngine(CreateConfig());
 
-        engine.PlayerMove(Direction.Right);
+        // Step off the door row, then walk into the left border wall. The player stops just
+        // inside the wall (x == 1) and a further push doesn't move them.
+        engine.PlayerMove(Direction.Up);
+        engine.PlayerMove(Direction.Up);
+        for (var i = 0; i < CreateConfig().RoomWidth; i++)
+        {
+            var before = engine.State.Player.Position;
+            engine.PlayerMove(Direction.Left);
+            if (engine.State.Player.Position.Equals(before))
+                break;
+        }
 
-        Assert.Equal(1, player.Position.X);
-        Assert.Equal(1, player.Position.Y);
+        var atWall = engine.State.Player.Position;
+        engine.PlayerMove(Direction.Left);
+
+        Assert.Equal(atWall, engine.State.Player.Position);
+        Assert.Equal(1, atWall.X);
     }
 
     [Fact]
     public void PlayerSkipTurn_IncrementsTurn()
     {
-        var (engine, _, state) = CreateGame(0, 0);
-        var turn = state.TurnNumber;
+        var engine = new GameEngine(CreateConfig());
+        var turn = engine.State.TurnNumber;
 
         engine.PlayerSkipTurn();
 
-        Assert.Equal(turn + 1, state.TurnNumber);
+        Assert.Equal(turn + 1, engine.State.TurnNumber);
     }
 
     [Fact]
     public void PlayerAttack_AdvancesTurnAndPlayerSurvives()
     {
-        var (engine, player, state) = CreateGame(5, 5);
-        var turn = state.TurnNumber;
+        var engine = new GameEngine(CreateConfig());
+        var turn = engine.State.TurnNumber;
 
         engine.PlayerAttack(Direction.Right);
 
-        Assert.Equal(turn + 1, state.TurnNumber);
-        Assert.True(player.IsAlive);
+        Assert.Equal(turn + 1, engine.State.TurnNumber);
+        Assert.True(engine.State.Player.IsAlive);
     }
 }
