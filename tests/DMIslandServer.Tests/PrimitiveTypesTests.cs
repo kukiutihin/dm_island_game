@@ -2,10 +2,6 @@ using RoguelikeServerMVP.Game;
 
 namespace GameTests;
 
-/// <summary>
-/// Pure geometry/direction primitives. They underpin movement, attack aiming and
-/// pathfinding, so they're worth pinning down precisely.
-/// </summary>
 public class PrimitiveTypesTests
 {
     [Theory]
@@ -15,8 +11,7 @@ public class PrimitiveTypesTests
     [InlineData(Direction.Right, 6, 5)]
     public void Position_Move_StepsOneTileInDirection(Direction dir, int ex, int ey)
     {
-        var moved = new Position(5, 5).Move(dir);
-        Assert.Equal(new Position(ex, ey), moved);
+        Assert.Equal(new Position(ex, ey), new Position(5, 5).Move(dir));
     }
 
     [Fact]
@@ -38,7 +33,7 @@ public class PrimitiveTypesTests
     public void Position_CreateRectangle_CoversInclusiveArea()
     {
         var tiles = Position.CreateRectangle(new Position(0, 0), new Position(2, 1)).ToList();
-        Assert.Equal(6, tiles.Count); // 3 wide * 2 tall
+        Assert.Equal(6, tiles.Count);
         Assert.Contains(new Position(0, 0), tiles);
         Assert.Contains(new Position(2, 1), tiles);
     }

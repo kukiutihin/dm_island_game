@@ -1,21 +1,14 @@
-"""Budget accounting, provider selection, and FakeLLM tests.
-
-Budget is the rubric's "step/token budget + graceful degradation" guard. build_llm_client is
-the "two LLM providers selected by LLM_PROVIDER" switch — here we only check selection and
-validation (no network), since real calls are forbidden in tests.
-"""
 import pytest
 from budget import Budget
 from fake_llm import FakeLlmClient
 from llm_client import build_llm_client
 
-# ---- Budget ---------------------------------------------------------------
 
 def test_budget_step_counts_and_exhausts_at_max():
     b = Budget(max_steps=3, max_tokens=1000)
-    assert b.step() is True   # 1
-    assert b.step() is True   # 2
-    assert b.step() is False  # 3 -> exhausted
+    assert b.step() is True
+    assert b.step() is True
+    assert b.step() is False
     assert b.exhausted is True
 
 
@@ -23,7 +16,7 @@ def test_budget_token_limit_exhausts():
     b = Budget(max_steps=1000, max_tokens=50)
     b.add_tokens(30)
     assert b.exhausted is False
-    b.add_tokens(25)  # total 55 >= 50
+    b.add_tokens(25)
     assert b.exhausted is True
 
 
@@ -31,11 +24,8 @@ def test_budget_summary_reports_all_counters():
     b = Budget(max_steps=10, max_tokens=100)
     b.step()
     b.add_tokens(7)
-    s = b.summary
-    assert s == {"steps": 1, "tokens": 7, "max_steps": 10, "max_tokens": 100}
+    assert b.summary == {"steps": 1, "tokens": 7, "max_steps": 10, "max_tokens": 100}
 
-
-# ---- FakeLlmClient --------------------------------------------------------
 
 def test_fake_llm_returns_scripted_actions_in_order():
     llm = FakeLlmClient([("move", {"direction": "up"}), ("attack", {"direction": "left"})])
@@ -46,8 +36,7 @@ def test_fake_llm_returns_scripted_actions_in_order():
 
 
 def test_fake_llm_defaults_to_skip_when_script_exhausted():
-    llm = FakeLlmClient([])
-    r = llm.ask("sys", "prompt", [])
+    r = FakeLlmClient([]).ask("sys", "prompt", [])
     assert r.tool_name == "skip_turn"
     assert r.finish_reason == "stop"
 
@@ -57,8 +46,6 @@ def test_fake_llm_records_prompts():
     llm.ask("the-system", "the-user", [])
     assert llm._calls == [("the-system", "the-user")]
 
-
-# ---- build_llm_client (provider switch, no network) -----------------------
 
 def test_build_llm_client_unknown_provider_raises(monkeypatch):
     monkeypatch.setenv("LLM_PROVIDER", "definitely-not-a-provider")
@@ -89,8 +76,7 @@ def test_build_llm_client_gigachat_requires_credentials(monkeypatch):
 
 
 def test_build_llm_client_selects_yandex_when_configured(monkeypatch):
-    # Patch the concrete client so we test the SELECTION logic without constructing a real
-    # HTTP client (which would try to honour the sandbox proxy / network).
+    # Stub the concrete client so selection is tested without opening a real HTTP client.
     import yandex_client
 
     class _Stub:

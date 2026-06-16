@@ -1,4 +1,3 @@
-# Tooling config for the Python agent-runner (the only first-party Python in the repo).
 # `skib/` is a checked-in third-party virtualenv and is never linted or tested.
 
 [tool.ruff]
@@ -7,13 +6,10 @@ line-length = 120
 extend-exclude = ["skib", "**/__pycache__", ".pytest_cache"]
 
 [tool.ruff.lint]
-# A pragmatic set: pyflakes (F) + a slice of pycodestyle (E) + bugbear (B) + isort (I).
 select = ["E", "F", "B", "I"]
-# E501 line-too-long is handled by the formatter; keep long prompt strings readable.
 ignore = ["E501", "B008"]
 
 [tool.pytest.ini_options]
-# Only collect the agent-runner suite; the repo root holds manual integration scripts
-# (test_mcp.py) that talk to a live server and must not run in CI.
+# test_mcp.py at the repo root talks to a live server, so only collect the agent-runner suite.
 testpaths = ["services/agent-runner"]
 addopts = "-q"

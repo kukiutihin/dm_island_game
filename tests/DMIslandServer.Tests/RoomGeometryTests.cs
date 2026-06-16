@@ -3,10 +3,6 @@ using RoguelikeServerMVP.Game.Dungeon;
 
 namespace GameTests;
 
-/// <summary>
-/// Door/entry geometry of a rectangular room. Wrong door tiles would let the agent walk
-/// "through" a wall or land outside the room on a transition, so these are pinned exactly.
-/// </summary>
 public class RoomGeometryTests
 {
     [Theory]
@@ -40,7 +36,6 @@ public class RoomGeometryTests
     [Fact]
     public void EntryTile_LandsJustInsideTheOppositeWall()
     {
-        // Walking RIGHT into a room lands one tile inside its LEFT wall.
         Assert.Equal(new Position(1, 10), RoomGeometry.EntryTile(20, 20, Direction.Right));
         Assert.Equal(new Position(18, 10), RoomGeometry.EntryTile(20, 20, Direction.Left));
         Assert.Equal(new Position(10, 1), RoomGeometry.EntryTile(20, 20, Direction.Down));

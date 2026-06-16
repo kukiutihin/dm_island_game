@@ -3,10 +3,6 @@ using RoguelikeServerMVP.Game.Dungeon;
 
 namespace GameTests;
 
-/// <summary>
-/// Floor generation: determinism (same seed -> same floor, required by the eval harness's
-/// fixed-seed runs), the start/exit invariants, connectivity, and difficulty scaling.
-/// </summary>
 public class DungeonGeneratorTests
 {
     private static GameConfig Config() => new GameConfig
@@ -29,10 +25,9 @@ public class DungeonGeneratorTests
         var b = DungeonGenerator.Generate(Config(), 1, seed: 4242);
 
         Assert.Equal(Signature(a), Signature(b));
-
-        var ea = a.AllRooms.First(r => r.IsExit);
-        var eb = b.AllRooms.First(r => r.IsExit);
-        Assert.Equal(ea.ExitTile, eb.ExitTile);
+        Assert.Equal(
+            a.AllRooms.First(r => r.IsExit).ExitTile,
+            b.AllRooms.First(r => r.IsExit).ExitTile);
     }
 
     [Fact]
@@ -40,7 +35,6 @@ public class DungeonGeneratorTests
     {
         var a = DungeonGenerator.Generate(Config(), 1, seed: 1);
         var b = DungeonGenerator.Generate(Config(), 1, seed: 999);
-        // Extremely unlikely to coincide; guards against an ignored seed.
         Assert.NotEqual(Signature(a), Signature(b));
     }
 
@@ -57,8 +51,7 @@ public class DungeonGeneratorTests
     [Fact]
     public void Generate_AlwaysHasAnExitRoomWithAPortalTile()
     {
-        var f = DungeonGenerator.Generate(Config(), 1, seed: 13);
-        var exit = f.AllRooms.Single(r => r.IsExit);
+        var exit = DungeonGenerator.Generate(Config(), 1, seed: 13).AllRooms.Single(r => r.IsExit);
         Assert.NotNull(exit.ExitTile);
         Assert.False(exit.IsStart);
     }
@@ -66,8 +59,7 @@ public class DungeonGeneratorTests
     [Fact]
     public void Generate_FloorNotFullyClearedAtStart()
     {
-        var f = DungeonGenerator.Generate(Config(), 1, seed: 21);
-        Assert.False(f.AllCleared); // non-start rooms still hold mobs
+        Assert.False(DungeonGenerator.Generate(Config(), 1, seed: 21).AllCleared);
     }
 
     [Fact]

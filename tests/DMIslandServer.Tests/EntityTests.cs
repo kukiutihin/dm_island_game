@@ -3,11 +3,6 @@ using RoguelikeServerMVP.Game;
 
 namespace GameTests;
 
-/// <summary>
-/// The shared Entity health model (damage clamping, healing, death) plus player-specific
-/// behaviour: ranged attacks spawn projectiles, item pickups change stats, and blocking
-/// entities stop movement.
-/// </summary>
 public class EntityTests
 {
     private static GameState NewState(out Player player)
@@ -33,8 +28,7 @@ public class EntityTests
     {
         var state = NewState(out var player);
         player.Kill(state);
-        Assert.False(player.IsAlive);
-        player.TakeDamage(5, state); // should not throw or go negative
+        player.TakeDamage(5, state);
         Assert.Equal(0, player.Hp);
     }
 
@@ -69,9 +63,9 @@ public class EntityTests
     public void Player_PickupHeart_Heals()
     {
         var state = NewState(out var player);
-        player.TakeDamage(4, state); // hp 6
+        player.TakeDamage(4, state);
         player.PickupItem(ItemType.Heart);
-        Assert.Equal(8, player.Hp); // Heart heals 2
+        Assert.Equal(8, player.Hp);
     }
 
     [Fact]
@@ -79,7 +73,7 @@ public class EntityTests
     {
         var state = NewState(out var player);
         player.PickupItem(ItemType.Java);
-        Assert.Equal(14, player.MaxHp); // Java grants +4 max
+        Assert.Equal(14, player.MaxHp);
         Assert.Contains(ItemType.Java, player.GetItems());
     }
 

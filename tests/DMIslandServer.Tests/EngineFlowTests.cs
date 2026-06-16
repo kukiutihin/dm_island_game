@@ -2,11 +2,6 @@ using RoguelikeServerMVP.Game;
 
 namespace GameTests;
 
-/// <summary>
-/// End-to-end behaviour of a real <see cref="GameEngine"/> run: spawn invariants,
-/// turn advancement, wall blocking, seeded reproducibility, restart healing, and
-/// room transitions through doors. These exercise the engine the way the MCP server does.
-/// </summary>
 public class EngineFlowTests
 {
     private static GameConfig Config() => new GameConfig
@@ -86,7 +81,7 @@ public class EngineFlowTests
         var engine = new GameEngine(Config());
         var startCoords = (engine.Floor.CurrentX, engine.Floor.CurrentY);
 
-        // The start room is cleared, so its doors are open. Walking along a door's axis
+        // The start room is cleared, so its doors are open; walking along a door's axis
         // eventually carries the player into the neighbouring room.
         var dir = engine.Floor.Current.Doors.First();
         for (var i = 0; i < Config().RoomWidth + Config().RoomHeight; i++)

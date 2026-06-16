@@ -3,11 +3,6 @@ using RoguelikeServerMVP.Game;
 
 namespace GameTests;
 
-/// <summary>
-/// Player actions driven through the real GameEngine. The engine owns its own GameState
-/// (built in its constructor), so these tests act on <c>engine.State</c> rather than a
-/// hand-built state — that's the bug the earlier version of these tests had.
-/// </summary>
 public class GameEngineTests
 {
     private static GameConfig CreateConfig() => new GameConfig
@@ -43,8 +38,8 @@ public class GameEngineTests
     {
         var engine = new GameEngine(CreateConfig());
 
-        // Step off the door row, then walk into the left border wall. The player stops just
-        // inside the wall (x == 1) and a further push doesn't move them.
+        // Step off the door row, then walk into the left border wall: the player stops just
+        // inside it (x == 1) and a further push doesn't move them.
         engine.PlayerMove(Direction.Up);
         engine.PlayerMove(Direction.Up);
         for (var i = 0; i < CreateConfig().RoomWidth; i++)
