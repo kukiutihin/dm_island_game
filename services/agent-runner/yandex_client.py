@@ -1,7 +1,7 @@
 import json
 import re
-import httpx
 
+import httpx
 from llm_client import BaseLlmClient, LlmResult
 
 TOOL_CALLS_STATUS = "ALTERNATIVE_STATUS_TOOL_CALLS"

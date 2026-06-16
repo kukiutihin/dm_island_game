@@ -5,10 +5,10 @@ import re
 import time
 from collections import deque
 
-from agent_core import WorldModel, Goal, select_goal, plan_actions, bfs, path_to_actions, DIR_OFFSET
+from agent_core import DIR_OFFSET, Goal, WorldModel, plan_actions, select_goal
 from budget import Budget
+from llm_client import BaseLlmClient
 from mcp_client import McpClient
-from llm_client import BaseLlmClient, LlmResult
 
 MAX_HISTORY = 20
 STUCK_LIMIT = 2
@@ -168,7 +168,7 @@ def _bfs_step(px, py, targets, walls, max_nodes=800) -> str | None:
         nodes += 1
         if (cx, cy) in targets:
             return first
-        for name, dx, dy in sd:
+        for _name, dx, dy in sd:
             nb = (cx + dx, cy + dy)
             if nb not in walls and nb not in seen:
                 seen.add(nb)
@@ -198,7 +198,7 @@ def _room_step_dir(rooms_info, current_xy, want_exit=False) -> str | None:
         goal = is_exit.get((cx, cy), False) if want_exit else (not cleared.get((cx, cy), True))
         if goal:
             return first
-        for name, (dx, dy) in sd.items():
+        for _name, (dx, dy) in sd.items():
             nb = (cx + dx, cy + dy)
             if nb in exists and nb not in seen:
                 seen.add(nb)
@@ -393,12 +393,12 @@ def _format_state(state: dict, prev_action: str = "none", repeat_count: int = 0)
     elif nearest_uncleared_dir:
         decision = f"move({nearest_uncleared_dir}) to next room"
     else:
-        decision = f"explore ↑↓→←"
+        decision = "explore ↑↓→←"
 
     if repeat_count >= 3:
         decision = f"❗{repeat_count}x {decision}"
     if repeat_count >= 5 and prev_action.startswith("attack") and alive == 0:
-        decision = f"❌NO ENEMIES " + decision
+        decision = "❌NO ENEMIES " + decision
 
     free_str = " ".join(unblocked) if unblocked else "none"
     next_room = f" [next:{nearest_uncleared_dir}]" if nearest_uncleared_dir else ""
@@ -483,7 +483,6 @@ def _fallback_action(
     stuck_count: int = 0, observe_count_in_window: int = 0,
     attack_fail_count: int = 0,
 ) -> str | None:
-    import random
     if repeat_count < 5 and stuck_count < STUCK_LIMIT and observe_count_in_window < OBSERVE_LIMIT + 1 and attack_fail_count < ATTACK_FAIL_LIMIT:
         return None
 

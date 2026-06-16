@@ -1,10 +1,10 @@
 import os
 import time
 
-from mcp_client import McpClient
-from llm_client import build_llm_client
 from agent_loop import play_game
 from budget import Budget
+from llm_client import build_llm_client
+from mcp_client import McpClient
 
 
 def main():
@@ -31,7 +31,7 @@ def main():
             break
         except ValueError as e:
             print(f"[agent] {e}")
-            print(f"[agent] Set LLM_PROVIDER (yandexgpt|gigachat) and its keys in .env")
+            print("[agent] Set LLM_PROVIDER (yandexgpt|gigachat) and its keys in .env")
             time.sleep(30)
         except Exception as e:
             print(f"[agent] LLM init error: {e}, retrying in 10s...")

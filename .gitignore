@@ -35,6 +35,12 @@ packages/
 # Python
 __pycache__/
 *.pyc
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Checked-in third-party virtualenv (numpy/matplotlib sandbox) — never linted or tested
+skib/
 
 # Local env / secrets
 .env

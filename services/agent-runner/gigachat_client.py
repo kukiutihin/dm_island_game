@@ -1,10 +1,9 @@
 import base64
-import json
 import re
 import time
 import uuid
-import httpx
 
+import httpx
 from llm_client import BaseLlmClient, LlmResult
 
 
@@ -42,7 +41,6 @@ class GigaChatClient(BaseLlmClient):
         token = self._get_token()
         headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
 
-        tool_names = ", ".join(t["name"] for t in tools)
         body = {
             "model": self._model,
             "messages": [

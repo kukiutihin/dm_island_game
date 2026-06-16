@@ -362,7 +362,7 @@ def _nearest_frontier_bfs(world: WorldModel) -> tuple[int, int] | None:
         if found:
             if room_dir and len(found) > 1:
                 rdx, rdy = DIR_OFFSET[room_dir]
-                def bias(p):
+                def bias(p, rdx=rdx, rdy=rdy):
                     return abs((p[0] + rdx) - world.px) + abs((p[1] + rdy) - world.py)
                 found.sort(key=bias)
             else:

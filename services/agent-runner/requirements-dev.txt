@@ -1,0 +1,5 @@
+# Dev/test dependencies for the agent-runner. Installed in CI on top of requirements.txt.
+-r requirements.txt
+
+pytest>=8,<10
+ruff>=0.6
