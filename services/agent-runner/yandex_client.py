@@ -3,6 +3,7 @@ import re
 
 import httpx
 from llm_client import BaseLlmClient, LlmResult
+from openai import OpenAI
 
 TOOL_CALLS_STATUS = "ALTERNATIVE_STATUS_TOOL_CALLS"
 
@@ -98,6 +99,117 @@ class YandexGptClient(BaseLlmClient):
             "messages": messages,
             "tools": [_convert_tool(t) for t in tools],
         }
+
+
+class CometApiClient(BaseLlmClient):
+    def __init__(self, api_key: str, model: str, base_url: str = "https://api.cometapi.com"):
+        self._model = model
+        self._client = OpenAI(api_key=api_key, base_url=base_url, timeout=120)
+
+    def _normalize(self, messages: list) -> list:
+        result = []
+        for m in messages:
+            mc = dict(m)
+            if "text" in mc and "content" not in mc:
+                mc["content"] = mc.pop("text")
+            result.append(mc)
+        return result
+
+    def _dump_messages(self, messages: list[dict]):
+        print("--- messages to LLM ---")
+        for i, m in enumerate(messages):
+            role = m.get("role", "?")
+            content = m.get("content") or m.get("text", "")
+            tc = m.get("tool_calls")
+            info = f"content={content[:120]!r}" if content else ""
+            if tc:
+                info += f" tool_calls={[{t['function']['name']: t['function']['arguments']} for t in tc]}"
+            print(f"  [{i}] {role}: {info}")
+        print("--- end messages ---")
+
+    def ask(self, system_prompt: str, user_prompt: str, tools: list[dict]) -> LlmResult:
+        messages = [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt},
+        ]
+        return self._request(messages, tools)
+
+    def ask_messages(self, messages: list, tools: list[dict]) -> LlmResult:
+        return self._request(self._normalize(messages), tools)
+
+    def _request(self, messages: list[dict], tools: list[dict] | None = None) -> LlmResult:
+        self._dump_messages(messages)
+        kwargs: dict = {
+            "model": self._model,
+            "messages": messages,
+            "temperature": 0,
+            "max_tokens": 500,
+            "reasoning_effort": "none",
+        }
+        if tools:
+            kwargs["tools"] = [_convert_tool_comet(t) for t in tools]
+            kwargs["tool_choice"] = "auto"
+
+        import time as _time
+        _t0 = _time.time()
+        completion = self._client.chat.completions.create(**kwargs)
+        _t = _time.time() - _t0
+        if not completion.choices:
+            raise RuntimeError("API error: no choices returned")
+
+        choice = completion.choices[0]
+        msg = choice.message
+        text = msg.content or ""
+        finish = choice.finish_reason or ""
+        tokens = (completion.usage.prompt_tokens or 0) + (completion.usage.completion_tokens or 0) if completion.usage else 0
+
+        if msg.tool_calls:
+            tc = msg.tool_calls[0]
+            fn = tc.function
+            args = json.loads(fn.arguments) if isinstance(fn.arguments, str) else fn.arguments
+            print(f"  [LLM] {_t:.1f}s {fn.name}({args})")
+            assistant_msg = {
+                "role": "assistant",
+                "content": None,
+                "tool_calls": [{"id": tc.id, "type": "function", "function": {"name": fn.name, "arguments": fn.arguments}}],
+            }
+            return LlmResult(
+                content=text or None,
+                tool_name=fn.name,
+                tool_args=args,
+                tokens=tokens,
+                finish_reason=finish,
+                assistant_message=assistant_msg,
+            )
+
+        print(f"  [LLM] {_t:.1f}s text-only: {text[:60]!r}")
+        return LlmResult(
+            content=text or None, tool_name=None, tool_args=None,
+            tokens=tokens, finish_reason=finish,
+        )
+
+
+def _convert_tool_comet(t: dict) -> dict:
+    props = t.get("inputSchema", {}).get("properties", {})
+    return {
+        "type": "function",
+        "function": {
+            "name": t["name"],
+            "description": t["description"],
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    k: {
+                        "type": v.get("type", "string"),
+                        "description": v.get("description", ""),
+                        **({"enum": v["enum"]} if "enum" in v else {}),
+                    }
+                    for k, v in props.items()
+                },
+                "required": t.get("inputSchema", {}).get("required", []),
+            },
+        },
+    }
 
 
 def _convert_tool(t: dict) -> dict:

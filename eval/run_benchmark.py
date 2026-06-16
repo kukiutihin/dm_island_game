@@ -36,9 +36,6 @@ from agent_loop import (
 from budget import Budget
 from llm_client import BaseLlmClient, LlmResult, build_llm_client
 
-# ---------------------------------------------------------------------------
-# Agent prompts
-# ---------------------------------------------------------------------------
 
 BALANCED_PROMPT = SYSTEM_PROMPT
 
@@ -110,10 +107,6 @@ TOOLS = [
         "inputSchema": {"type": "object", "properties": {}, "required": []},
     },
 ]
-
-# ---------------------------------------------------------------------------
-# Game client
-# ---------------------------------------------------------------------------
 
 
 class GameClient:
@@ -215,6 +208,11 @@ def run_game(
         if completed:
             result.update({"won": True, "reason": "completed", "final_hp": hp})
             break
+
+        rooms = state.get("rooms", [])
+        cleared = sum(1 for r in rooms if r.get("cleared", False))
+        if cleared > result.get("max_room", 0):
+            result["max_room"] = cleared
 
         prompt = _format_state(state, prev_action, repeat_count)
 
@@ -365,6 +363,7 @@ def run_game_core(
         "won": False, "reason": "budget_exhausted",
         "steps": 0, "tokens": 0, "final_hp": 0,
         "max_floor": 1, "attack_count": 0,
+        "max_room":1
     }
 
     world = WorldModel()
@@ -388,6 +387,8 @@ def run_game_core(
             break
         if world.floor > result["max_floor"]:
             result["max_floor"] = world.floor
+        if world.max_room_cleared > result["max_room"]:
+            result["max_room"] = world.max_room_cleared
 
         if verbose:
             frontier_tiles = world.frontier_tiles()
@@ -534,6 +535,10 @@ def run_game_rulebased(
         if completed:
             result.update({"won": True, "reason": "completed", "final_hp": hp})
             break
+        rooms = state.get("rooms", [])
+        cleared = sum(1 for r in rooms if r.get("cleared", False))
+        if cleared > result["max_room"]:
+            result["max_room"] = cleared
 
         px = player.get("position", {}).get("x")
         py = player.get("position", {}).get("y")
@@ -645,6 +650,7 @@ def aggregate(results: list[dict]) -> dict:
     attacks = [r["attack_count"] for r in results]
     steps = [r["steps"] for r in results]
     tokens = [r["tokens"] for r in results]
+    rooms = [r["max_room"] for r in results]
 
     return {
         "n": n,
@@ -657,6 +663,8 @@ def aggregate(results: list[dict]) -> dict:
         "avg_steps": statistics.mean(steps),
         "avg_tokens": statistics.mean(tokens),
         "raw": results,
+        "max_room": max(rooms) if rooms else 0,  
+        "avg_rooms": statistics.mean(rooms) if rooms else 0,  
     }
 
 
@@ -666,14 +674,15 @@ def write_report(agg_results: dict, path: str, seeds: list[int]):
         f"Run at: {time.strftime('%Y-%m-%d %H:%M:%S')}",
         f"Seeds: {seeds[0]}–{seeds[-1]} ({len(seeds)} games per agent)\n",
         "## Summary\n",
-        "| Agent | Win Rate | Avg Floor | Max Floor | Avg Final HP | Avg Attacks | Avg Steps | Avg Tokens |",
-        "|-------|----------|-----------|-----------|-------------|-------------|-----------|------------|",
+        "| Agent | Win Rate | Avg Floor | Max Floor | Avg Final HP | Avg Attacks | Avg Steps | Avg Tokens | Max Room  |",
+        "|-------|----------|-----------|-----------|--------------|--------------|-----------|-----------|-----------|",
     ]
 
     for name, agg in agg_results.items():
         lines.append(
             f"| {name} | {agg['win_rate']:.0%} ({agg['wins']}/{agg['n']}) | "
             f"{agg['avg_floor']:.1f} | {agg['max_floor']} | "
+            f"{agg.get('avg_rooms', 0):.1f} | {agg.get('max_room', 0)}"
             f"{agg['avg_final_hp']:.0f} | {agg['avg_attacks']:.1f} | "
             f"{agg['avg_steps']:.0f} | {agg['avg_tokens']:.0f} |"
         )
@@ -767,7 +776,7 @@ def main():
     parser.add_argument(
         "--game-url",
         type=str,
-        default="http://localhost:5555",
+        default="http://localhost:5229",
         help="Game service base URL",
     )
     parser.add_argument("--max-steps", type=int, default=100)

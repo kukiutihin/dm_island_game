@@ -31,7 +31,16 @@ class BaseLlmClient(ABC):
 def build_llm_client() -> BaseLlmClient:
     provider = os.environ.get("LLM_PROVIDER", "yandexgpt").lower()
 
-    if provider == "yandexgpt":
+    if provider == "cometapi":
+        from yandex_client import CometApiClient
+        key = os.environ.get("COMETAPI_KEY")
+        if not key:
+            raise ValueError("COMETAPI_KEY not set")
+        model = os.environ.get("COMETAPI_MODEL", "deepseek-v4-flash")
+        base_url = os.environ.get("COMETAPI_BASE_URL", "https://api.cometapi.com/v1")
+        return CometApiClient(api_key=key, model=model, base_url=base_url)
+
+    elif provider == "yandexgpt":
         from yandex_client import YandexGptClient
         key = os.environ.get("YANDEX_API_KEY")
         if not key:

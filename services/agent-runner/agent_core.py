@@ -42,6 +42,7 @@ class WorldModel:
         self.completed = False
         self.exit_tile: tuple[int, int] | None = None
         self.exit_active = False
+        self.max_room_cleared = 0
 
     def update(self, state: dict):
         player = state.get("player", {})
@@ -98,6 +99,8 @@ class WorldModel:
                 "current": r.get("current", False),
                 "is_exit": r.get("isExit", False),
             })
+            if cleared:
+                self.max_room_cleared+=1
             if not cleared:
                 self.uncleared_rooms += 1
 

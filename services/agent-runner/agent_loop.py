@@ -11,7 +11,7 @@ from llm_client import BaseLlmClient
 from mcp_client import McpClient
 
 MAX_HISTORY = 20
-STUCK_LIMIT = 2
+STUCK_LIMIT = 15
 OBSERVE_LIMIT = 2
 OBSERVE_WINDOW = 15
 ATTACK_FAIL_LIMIT = 4
@@ -43,23 +43,36 @@ def _parse_action(text: str) -> tuple[str, dict] | None:
         return ("skip_turn", {})
     return None
 
-SYSTEM_PROMPT = """You are in a roguelike. Clear rooms of enemies, find the exit to the next floor.
+SYSTEM_PROMPT = """You are in a roguelike dungeon. Clear every room of enemies, then find the exit portal.
 
-Available: move(direction), attack(direction), skip_turn(), observe()
+Actions: move(direction), attack(direction), skip_turn(), observe(), get_inventory()
 
-Mechanics:
-- Attacks are RANGED: a tear flies in a straight line. Stand on the enemy's SAME row or
-  column and attack toward it (the DO: line tells you the direction). 1 damage per hit.
-- Enemies have 3-20 HP — hit them several times.
-- Do NOT walk onto or next to an enemy — adjacent enemies damage you every turn (you have
-  little HP). Keep your distance, line up, and shoot.
-- No enemies -> move toward an uncleared room
-- All rooms cleared -> go to the exit room and STAND on the portal (move onto it = next floor)
-- Wall -> try another direction
-- observe() — see the map in detail
-- Items (picked up by walking over them): Asm/AnsiC/Rust = tear speed, OCaml/Scala3 = homing, Cpp/Zig = lightning
+ROOM CLEARING:
+- Kill ALL enemies in your current room → room is cleared.
+- Doors open ONLY when the room is cleared — you cannot leave an uncleared room.
+- Clear ALL rooms on the floor → exit portal activates.
 
-Read the DO: line in the prompt — it points toward the goal/exit. Don't repeat the same action 3+ times."""
+EXIT:
+- The exit only activates when every room on the floor is cleared.
+- Walk ONTO the portal tile (one more move step) to descend.
+- Reach floor 4 exit to win.
+
+COMBAT:
+- RANGED: tears fly in a straight line (cardinal only, no diagonals).
+- Line up on the enemy's row or column → shoot. The >>> DO: line tells you direction.
+- NEVER walk adjacent to an enemy — they hit you every turn (you have low HP).
+- Enemies: ModusPonens(3hp), Lambda(3hp), Monad(4hp), Skolem(8hp), Nerd(10hp), NuclearNerd(12hp), Mole(5hp teleports).
+- Bosses (Nerd/NuclearNerd) use delayed Theta attacks — dodge the indicator tiles.
+
+ITEMS (collect by walking over them):
+- HP: Heart(+2), HalfHeart(+1)
+- Speed: Asm/AnsiC/Rust — tear flies faster
+- Homing: OCaml/Scala3 — tear tracks enemies
+- Lightning: Cpp/Zig — bonus damage
+- Stun: Python3/Haskell/JavaScript/TypeScript
+- Max HP: Java(+4), Kotlin(+2)
+
+Read the >>> DO: line — it tells you the best next action. Don't repeat the same action 3+ times."""
 
 
 def _dir_to_enemy(px, py, ex, ey) -> str:
@@ -236,6 +249,59 @@ def _is_enemy(e: dict) -> bool:
     return e.get("type", "") in ENEMY_TYPES
 
 
+PROJECTILE_TYPES = {"Tear", "EnemyProjectile", "AttackIndicator", "ThetaAttack", "Lightning"}
+
+
+def _format_observe(state: dict) -> str:
+    player = state.get("player", {})
+    px = player.get("position", {}).get("x", "?")
+    py = player.get("position", {}).get("y", "?")
+    hp = player.get("hp", "?")
+    lines = [
+        "--- observe ---",
+        f"player: ({px},{py}) HP={hp}",
+    ]
+    for e in state.get("entities", []):
+        etype = e.get("type", "?")
+        pos = e.get("position", {})
+        ex, ey = pos.get("x", "?"), pos.get("y", "?")
+        ehp = e.get("hp", "")
+        dx, dy = "", ""
+        if ex != "?" and ey != "?" and px != "?" and py != "?":
+            from_dist = _dir_dist(px, py, ex, ey)
+            dx, dy = from_dist[0], from_dist[1]
+        parts = [f"  {etype}({ex},{ey})"]
+        if ehp != "":
+            parts.append(f"hp={ehp}")
+        if dx:
+            parts.append(f"{dx}({dy})")
+        lines.append(" ".join(parts))
+    for o in state.get("objects", []):
+        otype = o.get("type", "?")
+        pos = o.get("position", {})
+        lines.append(f"  {otype}({pos.get('x','?')},{pos.get('y','?')})")
+    for d in state.get("doors", []):
+        lines.append(f"  door side={d.get('side')} ({d.get('x')},{d.get('y')})")
+    vm = state.get("validMoves", [])
+    lines.append(f"  valid: {' '.join(vm)}")
+    for r in state.get("rooms", []):
+        tags = []
+        if r.get("cleared"):
+            tags.append("ok")
+        else:
+            tags.append("UNCLEARED")
+        if r.get("isExit"):
+            tags.append("EXIT")
+        if r.get("current"):
+            tags.append("here")
+        lines.append(f"  room({r['x']},{r['y']}) {' '.join(tags)}")
+    inv = state.get("items", [])
+    if inv:
+        lines.append(f"  inv: {' '.join(inv)}")
+    lines.append("--- end observe ---")
+    return "\n".join(lines)
+
+
 def _item_priority(item_type: str) -> int:
     speed_items = {"AsmItem": 5, "AnsiCItem": 4, "RustItem": 4}
     homing_items = {"OCamlItem": 3, "Scala3Item": 2}
@@ -243,7 +309,7 @@ def _item_priority(item_type: str) -> int:
     return speed_items.get(item_type, 0) or homing_items.get(item_type, 0) or lightning_items.get(item_type, 0)
 
 
-def _format_state(state: dict, prev_action: str = "none", repeat_count: int = 0) -> str:
+def _format_state(state: dict, prev_action: str = "none", repeat_count: int = 0, observe_result: str = "") -> str:
     player = state.get("player", {})
     entities = state.get("entities", [])
     floor = state.get("floor", 1)
@@ -400,10 +466,27 @@ def _format_state(state: dict, prev_action: str = "none", repeat_count: int = 0)
     free_str = " ".join(unblocked) if unblocked else "none"
     next_room = f" [next:{nearest_uncleared_dir}]" if nearest_uncleared_dir else ""
 
+    # Surroundings: what is in each adjacent cell
+    dir_info = {"up": "\u2191", "down": "\u2193", "left": "\u2190", "right": "\u2192"}
+    dir_dx = {"up": (0, -1), "down": (0, 1), "left": (-1, 0), "right": (1, 0)}
+    alive_enemies = [e for e in enemies if e.get("hp", 0) > 0]
+    around = []
+    for d, sym in dir_info.items():
+        if d in unblocked:
+            nx, ny = px + dir_dx[d][0], py + dir_dx[d][1]
+            e = next((e for e in alive_enemies if e.get("position", {}).get("x") == nx and e.get("position", {}).get("y") == ny), None)
+            if e:
+                around.append(f"{sym}{e['type'][:3]}({e['hp']})")
+            else:
+                around.append(f"{sym}.")
+        else:
+            around.append(f"{sym}x")
+
     lines = [
         f"F{floor} H{turn} HP{hp}/{max_hp} | enemies {alive}/{total_enemies} | rooms {cleared}/{total_rooms}{next_room}",
         f"free: {free_str} | prev:{prev_action[:14]}",
         f">>> DO: {decision}",
+        f"around: {' '.join(around)}",
     ]
 
     if enemies_visible:
@@ -429,29 +512,47 @@ def _format_state(state: dict, prev_action: str = "none", repeat_count: int = 0)
             parts.append(f"{t} {d}({dist})")
         lines.append("  items: " + " ".join(parts))
 
-    # Navigation hints only when nothing is attacking us — keeps combat ticks focused.
-    if not enemies_visible:
-        if uncleared == 0 and rooms_info:
-            if exit_portal_xy == (px, py):
-                lines.append("  exit: you are ON the portal — any move = next floor")
-            elif exit_portal_xy is not None:
-                d, dist = _dir_dist(px, py, exit_portal_xy[0], exit_portal_xy[1])
-                lines.append(f"  exit: portal {d}({dist}) — step on it")
-            elif exit_dir:
-                lines.append(f"  exit: room {exit_dir}")
-        else:
-            if doors_list and px is not None and py is not None:
-                parts = []
-                for dr in doors_list:
-                    dx_, dy_ = dr.get("x"), dr.get("y")
-                    side = dr.get("side", "?")
-                    tag = "NEW" if _door_is_new(dr) else "seen"
-                    if dx_ is not None and dy_ is not None:
-                        parts.append(f"{side}[{_offset_str(px, py, dx_, dy_)}]{tag}")
-                    else:
-                        parts.append(f"{side}-{tag}")
-                if parts:
-                    lines.append("  doors (NEW=unexplored room, seen=already cleared): " + " ".join(parts))
+    inv = state.get("items", [])
+    if inv:
+        lines.append("  inv: " + " ".join(inv))
+
+    projectiles = [e for e in entities if e.get("type") in PROJECTILE_TYPES]
+    if projectiles:
+        parts = []
+        for p in projectiles:
+            pp = p.get("position", {})
+            pdir, pdist = _dir_dist(px, py, pp.get("x", 0), pp.get("y", 0))
+            parts.append(f"⚠{p['type'][:8]}{pdir}({pdist})")
+        lines.append("  threats: " + " ".join(parts))
+
+    # Exit portal info — always visible
+    if uncleared == 0 and rooms_info:
+        if exit_portal_xy == (px, py):
+            lines.append("  exit: ON PORTAL — any move = next floor")
+        elif exit_portal_xy is not None:
+            d, dist = _dir_dist(px, py, exit_portal_xy[0], exit_portal_xy[1])
+            lines.append(f"  exit: portal at {d}({dist})")
+        elif exit_dir:
+            lines.append(f"  exit: room {exit_dir}")
+    elif exit_portal_xy is not None:
+        d, dist = _dir_dist(px, py, exit_portal_xy[0], exit_portal_xy[1])
+        lines.append(f"  exit: portal {d}({dist}) (need clear {uncleared} more rooms)")
+
+    # Doors info — always visible
+    if doors_list and px is not None and py is not None:
+        parts = []
+        for dr in doors_list:
+            dx_, dy_ = dr.get("x"), dr.get("y")
+            side = dr.get("side", "?")
+            door_xy = f"({dx_},{dy_})" if dx_ is not None and dy_ is not None else ""
+            tag = "NEW" if _door_is_new(dr) else "seen"
+            parts.append(f"{side}{door_xy}{tag}")
+        if parts:
+            lines.append("  doors: " + " ".join(parts))
+
+    if prev_action == "observe()" and observe_result:
+        lines.append("")
+        lines.append(observe_result)
 
     return "\n".join(lines)
 
@@ -673,11 +774,18 @@ def play_game(
     repeat_count = 0
     multi_turn_messages = None
 
-    tools = tools + [{
-        "name": "observe",
-        "description": "Get detailed game state (player, enemies, items, map)",
-        "inputSchema": {"type": "object", "properties": {}, "required": []},
-    }]
+    tools = tools + [
+        {
+            "name": "observe",
+            "description": "Get detailed game state (player, enemies, items, map)",
+            "inputSchema": {"type": "object", "properties": {}, "required": []},
+        },
+        {
+            "name": "get_inventory",
+            "description": "List the items you have collected",
+            "inputSchema": {"type": "object", "properties": {}, "required": []},
+        },
+    ]
 
     stuck_count = 0
     pos_history = deque(maxlen=10)
@@ -688,6 +796,7 @@ def play_game(
     attack_fail_count = 0
     last_enemy_hp: dict[str, int] = {}
     visited_room_ids: set[str] = set()
+    last_observe_result = ""
 
     while not budget.exhausted:
         player = state.get("player", {})
@@ -733,7 +842,7 @@ def play_game(
             result.update({"won": True, "reason": "completed", "final_hp": hp})
             break
 
-        prompt = _format_state(state, prev_action, repeat_count)
+        prompt = _format_state(state, prev_action, repeat_count, last_observe_result)
 
         # Combat is handled deterministically (a weak LLM walks into mobs and dies): whenever
         # an enemy is in view we line up and shoot instead of trusting the model. Otherwise
@@ -812,12 +921,14 @@ def play_game(
                         attack_fail_count = 0
                 last_enemy_hp = new_enemy_hp
 
-            if name == "observe":
+            if name in ("observe", "get_inventory"):
                 state = mcp.get_state()
                 budget.step()
-                new_action = "observe()"
-                observe_count_in_window += 1
-                observe_count_since_reset += 1
+                new_action = f"{name}()"
+                if name == "observe":
+                    observe_count_in_window += 1
+                    observe_count_since_reset += 1
+                    last_observe_result = _format_observe(state)
             else:
                 # No "restart" here on purpose: the agent must never reset its own run
                 # mid-game (only the harness restarts between games).
