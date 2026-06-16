@@ -110,21 +110,6 @@ type MobFactory() =
         Async.Start (recursiveTask ())
         ImmovableEntity(sprite, LinearAnimatablePos(0.5f, pos), 3f)
 
-    // Frame-by-frame animation example:
-    //   To animate a mob, build its entity as usual, then attach a SpriteAnimation:
-    //
-    //     let createAnimatedFoo atlas (group: SpriteGroup) pos =
-    //         let sprite = Sprite(pos, atlas, Resources.Entity.FOO_FRAME_0)
-    //         group.AddSprite(sprite)
-    //         let entity = Entity(sprite, SmoothAnimatablePos(4f, pos), 1f)
-    //         entity.SetAnimation([| Resources.Entity.FOO_FRAME_0
-    //                                Resources.Entity.FOO_FRAME_1
-    //                                Resources.Entity.FOO_FRAME_2 |], 6f)   // 6 fps, looping
-    //         entity
-    //
-    //   The frame textures MUST be listed in MobGroupTextures.textures so they're
-    //   packed into this group's atlas. Entity.Update advances the animation each frame.
-
     interface IEntityFactory with
         member _.CreateEntity(t, atlas, group, pos) =
             match t with

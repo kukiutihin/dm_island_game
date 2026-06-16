@@ -171,7 +171,6 @@ def run_game(
     repeat_count = 0
     multi_turn_messages = None
 
-    # Tracking
     stuck_count = 0
     pos_history = deque(maxlen=10)
     pos_cycle_count = 0
@@ -188,13 +187,11 @@ def run_game(
         px = player.get("position", {}).get("x")
         py = player.get("position", {}).get("y")
 
-        # Reset observe window
         steps_since_observe_reset += 1
         if steps_since_observe_reset >= OBSERVE_WINDOW:
             observe_count_in_window = 0
             steps_since_observe_reset = 0
 
-        # Cycle detection via position history
         if px is not None and py is not None:
             pos_tuple = (px, py)
             if len(pos_history) >= 4:
@@ -221,7 +218,6 @@ def run_game(
 
         prompt = _format_state(state, prev_action, repeat_count)
 
-        # Override if LLM is stuck
         combined_stuck = stuck_count + pos_cycle_count
         fallback = _fallback_action(
             state, prev_action, repeat_count,
@@ -269,7 +265,6 @@ def run_game(
                 else:
                     multi_turn_messages.append(assistant_msg)
 
-        # Remember position before action
         old_px, old_py = px, py
 
         if not name:
@@ -281,7 +276,6 @@ def run_game(
         else:
             if name == "attack":
                 result["attack_count"] += 1
-                # Track enemy HP changes
                 new_enemy_hp = {
                     e["id"]: e.get("hp", 0)
                     for e in state.get("entities", [])
@@ -320,12 +314,10 @@ def run_game(
 
                 new_action = f"{name}({args.get('direction', '')})"
 
-        # Immediate death check
         if state.get("player", {}).get("hp", 0) <= 0:
             result.update({"won": False, "reason": "died", "final_hp": 0})
             break
 
-        # Stuck detection: position unchanged after move
         new_px = state.get("player", {}).get("position", {}).get("x")
         new_py = state.get("player", {}).get("position", {}).get("y")
         if name == "move" and new_px == old_px and new_py == old_py:
@@ -336,12 +328,10 @@ def run_game(
         repeat_count = repeat_count + 1 if new_action == prev_action else 1
         prev_action = new_action
 
-        # Context limit: trim multi-turn history
         if multi_turn_messages is not None and len(multi_turn_messages) > MAX_HISTORY:
             system_msg = multi_turn_messages[0]
             multi_turn_messages = [system_msg] + multi_turn_messages[-(MAX_HISTORY - 1):]
 
-        # Append tool result for multi-turn
         if multi_turn_messages is not None:
             state_str = _format_state(state, new_action, repeat_count)
             multi_turn_messages.append({
@@ -399,7 +389,6 @@ def run_game_core(
         if world.floor > result["max_floor"]:
             result["max_floor"] = world.floor
 
-        # Verbose logging
         if verbose:
             frontier_tiles = world.frontier_tiles()
             front = sorted(frontier_tiles)[:5] if frontier_tiles else []
@@ -408,7 +397,6 @@ def run_game_core(
                   f"enemies={len(world.enemies)} items={len(world.items)} "
                   f"frontier={len(frontier_tiles)} rooms={len(world.rooms)} unc cleared={world.uncleared_rooms}")
 
-        # Stuck detection (always, regardless of action_queue)
         current_pos = (world.px, world.py)
         if current_pos == last_pos:
             stuck_steps += 1
@@ -416,7 +404,6 @@ def run_game_core(
             stuck_steps = 0
         last_pos = current_pos
 
-        # Replan if queue empty or stuck
         if not action_queue or stuck_steps >= 3:
             if stuck_steps >= 3:
                 if verbose:
@@ -821,7 +808,6 @@ def main():
     print(f"Max steps: {args.max_steps}, Max tokens: {args.max_tokens}")
     print()
 
-    # Check game service connectivity
     game = GameClient(args.game_url)
     try:
         status = game.get_state()
@@ -857,7 +843,6 @@ def main():
 
     print(f"Agents: {', '.join(agents.keys())}")
 
-    # Build LLM (only if LLM-based agents are selected)
     need_llm = any(v is not None for v in agents.values())
     llm = None
     if need_llm:

@@ -59,8 +59,6 @@ public class GameEngine
         EnterRoom(start, new Position(start.Width / 2, start.Height / 2));
     }
 
-    // ---- Player actions -----------------------------------------------------
-
     public void PlayerMove(Direction dir)
     {
         if (!State.Player.IsAlive) return;
@@ -110,8 +108,6 @@ public class GameEngine
         AfterTurn();
     }
 
-    // ---- Turn / room bookkeeping -------------------------------------------
-
     private void AfterTurn()
     {
         var cur = Floor.Current;
@@ -147,8 +143,6 @@ public class GameEngine
         State.Items.RemoveAll(m => !m.IsAlive);
         State.Projectiles.RemoveAll(m => !m.IsAlive);
     }
-
-    // ---- Room loading -------------------------------------------------------
 
     private void EnterRoom(DungeonRoom target, Position playerPos)
     {

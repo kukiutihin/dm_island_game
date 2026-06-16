@@ -278,7 +278,6 @@ def _format_state(state: dict, prev_action: str = "none", repeat_count: int = 0)
     nearest_uncleared_dir = _room_step_dir(rooms_info, current_room_xy, want_exit=False)
     exit_dir = _room_step_dir(rooms_info, current_room_xy, want_exit=True)
 
-    # The exit portal, if it's in view (active = steppable to descend).
     exit_portal = next((o for o in objects if o.get("type") == "Exit"), None)
     exit_portal_dir = None
     exit_portal_xy = None
@@ -292,7 +291,6 @@ def _format_state(state: dict, prev_action: str = "none", repeat_count: int = 0)
     all_dirs = ["up", "down", "left", "right"]
     valid_moves = state.get("validMoves")
     if valid_moves is not None:
-        # The server tells us exactly which moves are legal right now.
         unblocked = [d for d in all_dirs if d in valid_moves]
         blocked = set(d for d in all_dirs if d not in unblocked)
     else:
@@ -375,7 +373,6 @@ def _format_state(state: dict, prev_action: str = "none", repeat_count: int = 0)
     elif uncleared == 0 and rooms_info and exit_portal_xy == (px, py):
         decision = "you are ON the exit! any move = next floor"
     elif uncleared == 0 and rooms_info and exit_portal_xy is not None:
-        # Path around walls onto the portal.
         step = _bfs_step(px, py, [exit_portal_xy], _wall_set) or _step_toward(px, py, exit_portal_xy[0], exit_portal_xy[1], unblocked)
         decision = f"STAND on exit portal: move({step})" if step else f"STAND on the exit portal({exit_portal_dir})"
     elif nearest_door is not None:
@@ -409,7 +406,6 @@ def _format_state(state: dict, prev_action: str = "none", repeat_count: int = 0)
         f">>> DO: {decision}",
     ]
 
-    # Enemies and items as direction + distance (no coords), nearest first.
     if enemies_visible:
         ranked = sorted(
             (e for e in enemies if e.get("hp", 0) > 0),
@@ -568,7 +564,6 @@ def _fallback_action(
             return f"move({secondary})"
         return None
 
-    # === STUCK: position didn't change after move ===
     if stuck_count >= STUCK_LIMIT:
         print(f"  [fallback] stuck {stuck_count}x — forcing direction change")
         avoid = prev_dir if prev_dir in unblocked else None
@@ -577,7 +572,6 @@ def _fallback_action(
             return f"move({move_dir})"
         return "skip_turn()"
 
-    # === OBSERVE SPAM ===
     if observe_count_in_window >= OBSERVE_LIMIT + 1:
         if nearest_uncleared_dir and nearest_uncleared_dir in unblocked:
             return f"move({nearest_uncleared_dir})"
@@ -585,7 +579,6 @@ def _fallback_action(
             return f"move({random.choice(unblocked)})"
         return "skip_turn()"
 
-    # === ATTACK NOT LANDING ===
     if attack_fail_count >= ATTACK_FAIL_LIMIT:
         print(f"  [fallback] attack fails {attack_fail_count}x — moving closer")
         if enemy_dir and enemy_dir in unblocked:
@@ -598,7 +591,6 @@ def _fallback_action(
     if repeat_count < 5:
         return None
 
-    # === OBSERVE SPAM (old, by repeat_count) ===
     if prev_action == "observe()" and repeat_count >= 3:
         if nearest_uncleared_dir and nearest_uncleared_dir in unblocked:
             return f"move({nearest_uncleared_dir})"
@@ -606,7 +598,6 @@ def _fallback_action(
             return f"move({random.choice(unblocked)})"
         return "skip_turn()"
 
-    # === ITEM-FIRST: pick up nearby items before engaging ===
     if items_on_map and px is not None and py is not None:
         item_dir, item_dist = _nearest_item_dir(px, py, items_on_map)
         if item_dist is not None and item_dist <= 10:
@@ -617,7 +608,6 @@ def _fallback_action(
                 if item_dir:
                     return _move_to_dir(item_dir, avoid=prev_dir)
 
-    # === ENEMY LOGIC: line up and shoot from range, never charge into melee ===
     eng = _engage_enemy()
     if eng:
         return eng
@@ -689,7 +679,6 @@ def play_game(
         "inputSchema": {"type": "object", "properties": {}, "required": []},
     }]
 
-    # Tracking
     stuck_count = 0
     pos_history = deque(maxlen=10)
     pos_cycle_count = 0
@@ -708,13 +697,11 @@ def play_game(
         px = player.get("position", {}).get("x")
         py = player.get("position", {}).get("y")
 
-        # Reset observe window every OBSERVE_WINDOW steps
         steps_since_observe_reset += 1
         if steps_since_observe_reset >= OBSERVE_WINDOW:
             observe_count_in_window = 0
             steps_since_observe_reset = 0
 
-        # Cycle detection via position history
         if px is not None and py is not None:
             pos_tuple = (px, py)
             if len(pos_history) >= 4:
@@ -729,7 +716,6 @@ def play_game(
                     pos_cycle_count = 0
             pos_history.append(pos_tuple)
 
-        # Visited room tracking
         current_room_id = None
         for r in state.get("rooms", []):
             if r.get("current"):
@@ -799,7 +785,6 @@ def play_game(
                 else:
                     multi_turn_messages.append(assistant_msg)
 
-        # Remember position before action
         old_px, old_py = px, py
 
         if not name:
@@ -809,7 +794,6 @@ def play_game(
         else:
             if name == "attack":
                 result["attack_count"] += 1
-                # Track enemy HP changes
                 new_enemy_hp = {
                     e.get("id", (e.get("position", {}).get("x"), e.get("position", {}).get("y"))): e.get("hp", 0)
                     for e in state.get("entities", [])
@@ -859,12 +843,10 @@ def play_game(
 
                 new_action = f"{name}({args.get('direction', '')})"
 
-        # Immediate death check
         if state.get("player", {}).get("hp", 0) <= 0:
             result.update({"won": False, "reason": "died", "final_hp": 0})
             break
 
-        # Stuck detection: position unchanged after move
         new_px = state.get("player", {}).get("position", {}).get("x")
         new_py = state.get("player", {}).get("position", {}).get("y")
         if name == "move" and new_px == old_px and new_py == old_py:
@@ -880,12 +862,10 @@ def play_game(
         print(f"[agent] step {budget.steps}: {new_action} hp={hp_now}", flush=True)
         _pace()
 
-        # Context limit: trim multi-turn history
         if multi_turn_messages is not None and len(multi_turn_messages) > MAX_HISTORY:
             system_msg = multi_turn_messages[0]
             multi_turn_messages = [system_msg] + multi_turn_messages[-(MAX_HISTORY - 1):]
 
-        # Append tool result for multi-turn
         if multi_turn_messages is not None:
             state_str = _format_state(state, new_action, repeat_count)
             multi_turn_messages.append({
@@ -937,7 +917,6 @@ def play_game_core(
         if world.floor > result["max_floor"]:
             result["max_floor"] = world.floor
 
-        # Stuck detection (always, regardless of action_queue)
         current_pos = (world.px, world.py)
         if current_pos == last_pos:
             stuck_steps += 1
@@ -945,7 +924,6 @@ def play_game_core(
             stuck_steps = 0
         last_pos = current_pos
 
-        # Replan if queue empty or stuck
         if not action_queue or stuck_steps >= 3:
             if stuck_steps >= 3:
                 print(f"  [core] STUCK {stuck_steps}x — escape")
@@ -965,7 +943,6 @@ def play_game_core(
             if current_goal:
                 action_queue = plan_actions(world, current_goal)
             else:
-                # Fallback: move anywhere not wall
                 for d, (dx, dy) in DIR_OFFSET.items():
                     nx, ny = world.px + dx, world.py + dy
                     if (nx, ny) not in world.walls:
