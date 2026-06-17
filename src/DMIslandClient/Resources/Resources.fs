@@ -33,8 +33,11 @@ module Resources =
         let EXIT = "Resources/Entity/exit.png"
         let EXIT_LOCKED = "Resources/Entity/exit_locked.png"
         let GOLDEN_FREDDY = "Resources/Entity/freddy.webp"
-    
-    
+        let NEIRONKA_IDLE = "Resources/Entity/neironka_idle.png"
+        let NEIRONKA_ATTACK = "Resources/Entity/neironka_attack.png"
+        let NEIRONKA_HIDE = "Resources/Entity/neironka_hide.png"
+
+
     module Particle =
         let BUBBLE = "Resources/Textures/Particle/dollar.png"
         let SMOKE1 = "Resources/Textures/Particle/generic_3.png"
@@ -44,6 +47,8 @@ module Resources =
         let ATTACK_INDICATOR = "Resources/Textures/Particle/attack.png"
         let LIGHTNING = "Resources/Textures/Particle/lightning.png"
         let HIT_SPARK = "Resources/Textures/Particle/hit_spark.png"
+        let NEIRONKA_PROJECTILE = "Resources/Textures/Particle/neironka_projectile.png"
+        let BLUE_FLASH = "Resources/Textures/Particle/blue_flash.png"
         
         
     

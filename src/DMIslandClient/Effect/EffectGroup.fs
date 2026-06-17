@@ -10,6 +10,7 @@ type EffectType =
     | EtTearPop
     | EtProjectilePop
     | EtMobAttack
+    | EtBlueFlash
 
 
 type EffectGroup() =
@@ -19,6 +20,7 @@ type EffectGroup() =
         Resources.Particle.BUBBLE
         Resources.Particle.ENEMY_PROJECTILE
         Resources.Particle.HIT_SPARK
+        Resources.Particle.BLUE_FLASH
     |]
     
     let atlas = TextureAtlas(textures)
@@ -41,12 +43,17 @@ type EffectGroup() =
         let effect = MobAttackEffect(position, atlas, spriteGroup)
         effects.Add(effect)
 
+    let createBlueFlash position =
+        let effect = BlueFlashEffect(position, atlas, spriteGroup)
+        effects.Add(effect)
+
     member x.CreateEffect(typ: EffectType, position: Pos) =
         match typ with
         | EtEntityDeath -> createEntityDeath position
         | EtProjectilePop -> createProjectileExplosion position
         | EtTearPop -> createTearExplosion position
         | EtMobAttack -> createMobAttack position
+        | EtBlueFlash -> createBlueFlash position
     
     member x.Update(dt: float32) =
         effects |> Seq.iter _.Update(dt)

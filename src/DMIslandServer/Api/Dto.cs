@@ -153,7 +153,9 @@ public enum EventType
     EntityDeath,
     EnemyProjectilePop,
     TearPop,
-    MobAttack
+    MobAttack,
+    NeironkaVisual,
+    NeironkaBoom
 }
 
 public enum EntityType
@@ -169,7 +171,9 @@ public enum EntityType
     Mole,
     Tear,
     GoldenFreddy,
-    
+    Neironka,
+    NeironkaBomb,
+
     AttackIndicator,
     ThetaAttack,
     Lightning,

@@ -10,6 +10,8 @@ module Dto =
         | TearPop = 2
         | EnemyProjectilePop = 3
         | MobAttack = 4
+        | NeironkaVisual = 5
+        | NeironkaBoom = 6
 
     type EntityType =
         | Player = 1
@@ -49,6 +51,8 @@ module Dto =
         | Exit = 35
         | ExitClosed = 36
         | GoldenFreddy = 37
+        | Neironka = 38
+        | NeironkaBomb = 39
 
     type ItemType =
         | Heart = 1

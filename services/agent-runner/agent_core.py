@@ -8,7 +8,7 @@ ITEM_TYPES = {
     "HeartItem", "HalfHeartItem", "AmethystItem",
 }
 
-ENEMY_TYPES = {"ModusPonens", "Lambda", "Monad", "Nerd", "NuclearNerd", "Skolem", "Mole"}
+ENEMY_TYPES = {"ModusPonens", "Lambda", "Monad", "Nerd", "NuclearNerd", "Skolem", "Mole", "Neironka"}
 
 DIR_OFFSET = {"up": (0, -1), "down": (0, 1), "left": (-1, 0), "right": (1, 0)}
 

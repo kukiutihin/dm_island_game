@@ -62,6 +62,13 @@ type MobFactory() =
         let sprite = Sprite(pos, atlas, Resources.Entity.NUCLEAR_NERD)
         spriteGroup.AddSprite(sprite)
         Entity(sprite, EaseOutAndBounceAnimatablePos(0.5f, 4f, pos), 1f)
+
+    let createNeironka atlas (spriteGroup: SpriteGroup) pos =
+        let sprite = Sprite(pos, atlas, Resources.Entity.NEIRONKA_IDLE)
+        spriteGroup.AddSprite(sprite)
+        let entity = Entity(sprite, EaseOutAndBounceAnimatablePos(0.5f, 4f, pos), 2.4f)
+        entity.SetScale(2.4f, 2.4f)
+        entity
         
     let createMole atlas (spriteGroup: SpriteGroup) pos =
         let sprite = Sprite(pos, atlas, Resources.Entity.MOLE)
@@ -128,6 +135,8 @@ type MobFactory() =
             | EntityType.NuclearNerd -> createNuclearNerd atlas group pos
             | EntityType.Mole -> createMole atlas group pos
             | EntityType.Skolem -> createSkolem atlas group pos
+            | EntityType.Neironka -> createNeironka atlas group pos
+            | EntityType.NeironkaBomb -> createProjectile atlas group Resources.Particle.NEIRONKA_PROJECTILE pos
             | EntityType.HeartItem -> createItem atlas group Resources.UI.FULL_HEART pos
             | EntityType.HalfHeartItem -> createItem atlas group Resources.UI.HALF_HEART pos
             | EntityType.AmethystItem -> createItem atlas group Resources.Item.AMETHYST_SHARD pos

@@ -4,6 +4,7 @@ open System
 open DMIslandClient.Connection.Dto
 open DMIslandClient.Effect
 open DMIslandClient.Entity
+open DMIslandClient.Resources
 open DMIslandClient.UI
 open LadaEngine
 
@@ -38,6 +39,18 @@ type EventDispatcher(entities: EntityGroup, effects: EffectGroup, objects: Entit
             // Melee hit: spark burst at the mob plus a quick camera kick.
             effects.CreateEffect(EtMobAttack, posOfDto e.Position)
             camera.Shake(0.35f)
+        | EventType.NeironkaVisual ->
+            let parts = e.Payload.Split('|')
+            if parts.Length = 2 then
+                let texture =
+                    match parts.[1] with
+                    | "attack" -> Resources.Entity.NEIRONKA_ATTACK
+                    | "hide" -> Resources.Entity.NEIRONKA_HIDE
+                    | _ -> Resources.Entity.NEIRONKA_IDLE
+                entities.PlayAnimation(Guid.Parse(parts.[0]), [| texture |], 0f, false)
+                if parts.[1] = "hide" then effects.CreateEffect(EtBlueFlash, posOfDto e.Position)
+        | EventType.NeironkaBoom ->
+            effects.CreateEffect(EtBlueFlash, posOfDto e.Position)
         | _ -> ArgumentOutOfRangeException() |> raise
 
     let processEntities (updates: ObjectViewDto seq)=

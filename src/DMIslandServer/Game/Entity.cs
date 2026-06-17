@@ -28,10 +28,10 @@ public abstract class Entity
         Hp = maxHp;
     }
 
-    public void TakeDamage(int amount, GameState state)
+    public virtual void TakeDamage(int amount, GameState state)
     {
         if (!IsAlive) return;
-        
+
         Hp = Math.Max(0, Hp - amount);
         OnDamage(amount, state);
         if (Hp <= 0) OnDeath(state);

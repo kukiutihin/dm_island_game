@@ -315,6 +315,7 @@ public class GameEngine
         EntityType.Monad => new Monad(pos),
         EntityType.Mole => new Mole(pos),
         EntityType.GoldenFreddy => new GoldenFreddy(pos),
+        EntityType.Neironka => new Neironka(pos),
         _ => new ModusPonens(pos)
     };
 

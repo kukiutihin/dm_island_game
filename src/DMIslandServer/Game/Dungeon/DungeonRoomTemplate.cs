@@ -41,8 +41,21 @@ public class DungeonRoomTemplate(int floor)
                     template.ExitPosition = new Position(x + 1, y + 1);
             }
         }
-        
+
+        MaybeAddNeironka(rand, floor, template);
+
         return template;
+    }
+
+    private const double NeironkaRoomChance = 0.4;
+
+    private static void MaybeAddNeironka(Random rand, int floor, DungeonRoomTemplate template)
+    {
+        if (floor != 1 || template.MobSpawns.Count == 0) return;
+        if (rand.NextDouble() >= NeironkaRoomChance) return;
+
+        var i = rand.Next(template.MobSpawns.Count);
+        template.MobSpawns[i] = new MobSpawn(EntityType.Neironka, template.MobSpawns[i].Position);
     }
     
     private static ItemSpawn ChooseItem(Random rand, Position position)

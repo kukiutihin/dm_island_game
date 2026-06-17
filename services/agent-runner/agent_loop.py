@@ -238,7 +238,7 @@ ITEM_TYPES = {
     "HeartItem", "HalfHeartItem", "AmethystItem",
 }
 
-ENEMY_TYPES = {"ModusPonens", "Lambda", "Monad", "Nerd", "NuclearNerd", "Skolem", "Mole"}
+ENEMY_TYPES = {"ModusPonens", "Lambda", "Monad", "Nerd", "NuclearNerd", "Skolem", "Mole", "Neironka"}
 
 
 def _is_item(e: dict) -> bool:

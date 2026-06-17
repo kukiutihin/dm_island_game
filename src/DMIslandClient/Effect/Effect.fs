@@ -66,3 +66,7 @@ type ProjectilePopEffect(a, b, c) =
 /// Quick spark burst shown when a mob lands a melee hit.
 type MobAttackEffect(a, b, c) =
     inherit ExplosionEffect([Resources.Particle.HIT_SPARK], 0.8f, 7, 2.5f, a, b, c)
+
+/// Blue burst shown when the Neironka raises its shield or one of its bombs detonates.
+type BlueFlashEffect(a, b, c) =
+    inherit ExplosionEffect([Resources.Particle.BLUE_FLASH], 1.2f, 10, 3f, a, b, c)

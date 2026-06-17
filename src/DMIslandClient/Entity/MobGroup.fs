@@ -40,6 +40,10 @@ module MobGroupTextures =
         Resources.Particle.ATTACK_INDICATOR
         Resources.Particle.LIGHTNING
         Resources.Entity.GOLDEN_FREDDY
+        Resources.Entity.NEIRONKA_IDLE
+        Resources.Entity.NEIRONKA_ATTACK
+        Resources.Entity.NEIRONKA_HIDE
+        Resources.Particle.NEIRONKA_PROJECTILE
     |]
 
 type MobGroup() =
