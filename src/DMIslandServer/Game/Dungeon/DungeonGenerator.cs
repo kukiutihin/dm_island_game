@@ -137,6 +137,21 @@ public static class DungeonGenerator
             }
         }
 
+        if (floorNumber == 4)
+        {
+            var boss = placed.FirstOrDefault(r => !r.IsStart && !r.IsExit);
+            if (boss is not null)
+            {
+                boss.Width = exitWidth;
+                boss.Height = exitHeight;
+                boss.Template.WallSpawns.Clear();
+                boss.Template.ItemSpawns.Clear();
+                boss.Template.MobSpawns.Clear();
+                boss.Template.MobSpawns.Add(
+                    new MobSpawn(EntityType.Neironka, new Position(boss.Width / 2, boss.Height / 2)));
+            }
+        }
+
         return new Floor(floorNumber, rooms, cx, cy);
     }
 

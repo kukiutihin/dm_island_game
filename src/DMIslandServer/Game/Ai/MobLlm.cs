@@ -27,7 +27,12 @@ public static class MobLlm
         {
             EnsureEnv();
             var provider = (Env("LLM_PROVIDER") ?? "yandexgpt").Trim().ToLowerInvariant();
-            var reply = provider == "gigachat" ? GigaChat(system, user) : Yandex(system, user);
+            var reply = provider switch
+            {
+                "cometapi" => CometApi(system, user),
+                "gigachat" => GigaChat(system, user),
+                _ => Yandex(system, user),
+            };
             Console.WriteLine($"[MobLlm/{provider}] reply: {(reply is null ? "<null>" : reply.Trim())}");
             return reply;
         }
@@ -68,6 +73,43 @@ public static class MobLlm
         var alts = doc.RootElement.GetProperty("result").GetProperty("alternatives");
         if (alts.GetArrayLength() == 0) return null;
         return alts[0].GetProperty("message").GetProperty("text").GetString();
+    }
+
+    private static string? CometApi(string system, string user)
+    {
+        var key = Env("COMETAPI_KEY");
+        if (string.IsNullOrWhiteSpace(key)) return null;
+        var model = Env("COMETAPI_MODEL") ?? "gpt-5-mini";
+        var baseUrl = (Env("COMETAPI_BASE_URL") ?? "https://api.cometapi.com/v1").TrimEnd('/');
+
+        var body = new
+        {
+            model,
+            messages = new object[]
+            {
+                new { role = "system", content = system },
+                new { role = "user", content = user },
+            },
+            temperature = 0,
+            max_tokens = 256,
+            reasoning_effort = "none",
+        };
+
+        using var req = new HttpRequestMessage(HttpMethod.Post, $"{baseUrl}/chat/completions");
+        req.Headers.TryAddWithoutValidation("Authorization", $"Bearer {key}");
+        req.Content = new StringContent(JsonSerializer.Serialize(body), Encoding.UTF8, "application/json");
+
+        using var resp = Http.Send(req);
+        if (!resp.IsSuccessStatusCode)
+        {
+            Console.WriteLine($"[MobLlm/cometapi] HTTP {(int)resp.StatusCode}: {resp.Content.ReadAsStringAsync().Result}");
+            return null;
+        }
+        using var stream = resp.Content.ReadAsStream();
+        using var doc = JsonDocument.Parse(stream);
+        var choices = doc.RootElement.GetProperty("choices");
+        if (choices.GetArrayLength() == 0) return null;
+        return choices[0].GetProperty("message").GetProperty("content").GetString();
     }
 
     private static string? GigaChat(string system, string user)

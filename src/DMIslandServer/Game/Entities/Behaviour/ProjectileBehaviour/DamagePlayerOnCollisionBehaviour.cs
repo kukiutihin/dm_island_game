@@ -6,8 +6,7 @@ public class DamagePlayerOnCollisionBehaviour(int damage) : IBehaviour<Projectil
     {
         var positionsCollided =
             self.Position == state.Player.Position ||
-            self.PreviousPosition == state.Player.Position ||
-            self.PreviousPosition == state.Player.PreviousPosition;
+            self.PreviousPosition == state.Player.Position;
 
         if (!positionsCollided)
             return;
