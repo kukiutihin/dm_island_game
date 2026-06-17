@@ -22,6 +22,9 @@ services:
     container_name: dmisland-server
     ports:
       - "5229:5229"
+    # The LLM-controlled mob reads LLM_PROVIDER + provider keys from this file.
+    env_file:
+      - services/agent-runner/.env
     environment:
       ASPNETCORE_URLS: http://0.0.0.0:5229
       ASPNETCORE_ENVIRONMENT: Development
