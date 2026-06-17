@@ -28,8 +28,13 @@ class BaseLlmClient(ABC):
         raise NotImplementedError("ask_messages not implemented")
 
 
-def build_llm_client() -> BaseLlmClient:
-    provider = os.environ.get("LLM_PROVIDER", "yandexgpt").lower()
+_KNOWN_PROVIDERS = {"yandexgpt", "cometapi", "gigachat"}
+
+
+def build_llm_client(provider: str | None = None) -> BaseLlmClient:
+    if provider is None:
+        provider = os.environ.get("LLM_PROVIDER", "yandexgpt")
+    provider = provider.lower()
 
     if provider == "cometapi":
         from yandex_client import CometApiClient
@@ -63,4 +68,5 @@ def build_llm_client() -> BaseLlmClient:
         return GigaChatClient(client_id=client_id, client_secret=client_secret, model=model)
 
     else:
-        raise ValueError(f"Unknown LLM_PROVIDER: {provider}, expected: yandexgpt, gigachat")
+        choices = ", ".join(sorted(_KNOWN_PROVIDERS))
+        raise ValueError(f"Unknown LLM provider: {provider!r}, expected one of: {choices}")

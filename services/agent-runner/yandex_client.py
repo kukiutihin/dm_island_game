@@ -108,11 +108,36 @@ class CometApiClient(BaseLlmClient):
 
     def _normalize(self, messages: list) -> list:
         result = []
+        pending_ids: list[str] = []
+
         for m in messages:
             mc = dict(m)
+
             if "text" in mc and "content" not in mc:
                 mc["content"] = mc.pop("text")
+
+            # Already OpenAI-format tool call — collect its id
+            if mc.get("tool_calls"):
+                for tc in mc["tool_calls"]:
+                    if tc.get("id"):
+                        pending_ids.append(tc["id"])
+                result.append(mc)
+                continue
+
+            # YandexGPT-format tool result → convert to OpenAI tool response
+            if "toolResultList" in mc:
+                for tr in mc["toolResultList"].get("toolResults", []):
+                    fn = tr.get("functionResult", {})
+                    call_id = pending_ids.pop(0) if pending_ids else f"call_{len(result)}"
+                    result.append({
+                        "role": "tool",
+                        "tool_call_id": call_id,
+                        "content": fn.get("content", ""),
+                    })
+                continue
+
             result.append(mc)
+
         return result
 
     def _dump_messages(self, messages: list[dict]):
@@ -144,7 +169,6 @@ class CometApiClient(BaseLlmClient):
             "messages": messages,
             "temperature": 0,
             "max_tokens": 500,
-            "reasoning_effort": "none",
         }
         if tools:
             kwargs["tools"] = [_convert_tool_comet(t) for t in tools]

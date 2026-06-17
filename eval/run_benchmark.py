@@ -31,7 +31,7 @@ if _AGENT_RUNNER not in sys.path:
 from agent_core import WorldModel, select_goal, plan_actions, DIR_OFFSET
 from agent_loop import (
     _fallback_action, _format_state, _parse_action, _is_enemy, _is_item,
-    SYSTEM_PROMPT, MAX_HISTORY, OBSERVE_LIMIT, OBSERVE_WINDOW, ATTACK_FAIL_LIMIT, STUCK_LIMIT,
+    play_game, SYSTEM_PROMPT, MAX_HISTORY, OBSERVE_LIMIT, OBSERVE_WINDOW, ATTACK_FAIL_LIMIT, STUCK_LIMIT,
 )
 from budget import Budget
 from llm_client import BaseLlmClient, LlmResult, build_llm_client
@@ -101,28 +101,23 @@ TOOLS = [
         "description": "Skip the current turn (do nothing)",
         "inputSchema": {"type": "object", "properties": {}, "required": []},
     },
-    {
-        "name": "observe",
-        "description": "Get detailed game state (player, enemies, items, map)",
-        "inputSchema": {"type": "object", "properties": {}, "required": []},
-    },
 ]
 
 
 class GameClient:
     def __init__(self, base_url: str):
         self._base_url = base_url.rstrip("/")
-        self._http = httpx.Client(timeout=15)
+        self._http = httpx.Client(timeout=60)
 
     def start_game(self, seed: int) -> dict:
         resp = self._http.post(f"{self._base_url}/start_game", params={"seed": seed})
         resp.raise_for_status()
-        return resp.json()
+        return self._filter(resp.json())
 
     def get_state(self) -> dict:
         resp = self._http.get(f"{self._base_url}/state")
         resp.raise_for_status()
-        return resp.json()
+        return self._filter(resp.json())
 
     def do_action(self, action: str, direction: str | None = None) -> dict:
         body = {"action": action}
@@ -130,7 +125,54 @@ class GameClient:
             body["direction"] = direction
         resp = self._http.post(f"{self._base_url}/action", json=body)
         resp.raise_for_status()
-        return resp.json()
+        return self._filter(resp.json())
+
+    @staticmethod
+    def _filter(state: dict) -> dict:
+        """Add validMoves + doors like the MCP server does."""
+        walls = set()
+        for obj in state.get("objects", []):
+            p = obj.get("position", {})
+            if obj.get("type") == "Wall" and p.get("x") is not None and p.get("y") is not None:
+                walls.add((p["x"], p["y"]))
+
+        enemy_tiles = set()
+        from agent_loop import _is_enemy
+        for e in state.get("entities", []):
+            p = e.get("position", {})
+            if _is_enemy(e) and e.get("hp", 0) > 0 and p.get("x") is not None and p.get("y") is not None:
+                enemy_tiles.add((p["x"], p["y"]))
+
+        player = state.get("player", {})
+        px = player.get("position", {}).get("x")
+        py = player.get("position", {}).get("y")
+        if px is not None and py is not None:
+            dirs = {"up": (0, -1), "down": (0, 1), "left": (-1, 0), "right": (1, 0)}
+            valid = [d for d, (dx, dy) in dirs.items()
+                     if (px + dx, py + dy) not in walls and (px + dx, py + dy) not in enemy_tiles]
+            state["validMoves"] = valid
+        else:
+            state["validMoves"] = ["up", "down", "left", "right"]
+
+        doors = []
+        if walls:
+            xs = {w[0] for w in walls}
+            ys = {w[1] for w in walls}
+            min_x, max_x = min(xs), max(xs)
+            min_y, max_y = min(ys), max(ys)
+            for x in range(min_x + 1, max_x):
+                if (x, min_y) not in walls:
+                    doors.append({"x": x, "y": min_y, "side": "up"})
+                if (x, max_y) not in walls:
+                    doors.append({"x": x, "y": max_y, "side": "down"})
+            for y in range(min_y + 1, max_y):
+                if (min_x, y) not in walls:
+                    doors.append({"x": min_x, "y": y, "side": "left"})
+                if (max_x, y) not in walls:
+                    doors.append({"x": max_x, "y": y, "side": "right"})
+        state["doors"] = doors
+
+        return state
 
 
 # ---------------------------------------------------------------------------
@@ -147,205 +189,8 @@ def run_game(
     verbose: bool = True,
 ) -> dict:
     budget = Budget(max_steps=max_steps, max_tokens=max_tokens)
-
-    result = {
-        "won": False,
-        "reason": "budget_exhausted",
-        "steps": 0,
-        "tokens": 0,
-        "final_hp": 0,
-        "max_floor": 1,
-        "attack_count": 0,
-    }
-
-    state = game.get_state()
-    budget.step()
-    prev_action = "none"
-    repeat_count = 0
-    multi_turn_messages = None
-
-    stuck_count = 0
-    pos_history = deque(maxlen=10)
-    pos_cycle_count = 0
-    observe_count_in_window = 0
-    steps_since_observe_reset = 0
-    attack_fail_count = 0
-    last_enemy_hp: dict[str, int] = {}
-
-    while not budget.exhausted:
-        player = state.get("player", {})
-        hp = player.get("hp", 0)
-        completed = state.get("completed", False)
-        floor = state.get("floor", 1)
-        px = player.get("position", {}).get("x")
-        py = player.get("position", {}).get("y")
-
-        steps_since_observe_reset += 1
-        if steps_since_observe_reset >= OBSERVE_WINDOW:
-            observe_count_in_window = 0
-            steps_since_observe_reset = 0
-
-        if px is not None and py is not None:
-            pos_tuple = (px, py)
-            if len(pos_history) >= 4:
-                pos_list = list(pos_history)
-                if (
-                    pos_list[-3] == pos_tuple and pos_list[-1] == pos_list[-2]
-                ) or (
-                    len(pos_history) >= 3 and pos_list[-1] == pos_tuple and pos_tuple in set(pos_list[:-1])
-                ):
-                    pos_cycle_count += 1
-                else:
-                    pos_cycle_count = 0
-            pos_history.append(pos_tuple)
-
-        if floor > result["max_floor"]:
-            result["max_floor"] = floor
-
-        if hp <= 0:
-            result.update({"won": False, "reason": "died", "final_hp": 0})
-            break
-        if completed:
-            result.update({"won": True, "reason": "completed", "final_hp": hp})
-            break
-
-        rooms = state.get("rooms", [])
-        cleared = sum(1 for r in rooms if r.get("cleared", False))
-        if cleared > result.get("max_room", 0):
-            result["max_room"] = cleared
-
-        prompt = _format_state(state, prev_action, repeat_count)
-
-        combined_stuck = stuck_count + pos_cycle_count
-        fallback = _fallback_action(
-            state, prev_action, repeat_count,
-            stuck_count=combined_stuck,
-            observe_count_in_window=observe_count_in_window,
-            attack_fail_count=attack_fail_count,
-        )
-        if fallback:
-            parsed = _parse_action(fallback)
-            if parsed:
-                name, args = parsed
-            else:
-                name, args = None, {}
-            if verbose:
-                print(f"    OVERRIDE (stuck={combined_stuck} obs={observe_count_in_window} atk_fail={attack_fail_count} repeat={repeat_count}x): {prev_action} -> {name}({args.get('direction','')})")
-            if multi_turn_messages is not None:
-                multi_turn_messages = None
-        else:
-            try:
-                if multi_turn_messages is None:
-                    llm_result = llm.ask(system_prompt, prompt, TOOLS)
-                else:
-                    llm_result = llm.ask_messages(multi_turn_messages, TOOLS)
-            except Exception as e:
-                print(f"  [eval] LLM error: {e}, sleeping 2s...")
-                time.sleep(2)
-                continue
-
-            if verbose:
-                print(f"    llm: {llm_result.tool_name} {llm_result.tool_args or {}} | "
-                      f"+{llm_result.tokens} tok | budget {budget.tokens}/{max_tokens}")
-
-            budget.add_tokens(llm_result.tokens)
-            assistant_msg = llm_result.assistant_message
-            name = llm_result.tool_name
-            args = llm_result.tool_args or {}
-
-            if assistant_msg:
-                if multi_turn_messages is None:
-                    multi_turn_messages = [
-                        {"role": "system", "text": system_prompt},
-                        {"role": "user", "text": prompt},
-                        assistant_msg,
-                    ]
-                else:
-                    multi_turn_messages.append(assistant_msg)
-
-        old_px, old_py = px, py
-
-        if not name:
-            if verbose:
-                print(f"    llm: no tool call — skipping turn")
-            state = game.do_action("skip")
-            budget.step()
-            new_action = "skip_turn()"
-        else:
-            if name == "attack":
-                result["attack_count"] += 1
-                new_enemy_hp = {
-                    e["id"]: e.get("hp", 0)
-                    for e in state.get("entities", [])
-                    if _is_enemy(e) and e.get("hp", 0) > 0
-                }
-                if not new_enemy_hp:
-                    attack_fail_count += 1
-                else:
-                    hp_changed = any(
-                        new_enemy_hp.get(eid, 0) != last_hp
-                        for eid, last_hp in last_enemy_hp.items()
-                    )
-                    attack_fail_count = 0 if hp_changed else attack_fail_count + 1
-                last_enemy_hp = new_enemy_hp
-
-            if name == "observe":
-                state = game.get_state()
-                budget.step()
-                new_action = "observe()"
-                observe_count_in_window += 1
-            else:
-                try:
-                    if name == "move":
-                        state = game.do_action("move", args.get("direction"))
-                    elif name == "attack":
-                        state = game.do_action("attack", args.get("direction"))
-                    elif name == "skip_turn":
-                        state = game.do_action("skip")
-                    else:
-                        print(f"  [eval] unknown action: {name}")
-                        continue
-                    budget.step()
-                except Exception as e:
-                    print(f"  [eval] action error: {e}")
-                    continue
-
-                new_action = f"{name}({args.get('direction', '')})"
-
-        if state.get("player", {}).get("hp", 0) <= 0:
-            result.update({"won": False, "reason": "died", "final_hp": 0})
-            break
-
-        new_px = state.get("player", {}).get("position", {}).get("x")
-        new_py = state.get("player", {}).get("position", {}).get("y")
-        if name == "move" and new_px == old_px and new_py == old_py:
-            stuck_count += 1
-        else:
-            stuck_count = 0
-
-        repeat_count = repeat_count + 1 if new_action == prev_action else 1
-        prev_action = new_action
-
-        if multi_turn_messages is not None and len(multi_turn_messages) > MAX_HISTORY:
-            system_msg = multi_turn_messages[0]
-            multi_turn_messages = [system_msg] + multi_turn_messages[-(MAX_HISTORY - 1):]
-
-        if multi_turn_messages is not None:
-            state_str = _format_state(state, new_action, repeat_count)
-            multi_turn_messages.append({
-                "role": "assistant",
-                "toolResultList": {
-                    "toolResults": [{
-                        "functionResult": {
-                            "name": name or "skip_turn",
-                            "content": json.dumps({"state": state_str}),
-                        }
-                    }]
-                }
-            })
-
-    result["steps"] = budget.steps
-    result["tokens"] = budget.tokens
+    result = play_game(game, llm, budget, TOOLS, system_prompt)
+    result.setdefault("max_room", 0)
     return result
 
 
@@ -482,11 +327,13 @@ def _exec_core(game, name, args, result, verbose):
 # ---------------------------------------------------------------------------
 
 
-def _dir_to_enemy_bench(px, py, ex, ey) -> str:
+def _dir_to_enemy_bench(px, py, ex, ey) -> str | None:
     dx = ex - px
     dy = ey - py
+    if dx == 0 and dy == 0:
+        return None
     if abs(dx) >= abs(dy):
-        return "right" if dx > 0 else "left" if dx < 0 else ("down" if dy > 0 else "up" if dy < 0 else "?")
+        return "right" if dx > 0 else "left" if dx < 0 else ("down" if dy > 0 else "up")
     return "down" if dy > 0 else "up"
 
 
@@ -514,10 +361,14 @@ def run_game_rulebased(
         "final_hp": 0,
         "max_floor": 1,
         "attack_count": 0,
+        "max_room": 0,
     }
 
     state = game.get_state()
     steps = 0
+    last_px, last_py = None, None
+    item_chase_stuck = 0
+    last_item_dist = 999
 
     while steps < max_steps:
         steps += 1
@@ -537,7 +388,7 @@ def run_game_rulebased(
             break
         rooms = state.get("rooms", [])
         cleared = sum(1 for r in rooms if r.get("cleared", False))
-        if cleared > result["max_room"]:
+        if cleared > result.get("max_room", 0):
             result["max_room"] = cleared
 
         px = player.get("position", {}).get("x")
@@ -555,15 +406,22 @@ def run_game_rulebased(
             best = min(items_on_map, key=lambda it: abs(it.get("position", {}).get("x", 999) - px) + abs(it.get("position", {}).get("y", 999) - py))
             ix, iy = best["position"]["x"], best["position"]["y"]
             dist = abs(ix - px) + abs(iy - py)
-            if dist <= 8:
+            if dist <= 8 and dist == last_item_dist:
+                item_chase_stuck += 1
+            else:
+                item_chase_stuck = 0
+            last_item_dist = dist
+            if dist <= 8 and item_chase_stuck < 3:
                 d = _dir_to_enemy_bench(px, py, ix, iy)
-                try:
-                    state = game.do_action("move", d)
-                    if verbose:
-                        print(f"    rule: move({d}) item (dist={dist})")
-                    continue
-                except Exception:
-                    pass
+                if d is not None:
+                    try:
+                        state = game.do_action("move", d)
+                        if verbose:
+                            print(f"    rule: move({d}) item (dist={dist})")
+                        last_px, last_py = px, py
+                        continue
+                    except Exception:
+                        pass
 
         # 1. Attack nearest visible enemy
         if can_see_enemies:
@@ -577,14 +435,16 @@ def run_game_rulebased(
             nx, ny = nearest.get("position", {}).get("x"), nearest.get("position", {}).get("y")
             if nx is not None and ny is not None:
                 d = _dir_to_enemy_bench(px, py, nx, ny)
-                try:
-                    state = game.do_action("attack", d)
-                    result["attack_count"] += 1
-                    if verbose:
-                        print(f"    rule: attack({d})")
-                    continue
-                except Exception:
-                    pass
+                if d is not None:
+                    try:
+                        state = game.do_action("attack", d)
+                        result["attack_count"] += 1
+                        if verbose:
+                            print(f"    rule: attack({d})")
+                        last_px, last_py = px, py
+                        continue
+                    except Exception:
+                        pass
 
         # 2. Find nearest uncleared room and move toward it
         rooms_info = state.get("rooms", [])
@@ -682,9 +542,9 @@ def write_report(agg_results: dict, path: str, seeds: list[int]):
         lines.append(
             f"| {name} | {agg['win_rate']:.0%} ({agg['wins']}/{agg['n']}) | "
             f"{agg['avg_floor']:.1f} | {agg['max_floor']} | "
-            f"{agg.get('avg_rooms', 0):.1f} | {agg.get('max_room', 0)}"
             f"{agg['avg_final_hp']:.0f} | {agg['avg_attacks']:.1f} | "
-            f"{agg['avg_steps']:.0f} | {agg['avg_tokens']:.0f} |"
+            f"{agg['avg_steps']:.0f} | {agg['avg_tokens']:.0f} | "
+            f"{agg.get('max_room', 0)} |"
         )
 
     lines.extend(["\n## Per-Game Results\n"])
@@ -703,8 +563,65 @@ def write_report(agg_results: dict, path: str, seeds: list[int]):
                 f"{r['steps']} | {r['tokens']} |"
             )
 
-    Path(path).write_text("\n".join(lines) + "\n")
+    # --- LLM Provider Comparison section ---
+    _write_llm_comparison(agg_results, lines)
+
+    report_path = Path(path)
+    report_path.parent.mkdir(parents=True, exist_ok=True)
+
+    plots_dir = report_path.parent / "plots"
+    if plots_dir.exists():
+        lines.append("\n## Plots\n")
+        for png in sorted(plots_dir.glob("*.png")):
+            rel = png.relative_to(report_path.parent)
+            lines.append(f"![{png.stem}]({rel})\n")
+
+    report_path.write_text("\n".join(lines) + "\n")
     print(f"Report written to {path}")
+
+
+def _write_llm_comparison(agg_results: dict, lines: list):
+    LLM_PROVIDERS = {"yandexgpt", "cometapi", "gigachat"}
+    groups: dict[str, dict[str, dict]] = {}
+
+    for name in agg_results:
+        for prov in LLM_PROVIDERS:
+            suffix = f"_{prov}"
+            if name.endswith(suffix):
+                base = name[: -len(suffix)]
+                groups.setdefault(base, {})[prov] = agg_results[name]
+                break
+
+    if not groups:
+        return
+
+    lines.append("## LLM Provider Comparison\n")
+    first = True
+    for base_name in sorted(groups):
+        provs = groups[base_name]
+        prov_names = sorted(provs)
+        if not first:
+            lines.append("")
+        first = False
+        lines.append(f"### {base_name}")
+        header = "| Metric | " + " | ".join(prov_names) + " |"
+        sep = "|--------|" + "|".join("---" for _ in prov_names) + "|"
+        lines.append(header)
+        lines.append(sep)
+
+        metric_rows = [
+            ("Win Rate",       lambda a: f"{a['win_rate']:.0%}"),
+            ("Avg Floor",      lambda a: f"{a['avg_floor']:.1f}"),
+            ("Max Floor",      lambda a: str(a['max_floor'])),
+            ("Avg Final HP",   lambda a: f"{a['avg_final_hp']:.0f}"),
+            ("Avg Attacks",    lambda a: f"{a['avg_attacks']:.1f}"),
+            ("Avg Steps",      lambda a: f"{a['avg_steps']:.0f}"),
+            ("Avg Tokens",     lambda a: f"{a['avg_tokens']:.0f}"),
+            ("Avg Rooms",      lambda a: f"{a.get('avg_rooms', 0):.1f}"),
+        ]
+        for metric_name, fmt_fn in metric_rows:
+            vals = [fmt_fn(provs[p]) for p in prov_names]
+            lines.append(f"| {metric_name} | " + " | ".join(vals) + " |")
 
 
 def generate_plots(agg_results: dict, out_dir: str):
@@ -719,6 +636,7 @@ def generate_plots(agg_results: dict, out_dir: str):
     out = Path(out_dir)
     out.mkdir(parents=True, exist_ok=True)
 
+    _COLORS = ["#4C72B0", "#DD8452", "#55A868", "#C44E52", "#8172B3", "#937860", "#DA8BC3", "#8DB5CE"]
     names = list(agg_results.keys())
     metrics = {
         "Win Rate": [agg_results[n]["win_rate"] * 100 for n in names],
@@ -730,7 +648,8 @@ def generate_plots(agg_results: dict, out_dir: str):
 
     for title, values in metrics.items():
         fig, ax = plt.subplots(figsize=(6, 4))
-        bars = ax.bar(names, values, color=["steelblue", "coral"])
+        colors = _COLORS[:len(names)]
+        bars = ax.bar(names, values, color=colors)
         ax.set_title(title)
         ax.set_ylabel(title)
         for bar, v in zip(bars, values):
@@ -747,10 +666,46 @@ def generate_plots(agg_results: dict, out_dir: str):
         plt.close(fig)
         print(f"  Saved plot: {out / fname}")
 
+    fig, axes = plt.subplots(2, 3, figsize=(14, 8))
+    fig.suptitle("Agent Benchmark Dashboard", fontsize=14, fontweight="bold")
+    dashboard = [
+        ("Win Rate (%)",     [agg_results[n]["win_rate"] * 100 for n in names], "%"),
+        ("Avg Floor",        [agg_results[n]["avg_floor"] for n in names], ""),
+        ("Avg Final HP",     [agg_results[n]["avg_final_hp"] for n in names], ""),
+        ("Avg Steps",        [agg_results[n]["avg_steps"] for n in names], ""),
+        ("Avg Attacks",      [agg_results[n]["avg_attacks"] for n in names], ""),
+        ("Avg Tokens",       [agg_results[n]["avg_tokens"] for n in names], ""),
+    ]
+    for ax_i, ((title, values, suffix), ax) in enumerate(zip(dashboard, axes.flat)):
+        colors = _COLORS[:len(names)]
+        bars = ax.bar(names, values, color=colors)
+        ax.set_title(title)
+        for bar, v in zip(bars, values):
+            ax.text(
+                bar.get_x() + bar.get_width() / 2,
+                bar.get_height(),
+                f"{v:.1f}{suffix}",
+                ha="center",
+                va="bottom", fontsize=8,
+            )
+    fig.tight_layout()
+    fig.savefig(out / "dashboard.png", dpi=150)
+    plt.close(fig)
+    print(f"  Saved plot: {out / 'dashboard.png'}")
+
 
 # ---------------------------------------------------------------------------
 # CLI
 # ---------------------------------------------------------------------------
+
+
+def _print_agg_summary(agg: dict):
+    print(f"  Win rate:  {agg['win_rate']:.0%} ({agg['wins']}/{agg['n']})")
+    print(f"  Avg floor: {agg['avg_floor']:.1f}  Max floor: {agg['max_floor']}")
+    print(f"  Avg HP:    {agg['avg_final_hp']:.0f}")
+    print(f"  Attacks:   {agg['avg_attacks']:.1f}")
+    print(f"  Steps:     {agg['avg_steps']:.0f}")
+    print(f"  Tokens:    {agg['avg_tokens']:.0f}")
 
 
 def parse_seeds(s: str) -> list[int]:
@@ -792,6 +747,13 @@ def main():
         type=str,
         default="all",
         help="Comma-separated agent names to run (default: all)",
+    )
+    parser.add_argument(
+        "--llm-providers",
+        type=str,
+        default=None,
+        help="Comma-separated LLM providers (yandexgpt,cometapi,gigachat). "
+             "Default: reads LLM_PROVIDER from env",
     )
     parser.add_argument(
         "--fake",
@@ -852,30 +814,21 @@ def main():
 
     print(f"Agents: {', '.join(agents.keys())}")
 
-    need_llm = any(v is not None for v in agents.values())
-    llm = None
-    if need_llm:
-        if args.fake:
-            from fake_llm import FakeLlmClient
-            llm = FakeLlmClient([])
-            print("Using FakeLlmClient (deterministic, for testing)")
-        else:
-            print("Building LLM client...")
-            try:
-                _orig_cwd = os.getcwd()
-                os.chdir(_AGENT_RUNNER)
-                llm = build_llm_client()
-                os.chdir(_orig_cwd)
-                print(f"  Provider: {os.environ.get('LLM_PROVIDER', 'yandexgpt')}")
-            except Exception as e:
-                print(f"  Error initialising LLM: {e}")
-                print("  Set LLM_PROVIDER + API keys in services/agent-runner/.env,")
-                print("  or use --fake for testing without a real LLM.")
-                sys.exit(1)
+    llm_agents = {k: v for k, v in agents.items() if v is not None}
+    non_llm_agents = {k: v for k, v in agents.items() if v is None}
+
+    # Determine LLM providers
+    if args.llm_providers:
+        llm_providers = [p.strip() for p in args.llm_providers.split(",")]
+    elif llm_agents:
+        llm_providers = [os.environ.get("LLM_PROVIDER", "yandexgpt")]
+    else:
+        llm_providers = []
 
     agg_results = {}
 
-    for agent_name, system_prompt in agents.items():
+    # --- Run non-LLM agents (rule-based, core) once ---
+    for agent_name, _ in non_llm_agents.items():
         print(f"\n{'=' * 60}")
         print(f"Agent: {agent_name}")
         print(f"{'=' * 60}")
@@ -896,32 +849,70 @@ def main():
                 result = run_game_rulebased(game, args.max_steps)
             elif agent_name == CORE_AGENT:
                 result = run_game_core(game, args.max_steps, verbose=True)
-            else:
-                result = run_game(game, llm, system_prompt, args.max_steps, args.max_tokens)
 
             status = "WON" if result["won"] else f"LOST ({result['reason']})"
             print(
                 f"{status} | floor={result['max_floor']} hp={result['final_hp']} "
                 f"steps={result['steps']} attacks={result['attack_count']}"
             )
-
             results.append(result)
 
-        print(f"\n  --- {agent_name} summary ---")
-        if not results:
-            print("  No games completed — every start_game/run attempt failed.")
-            print("  Check the game service is up and exposes /start_game, /state, /action.")
-            continue
+        if results:
+            agg_results[agent_name] = aggregate(results)
+            _print_agg_summary(agg_results[agent_name])
 
-        agg = aggregate(results)
-        agg_results[agent_name] = agg
+    # --- Run LLM agents for each provider ---
+    if llm_agents and llm_providers:
+        for provider in llm_providers:
+            print(f"\n{'=' * 60}")
+            print(f"LLM Provider: {provider}")
+            print(f"{'=' * 60}")
 
-        print(f"  Win rate:  {agg['win_rate']:.0%} ({agg['wins']}/{agg['n']})")
-        print(f"  Avg floor: {agg['avg_floor']:.1f}  Max floor: {agg['max_floor']}")
-        print(f"  Avg HP:    {agg['avg_final_hp']:.0f}")
-        print(f"  Attacks:   {agg['avg_attacks']:.1f}")
-        print(f"  Steps:     {agg['avg_steps']:.0f}")
-        print(f"  Tokens:    {agg['avg_tokens']:.0f}")
+            if args.fake:
+                from fake_llm import FakeLlmClient
+                llm = FakeLlmClient([])
+                print(f"  Using FakeLlmClient (provider={provider} ignored)")
+            else:
+                print(f"  Building LLM client for {provider}...")
+                try:
+                    _orig_cwd = os.getcwd()
+                    os.chdir(_AGENT_RUNNER)
+                    llm = build_llm_client(provider)
+                    os.chdir(_orig_cwd)
+                    print(f"  Provider: {provider}")
+                except Exception as e:
+                    print(f"  Error initialising LLM for {provider}: {e}")
+                    print("  Skipping this provider.")
+                    continue
+
+            for agent_name, system_prompt in llm_agents.items():
+                full_name = f"{agent_name}_{provider}"
+                print(f"\n  Agent: {full_name}")
+                print(f"  {'─' * 40}")
+
+                results = []
+                for i, seed in enumerate(seeds):
+                    print(f"    Game {i + 1}/{len(seeds)} (seed={seed})...", end=" ", flush=True)
+
+                    try:
+                        game.start_game(seed)
+                    except Exception as e:
+                        print(f"FAILED: {e}")
+                        continue
+
+                    time.sleep(0.1)
+                    result = run_game(game, llm, system_prompt, args.max_steps, args.max_tokens)
+
+                    status = "WON" if result["won"] else f"LOST ({result['reason']})"
+                    print(
+                        f"{status} | floor={result['max_floor']} hp={result['final_hp']} "
+                        f"steps={result['steps']} attacks={result['attack_count']}"
+                    )
+                    results.append(result)
+
+                if results:
+                    agg_results[full_name] = aggregate(results)
+                    _print_agg_summary(agg_results[full_name])
 
     write_report(agg_results, args.out, seeds)
     generate_plots(agg_results, args.plots)
